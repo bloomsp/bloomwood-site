@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+  description?: string;
+  canonicalUrl?: URL;
+  ogImage?: string;
+}
+
+const { title, description, canonicalUrl, ogImage } = Astro.props;
+
+const siteName = 'Bloomwood Solutions';
+const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
+const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : undefined;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical.toString()} />
+
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={fullTitle} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical.toString()} />
+    {og && <meta property="og:image" content={og} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    {description && <meta name="twitter:description" content={description} />}
+    {og && <meta name="twitter:image" content={og} />}
+
+    <slot name="head" />
+  </head>
+  <body class="min-h-dvh bg-white text-slate-900">
+    <slot />
+  </body>
+</html>

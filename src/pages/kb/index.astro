@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../../layouts/PageLayout.astro';
+
+const articles = await getCollection('kb', ({ data }) => !data.draft);
+---
+
+<PageLayout title="Knowledge Base" description="Help articles and guides for Bloomwood Solutions customers.">
+  <h1>Knowledge Base</h1>
+  {articles.length === 0 ? (
+    <p>No articles yet.</p>
+  ) : (
+    <ul>
+      {articles.map((a) => (
+        <li><a href={`/kb/${a.slug}/`}>{a.data.title}</a></li>
+      ))}
+    </ul>
+  )}
+</PageLayout>

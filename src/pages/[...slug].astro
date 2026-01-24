@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../layouts/PageLayout.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', ({ data }) => !data.draft);
+  // For rest params, Astro expects a single string (e.g. "a/b/c").
+  return pages.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const pages = await getCollection('pages', ({ data }) => !data.draft);
+
+const slug = Astro.params.slug ?? '';
+const key = Array.isArray(slug) ? slug.join('/') : slug;
+
+const entry = pages.find((p) => p.slug === key);
+if (!entry) throw new Error(`Page not found: ${key}`);
+
+const { Content } = await entry.render();
+const data = entry.data;
+---
+
+<PageLayout title={data.title} description={data.description} ogImage={data.ogImage}>
+  <Content />
+</PageLayout>
