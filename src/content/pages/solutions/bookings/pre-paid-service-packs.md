@@ -36,7 +36,7 @@ $540
 
 -  Hours can be used for Onsite or Remote Support
 -  Value $600
--  **Save up to $60 off standard onsite rate**
+-  **Save up to $60 off standard onsite rate_*
 
 [Buy 5 hours](https://www.paypal.com/ncp/payment/HKPT5UNC9B9EQ) 
 
@@ -46,7 +46,7 @@ $1080
 
 -  Hours can be used for Onsite or Remote Support
 - Value $1200
-- **Save up to $120 off standard onsite rate**
+-_*Save up to $120 off standard onsite rate_*
 
 [Buy 10 hours](https://www.paypal.com/ncp/payment/HPMQT4H3K9EGJ) 
 
@@ -56,7 +56,7 @@ $2040
 
 -  Hours can be used for Onsite or Remote Support
 - Value $2400
-- **Save up to $360 off standard onsite rate**
+-_*Save up to $360 off standard onsite rate_*
 
 [Buy 20 hours](https://www.paypal.com/ncp/payment/TKYRXWZBGNBAJ) 
 
@@ -66,6 +66,6 @@ $3840
 
 -  Hours can be used for Onsite or Remote Support
 - Value $4800
-- **Save up to $960 off standard onsite rate**
+-_*Save up to $960 off standard onsite rate**
 
 [Buy 40 hours](https://www.paypal.com/ncp/payment/W63EWRTTHU4GC)

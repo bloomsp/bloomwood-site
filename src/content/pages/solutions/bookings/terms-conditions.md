@@ -9,9 +9,9 @@ Updated: 9 November 2025
 
 The terms below apply to our supply of services and goods to you (**Agreement**). All references to: 
 
-(a) **“You” or “your”** means the individual or business customer requesting the services and/or goods from us; 
+(a)**“You” or “your”_* means the individual or business customer requesting the services and/or goods from us; 
 
-(b) **“We”, “us”, “our”, or “Bloomwood Solutions” **means THE TRUSTEE FOR STEVEN P BLOOM TRUST trading as Bloomwood Solutions (ABN 40 264 085 778), including our employees, contractors, and authorised representatives. 
+(b)_*“We”, “us”, “our”, or “Bloomwood Solutions”**means THE TRUSTEE FOR STEVEN P BLOOM TRUST trading as Bloomwood Solutions (ABN 40 264 085 778), including our employees, contractors, and authorised representatives. 
 
 (c) “services” means the services we provide to you as described on our website and in these terms, including onsite technical support, remote technical support and flat‑pack assembly;  
 
@@ -29,11 +29,11 @@ The terms below apply to our supply of services and goods to you (**Agreement**)
 
 **(i) “Service area”** means the geographical area within an 80 km radius of Cairns, Queensland, Australia. 
 
-**(j) “Service Pack”** means a pre-paid bundle of hours for onsite and/or remote support purchased in advance at a discounted rate, such as the *Explorer*, *Adventure*, *Hero, or Legend* pack, subject to the inclusions, rates, and expiry periods published on our website at the time of purchase. 
+**(j) “Service Pack”_* means a pre-paid bundle of hours for onsite and/or remote support purchased in advance at a discounted rate, such as the_Explorer*, *Adventure*, *Hero, or Legend* pack, subject to the inclusions, rates, and expiry periods published on our website at the time of purchase. 
 
 **(k) “Pack hours”** means the total number of service hours included in a Service Pack, recorded and deducted in the increments specified in clause 1.2(b). 
 
-**(l) “Expiry date”** means the date 12 months from the purchase of a Service Pack, after which any unused Pack hours will automatically expire and be forfeited.  
+**(l) “Expiry date”_* means the date 12 months from the purchase of a Service Pack, after which any unused Pack hours will automatically expire and be forfeited.  
 
 ## Table of Contents 
 
@@ -89,11 +89,11 @@ The terms below apply to our supply of services and goods to you (**Agreement**)
 
 [10. Force Majeure](#10)  
 
-## **1. Purchasing services from us** 
+##_*1. Purchasing services from us_* 
 
 You may purchase services from us on the following basis: 
 
-### **1.1 On-demand services** 
+###_*1.1 On-demand services** 
 
 (a) On-demand services include three types of support: 
  
@@ -105,27 +105,27 @@ You may purchase services from us on the following basis:
 **Remote support** – troubleshooting and technical assistance provided over the internet or telephone.  
 -  
 
-**Flat-pack assembly** – assembly of furniture or equipment packaged for self-assembly.  
+**Flat-pack assembly_* – assembly of furniture or equipment packaged for self-assembly.  
  
 
 (b) We will perform the services and supply the goods specified in your booking at the rates set out on our website and in your booking confirmation. Our current rates (all amounts include GST) are: 
  
 -  
 
-Onsite support – **AU $120 per hour******  
+Onsite support –_*AU $120 per hour******  
 -  
 
-Remote support – **AU $80 per hour******  
+Remote support –**AU $80 per hour******  
 -  
 
-Flat-pack assembly – **AU $40 per hour**  
+Flat-pack assembly –**AU $40 per hour_*  
  
 
-(c) A **one-hour minimum charge** applies to all services. After the first hour: 
+(c) A_*one-hour minimum charge_* applies to all services. After the first hour: 
 
- • Onsite support is billed in **30-minute increments**; and 
+ • Onsite support is billed in_*30-minute increments**; and 
 
- • Remote support is billed in **15-minute increments**. 
+ • Remote support is billed in**15-minute increments**. 
 
 (d) Most issues can be solved in the first hour. If we expect that more time will be required, we will let you know within the first 30 minutes and provide options before proceeding. 
 
@@ -135,17 +135,17 @@ Flat-pack assembly – **AU $40 per hour**
 
  
 
-### **1.2 Service Packs** 
+###**1.2 Service Packs_* 
 
-(a) In addition to on-demand services, you may purchase **Bloomwood Solutions Service Packs** (for example, the *Explorer*, *Adventure*, or *Progress* pack). Each Service Pack provides a pre-paid allocation of hours that may be used for onsite or remote support at discounted rates. 
+(a) In addition to on-demand services, you may purchase_*Bloomwood Solutions Service Packs_* (for example, the_Explorer*, *Adventure_, or_Progress* pack). Each Service Pack provides a pre-paid allocation of hours that may be used for onsite or remote support at discounted rates. 
 
 (b) The inclusions, pricing, and validity periods for each Service Pack are detailed on our website. 
 
- • Onsite time is deducted in **30-minute increments** (minimum one hour per visit). 
+ • Onsite time is deducted in **30-minute increments_* (minimum one hour per visit). 
 
- • Remote time is deducted in **15-minute increments** (minimum 15 minutes per session). 
+ • Remote time is deducted in_*15-minute increments_* (minimum 15 minutes per session). 
 
-(c) Service Pack hours are valid for **12 months** from the date of purchase. Any unused hours after this period will expire and are non-refundable. 
+(c) Service Pack hours are valid for_*12 months_* from the date of purchase. Any unused hours after this period will expire and are non-refundable. 
 
 (d) Service Pack hours may not be exchanged for cash, transferred to another person, or used for goods or services not listed as part of Bloomwood Solutions’ standard offerings. 
 
@@ -159,15 +159,15 @@ Flat-pack assembly – **AU $40 per hour**
 
  
 
-### **1.3 Service area** 
+###_*1.3 Service area_* 
 
-(a) We provide onsite services within an **80 km radius of Cairns**. If you are located outside this radius, we will offer remote support instead. 
+(a) We provide onsite services within an_*80 km radius of Cairns**. If you are located outside this radius, we will offer remote support instead. 
 
 (b) You are responsible for ensuring that a person aged 18 years or older is present at the premises during the provision of onsite services.  
 
  
 
-### **1.4 Business hours** 
+###**1.4 Business hours_* 
 
 (a) Our business hours (Australian Eastern Standard Time) are: 
  
@@ -183,19 +183,19 @@ Saturday and Sunday: 9:00 am – 5:00 pm
 
  
 
-### **1.5 Cancellation** 
+###_*1.5 Cancellation_* 
 
-(a) If you cancel or reschedule an onsite or remote service with less than 24 hours’ notice, we may charge a **cancellation fee of AU $60**. 
+(a) If you cancel or reschedule an onsite or remote service with less than 24 hours’ notice, we may charge a_*cancellation fee of AU $60**. 
 
 (b) If we charge a cancellation fee, we will apply a credit equal to that fee to your account. This credit may be used against a future service booked within one year. 
 
 (c) We will not charge a cancellation fee if you cancel more than 24 hours before the appointment or if cancellation is required because of circumstances beyond your reasonable control. 
 
-(d) Cancellation of a Service Pack purchase after payment will only be accepted where no hours have been used. In such cases, a **10 % administrative fee** may apply. Once any portion of a Service Pack has been used, no refund is available.  
+(d) Cancellation of a Service Pack purchase after payment will only be accepted where no hours have been used. In such cases, a**10 % administrative fee_* may apply. Once any portion of a Service Pack has been used, no refund is available.  
 
-## **2. On-site services** 
+##_*2. On-site services_* 
 
-### **2.1 Your obligations** 
+###_*2.1 Your obligations_* 
 
 You must: 
 
@@ -211,15 +211,15 @@ You must:
 
 (f) ensure that you do not cause any harm or injury to our technicians.  
 
-### **2.2 Same-day service** 
+###_*2.2 Same-day service_* 
 
 We do not charge a surcharge for same-day service requests. However, appointments are subject to technician availability and may be scheduled at any time during business hours.  
 
  
 
-## **3. Remote services** 
+##_*3. Remote services_* 
 
-### **3.1 Your remote service obligations** 
+###_*3.1 Your remote service obligations_* 
 
 Where we provide remote services, you must: 
 
@@ -233,21 +233,21 @@ Where we provide remote services, you must:
 
  
 
-### **3.2 Limitations of remote support** 
+###_*3.2 Limitations of remote support_* 
 
 Some issues cannot be resolved by remote support (for example, where there is no internet connectivity or where hardware replacement is required). In those cases, we may recommend onsite support or refer you to an authorised service provider.  
 
  
 
-### **3.3 Deposit for remote services** 
+###_*3.3 Deposit for remote services_* 
 
-To secure your remote service booking, we will take a **deposit of AU $40** at the time of booking. This deposit will be applied as a credit towards the total fee for that remote service. The balance of the remote service fee (calculated at the hourly rate set out in clause 1.1(b)) is payable upon completion of the service (see section 5.1 for payment terms). 
+To secure your remote service booking, we will take a_*deposit of AU $40_* at the time of booking. This deposit will be applied as a credit towards the total fee for that remote service. The balance of the remote service fee (calculated at the hourly rate set out in clause 1.1(b)) is payable upon completion of the service (see section 5.1 for payment terms). 
 
 Where you hold a Service Pack, this deposit will be deducted from your Service Pack hours rather than charged separately.  
 
  
 
-## **4. Repairs and goods** 
+##_*4. Repairs and goods_* 
 
 (a) Goods presented for repair may be replaced by refurbished goods of the same type rather than being repaired. 
 
@@ -255,9 +255,9 @@ Where you hold a Service Pack, this deposit will be deducted from your Service P
 
  
 
-## **5. Payment** 
+##_*5. Payment_* 
 
-### **5.1 Fees and payment terms** 
+###_*5.1 Fees and payment terms_* 
 
 (a) All rates are inclusive of GST. 
 
@@ -279,7 +279,7 @@ Where you hold a Service Pack, this deposit will be deducted from your Service P
 
  
 
-### **5.2 Payment for Service Packs** 
+###_*5.2 Payment for Service Packs_* 
 
 (a) Service Packs must be paid for in full at the time of purchase. 
 
@@ -291,7 +291,7 @@ Where you hold a Service Pack, this deposit will be deducted from your Service P
 
 (e) We will issue a tax invoice at purchase showing the included hours, pack name, GST component, and expiry date.  
 
-### **5.3 Outstanding balances** 
+###_*5.3 Outstanding balances_* 
 
 (a) Any additional time beyond your available Service Pack balance will be invoiced at the current on-demand rate and is payable within 7 days. 
 
@@ -301,11 +301,11 @@ Where you hold a Service Pack, this deposit will be deducted from your Service P
 
   
 
-### **5.4 Surcharges** 
+###_*5.4 Surcharges_* 
 
 There are no additional surcharges for weekend, public holiday or same-day services. Our hourly rates are all-inclusive.  
 
-## **6. Data back-up and privacy** 
+##_*6. Data back-up and privacy_* 
 
 (a) You acknowledge that you are solely responsible for ensuring that your data is backed up before we access your systems. To the extent permitted by law, we will not be responsible for any data loss or corruption. 
 
@@ -313,15 +313,15 @@ There are no additional surcharges for weekend, public holiday or same-day servi
 
  
 
-## **7. Warranties and liability** 
+##_*7. Warranties and liability_* 
 
-### **7.1 Australian Consumer Law** 
+###_*7.1 Australian Consumer Law_* 
 
 Our goods and services come with guarantees that cannot be excluded under the Australian Consumer Law (ACL). For major failures with a service, you are entitled to cancel your service contract and receive a refund for unused hours or compensation for reduced value. For major failures with goods, you are entitled to a replacement or refund and compensation for any other reasonably foreseeable loss or damage. 
 
   
 
-### **7.2 Limitations** 
+###_*7.2 Limitations_* 
 
 (a) To the extent permitted by law (including the ACL), our liability to you (whether in contract, negligence or otherwise) is limited to: 
 
@@ -341,7 +341,7 @@ Our goods and services come with guarantees that cannot be excluded under the Au
 
  • viruses or system failures 
 
- • **incidental or unavoidable impacts associated with attending your premises, including vehicle-related condensation, dust, mud, tyre marks or similar minor, non-negligent environmental effects;****** 
+ •_*incidental or unavoidable impacts associated with attending your premises, including vehicle-related condensation, dust, mud, tyre marks or similar minor, non-negligent environmental effects;****** 
 
  • any cosmetic, environmental, or incidental outcome that does not arise from our negligence; or 
 
@@ -353,18 +353,18 @@ Our goods and services come with guarantees that cannot be excluded under the Au
 
  
 
-## **8. Termination** 
+##**8. Termination_* 
 
 Either party may terminate this Agreement immediately by written notice if the other party breaches a term which cannot be remedied or fails to remedy a breach within 10 days of notice. We may suspend services at any time due to your breach (including non-payment) or to prevent damage or misuse of our services.  
 
  
 
-## **9. Changes to Terms** 
+##_*9. Changes to Terms_* 
 
 We may change these terms from time to time by updating them on our website. For on-demand customers, changes take effect immediately after posting and apply to new bookings. If we change fees or services in a way detrimental to you, we will notify you before your next booking and you may cancel without penalty.  
 
  
 
-## **10. Force Majeure** 
+##_*10. Force Majeure** 
 
 We will not be liable for any failure to perform our obligations caused by external events

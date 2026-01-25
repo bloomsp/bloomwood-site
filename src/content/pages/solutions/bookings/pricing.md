@@ -7,17 +7,17 @@ description: "Simple and affordable pricing. No hidden fees. No call out or trav
 
 # Book Your Geek Squad FNQ Service Today
 
-**No hidden fees! ** 
+**No hidden fees!** 
 
 **No call out or travel fees within 80 km of Cairns!** 
 
 We are ready to assist you with all your technology needs.**** 
 
-#### **** 
+####**_* 
 
-#### **** 
+####_*** 
 
-#### **Simple Pricing** 
+####**Simple Pricing_* 
 
 ![Image](https://images.unsplash.com/photo-1625250564384-a46e5eb9d89c?ixid=M3w1ODkyNzF8MHwxfHNlYXJjaHw5fHx0ZWNobm9sb2d5JTIwd29ya3NwYWNlfGVufDB8Mnx8fDE3MzM2MzYyMzB8MA&ixlib=rb-4.0.3&fm=webp&fit=crop&crop=entropy&w=800&h=800&q=20&dpr=2)
 
@@ -51,7 +51,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 # Services
 
-### **1 Hour Onsite** 
+###_*1 Hour Onsite_* 
 
 #### Onsite service for any technology  
  
@@ -66,7 +66,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 [cal text=”Book now!” _builder_version=”3.0.47″][/cal]
 
-### **Computer Setup** 
+###_*Computer Setup_* 
 
 #### For new computers  
  
@@ -77,7 +77,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 [cal text=”Book now!” _builder_version=”3.0.47″][/cal]
 
-### **Wifi Setup** 
+###_*Wifi Setup_* 
 
 #### Setup or troubleshoot your Wifi router/modem.  
  
@@ -90,7 +90,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 [cal text=”Book now!” _builder_version=”3.0.47″][/cal]
 
-### **Remote Support** 
+###_*Remote Support_* 
 
 #### For fully operational computers with high speed internet  
  
@@ -102,7 +102,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 [cal text=”Book now!” _builder_version=”3.0.47″][/cal]
 
-### **Printer Setup** 
+###_*Printer Setup_* 
 
 #### For any printer you want to setup  
  
@@ -114,7 +114,7 @@ Review your details and confirm your appointment to secure your spot with Geek S
 
 [cal text=”Book now!” _builder_version=”3.0.47″][/cal]
 
-### **Quick Chat** 
+###_*Quick Chat** 
 
 #### Have some questions? No obligation free chat!  
  
@@ -175,7 +175,6 @@ Yes, we offer emergency I.T. support services. If you have an urgent issue, plea
 
 Absolutely. We stand by the quality of our work and offer a satisfaction guarantee on all services provided. Your technology problems are our priority. 
 
-
 
 # What Our Clients Say
 
