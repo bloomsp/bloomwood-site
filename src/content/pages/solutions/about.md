@@ -3,6 +3,13 @@ title: "About"
 description: "Discover tech support from Bloomwood Solutions, your local experts ready to assist you. Learn more about bloomwood and our services in the Cairns region."
 ---
 
+# About Bloomwood Solutions
+
+- [Privacy Policy](/solutions/about/privacy-policy/)
+- [Cookie Policy](/solutions/about/cookie-policy/)
+- [Website Terms of Use](/solutions/about/website-terms-of-use/)
+- [Terms & Conditions (Supply of Services & Goods)](/solutions/bookings/terms-conditions/)
+
 # Meet Our Expert Team 
 
 *Bloomwood Solutions delivers expert, friendly IT support in Cairns for homes and small businesses, specialising in solving hi-tech problems, WiFi networks, home automation, backups and smart-tech in general. *  
