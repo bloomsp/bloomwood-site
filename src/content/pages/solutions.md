@@ -43,71 +43,55 @@ Bloomwood Solutions is dedicated to delivering top-notch I.T. support and tech h
 
  
 
-
 
 #### Home Network Setup 
 
-
 
 #### Wireless Network Setup 
 
-
 
 #### Business IT Solutions 
 
-
 
 #### Data Recovery Services 
 
-
 
 #### Virus and Malware Removal 
 
-
 
 #### Hardware and Software Installation  
 
  
 
-
 
 #### Cloud Solutions 
 
-
 
 #### Remote IT Support 
 
-
 
 #### Web Design & Domain Solutions 
 
-
 
 #### IT Consultation 
 
-
 
 #### System Upgrades  
 
  
 
-
 
 #### Backup Solutions 
 
-
 
 #### Mac & PC 
 
-
 
 #### Server Maintenance 
 
-
 
 #### IT Training and Workshops 
 
-
 
 #### Tech Support for Events    
 
@@ -117,7 +101,6 @@ Bloomwood Solutions is dedicated to delivering top-notch I.T. support and tech h
 
  
 
- 
 
 ## What Our Clients Say   
 

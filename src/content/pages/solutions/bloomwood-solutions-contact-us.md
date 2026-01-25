@@ -25,7 +25,6 @@ Get expert assistance for all your technology needs, right here in the Far North
 
  
 
-
 
 #### Phone
 
@@ -33,7 +32,6 @@ Get expert assistance for all your technology needs, right here in the Far North
 
  
 
-
 
 #### Email
 
@@ -41,7 +39,6 @@ Get expert assistance for all your technology needs, right here in the Far North
 
  
 
-
 
 #### Address
 
@@ -49,7 +46,6 @@ Get expert assistance for all your technology needs, right here in the Far North
 
  
 
-
 
 #### Live Chat
 
@@ -133,25 +129,21 @@ For urgent assistance, please call our support hotline for immediate help during
 
  
 
-
 
 #### Facebook 
 
  
 
-
 
 #### Twitter 
 
  
 
-
 
 #### Linkedin 
 
  
 
-
 
 #### Youtube 
 
