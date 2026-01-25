@@ -3,6 +3,7 @@ node_modules
 
 # Astro
 .astro
+dist/
 
 # OS
 .DS_Store
