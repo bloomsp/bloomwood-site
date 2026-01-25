@@ -1,20 +1,31 @@
 ---
-const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/about/', label: 'About' },
-  { href: '/bookings/', label: 'Bookings' },
-  { href: '/service-packs/', label: 'Service Packs' },
-  { href: '/service-area/', label: 'Service Area' },
-  { href: '/blog/', label: 'Blog' },
-  { href: '/kb/', label: 'Knowledge Base' },
-];
+export interface NavItem {
+  href: string;
+  label: string;
+}
+
+export interface Props {
+  homeHref?: string;
+  brandLabel?: string;
+  logoSrc?: string;
+  logoAlt?: string;
+  nav?: NavItem[];
+}
+
+const {
+  homeHref = '/',
+  brandLabel = 'Bloomwood',
+  logoSrc = '/logo.svg',
+  logoAlt = brandLabel,
+  nav = [],
+} = Astro.props;
 ---
 
 <header class="border-b border-slate-200">
   <div class="mx-auto flex max-w-5xl items-center justify-between gap-6 px-4 py-4">
-    <a href="/" class="flex items-center gap-3">
-      <img src="/logo.svg" alt="Bloomwood Solutions" class="h-10 w-auto" loading="eager" />
-      <span class="text-lg font-semibold">Bloomwood Solutions</span>
+    <a href={homeHref} class="flex items-center gap-3">
+      <img src={logoSrc} alt={logoAlt} class="h-10 w-auto" loading="eager" />
+      <span class="text-lg font-semibold">{brandLabel}</span>
     </a>
     <nav class="hidden items-center gap-4 md:flex">
       {nav.map((i) => (

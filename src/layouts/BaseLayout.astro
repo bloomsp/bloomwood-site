@@ -3,14 +3,14 @@ import '../styles/global.css';
 
 export interface Props {
   title: string;
+  siteName?: string;
   description?: string;
   canonicalUrl?: URL;
   ogImage?: string;
 }
 
-const { title, description, canonicalUrl, ogImage } = Astro.props;
+const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage } = Astro.props;
 
-const siteName = 'Bloomwood Solutions';
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : undefined;

@@ -10,10 +10,65 @@ export interface Props {
 }
 
 const { title, description, ogImage } = Astro.props;
+
+const pathname = Astro.url.pathname;
+const isMedia = pathname === '/media/' || pathname.startsWith('/media/');
+const isSolutions = pathname === '/solutions/' || pathname.startsWith('/solutions/');
+
+const umbrellaNav = [
+  { href: '/', label: 'Home' },
+  { href: '/solutions/', label: 'Solutions' },
+  { href: '/media/', label: 'Media' },
+];
+
+const solutionsNav = [
+  { href: '/', label: 'Home' },
+  { href: '/solutions/', label: 'Solutions' },
+  { href: '/bookings/', label: 'Bookings' },
+  { href: '/service-packs/', label: 'Service Packs' },
+  { href: '/service-area/', label: 'Service Area' },
+  { href: '/kb/', label: 'Knowledge Base' },
+  { href: '/blog/', label: 'Blog' },
+];
+
+const mediaNav = [
+  { href: '/', label: 'Home' },
+  { href: '/media/', label: 'Media' },
+  // Add when ready:
+  // { href: '/media/services/', label: 'Services' },
+  // { href: '/media/portfolio/', label: 'Portfolio' },
+  // { href: '/media/contact/', label: 'Contact' },
+];
+
+const headerProps = isMedia
+  ? {
+      homeHref: '/media/',
+      brandLabel: 'Bloomwood Media',
+      logoSrc: '/logo-media.svg',
+      logoAlt: 'Bloomwood Media',
+      nav: mediaNav,
+    }
+  : isSolutions
+    ? {
+        homeHref: '/solutions/',
+        brandLabel: 'Bloomwood Solutions',
+        logoSrc: '/logo.svg',
+        logoAlt: 'Bloomwood Solutions',
+        nav: solutionsNav,
+      }
+    : {
+        homeHref: '/',
+        brandLabel: 'Bloomwood',
+        logoSrc: '/logo.svg',
+        logoAlt: 'Bloomwood',
+        nav: umbrellaNav,
+      };
+
+const siteName = isMedia ? 'Bloomwood Media' : isSolutions ? 'Bloomwood Solutions' : 'Bloomwood';
 ---
 
-<BaseLayout title={title} description={description} ogImage={ogImage}>
-  <Header />
+<BaseLayout title={title} siteName={siteName} description={description} ogImage={ogImage}>
+  <Header {...headerProps} />
   <main class="mx-auto max-w-5xl px-4 py-10">
     <article class="prose prose-slate max-w-none">
       <slot />
