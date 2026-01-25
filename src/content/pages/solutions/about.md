@@ -12,7 +12,7 @@ description: "Discover tech support from Bloomwood Solutions, your local experts
 
 # Meet Our Expert Team 
 
-*Bloomwood Solutions delivers expert, friendly IT support in Cairns for homes and small businesses, specialising in solving hi-tech problems, WiFi networks, home automation, backups and smart-tech in general. *  
+_Bloomwood Solutions delivers expert, friendly IT support in Cairns for homes and small businesses, specialising in solving hi‑tech problems, Wi‑Fi networks, home automation, backups and smart‑tech in general._
 
  
 
