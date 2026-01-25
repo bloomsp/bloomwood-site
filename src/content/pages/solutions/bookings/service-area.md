@@ -63,120 +63,45 @@ You can read more about [Helpwire security](https://www.helpwire.app/security) o
 
  
 
-# Service Areas Covered   
-
- 
-
- 
-
-
-#### Cairns & suburbs 
-
-
-#### Atherton 
-
-
-#### Babinda 
-
-
-#### Cooya Beach 
-
-
-#### Dimbula 
-
-
-#### El Arish 
-
-
-#### Eubenangee 
-
-
-#### Gordonvale 
-
-
-#### Herberton 
-
-
-#### Innisfail 
-
-
-#### Smithfield  
-
- 
-
-
-#### Julatten 
-
-
-#### Kuranda 
-
-
-#### Malanda 
-
-
-#### Mareeba 
-
-
-#### Millaa Millaa 
-
-
-#### Mission Beach 
-
-
-#### Mossman 
-
-
-#### Mount Molloy 
-
-
-#### Mutchilba 
-
-
-#### Newell Beach 
-
-
-#### Palm Cove  
-
- 
-
-
-#### Port Douglas 
-
-
-#### Ravenshoe 
-
-
-#### Silkwood 
-
-
-#### South Mission Beach 
-
-
-#### Tinaroo 
-
-
-#### Tolga 
-
-
-#### Tully 
-
-
-#### Walkamin 
-
-
-#### Wonga Beach 
-
-
-#### Wongaling Beach 
-
-
-#### Yungaburra    
-
- 
-
- 
-
- 
+# Service Areas Covered
+
+<div class="not-prose columns-2 gap-10 [column-fill:balance]">
+  <ul class="m-0 list-disc space-y-1 break-inside-avoid-column pl-5 text-slate-800">
+    <li>Cairns &amp; suburbs</li>
+    <li>Atherton</li>
+    <li>Babinda</li>
+    <li>Cooya Beach</li>
+    <li>Dimbula</li>
+    <li>El Arish</li>
+    <li>Eubenangee</li>
+    <li>Gordonvale</li>
+    <li>Herberton</li>
+    <li>Innisfail</li>
+    <li>Smithfield</li>
+    <li>Julatten</li>
+    <li>Kuranda</li>
+    <li>Malanda</li>
+    <li>Mareeba</li>
+    <li>Millaa Millaa</li>
+    <li>Mission Beach</li>
+    <li>Mossman</li>
+    <li>Mount Molloy</li>
+    <li>Mutchilba</li>
+    <li>Newell Beach</li>
+    <li>Palm Cove</li>
+    <li>Port Douglas</li>
+    <li>Ravenshoe</li>
+    <li>Silkwood</li>
+    <li>South Mission Beach</li>
+    <li>Tinaroo</li>
+    <li>Tolga</li>
+    <li>Tully</li>
+    <li>Walkamin</li>
+    <li>Wonga Beach</li>
+    <li>Wongaling Beach</li>
+    <li>Yungaburra</li>
+  </ul>
+</div>
 
 # Comprehensive I.T. Services 
 
