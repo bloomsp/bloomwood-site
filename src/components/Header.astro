@@ -22,15 +22,53 @@ const {
 ---
 
 <header class="border-b border-slate-200">
-  <div class="mx-auto flex max-w-5xl items-center justify-between gap-6 px-4 py-4">
-    <a href={homeHref} class="flex items-center gap-3">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+    <a href={homeHref} class="flex min-w-0 items-center gap-3">
       <img src={logoSrc} alt={logoAlt} class="h-10 w-auto" loading="eager" />
-      <span class="text-lg font-semibold">{brandLabel}</span>
+      <span class="truncate text-lg font-semibold">{brandLabel}</span>
     </a>
+
+    {/* Desktop nav */}
     <nav class="hidden items-center gap-4 md:flex">
       {nav.map((i) => (
         <a class="text-sm text-slate-700 hover:text-slate-950" href={i.href}>{i.label}</a>
       ))}
     </nav>
+
+    {/* Mobile nav (hamburger) */}
+    <details class="relative md:hidden">
+      <summary
+        class="list-none rounded-lg border border-slate-300 p-2 text-slate-700 hover:bg-slate-50"
+        aria-label="Open menu"
+      >
+        <span class="sr-only">Menu</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16" />
+          <path d="M4 12h16" />
+          <path d="M4 18h16" />
+        </svg>
+      </summary>
+
+      <div class="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+        {nav.map((i) => (
+          <a
+            class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+            href={i.href}
+          >
+            {i.label}
+          </a>
+        ))}
+      </div>
+    </details>
   </div>
 </header>
