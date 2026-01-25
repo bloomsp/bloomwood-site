@@ -1,0 +1,19 @@
+---
+export const prerender = true;
+
+export function getStaticPaths() {
+  const slugs = [
+    'bloomwood-solutions-cookie-policy',
+    'privacy-policy',
+    'social-media-policy',
+    'website-terms-of-use',
+  ];
+
+  return slugs.map((s) => ({ params: { slug: s } }));
+}
+
+const slug = Astro.params.slug;
+const rest = Array.isArray(slug) ? slug.join('/') : slug;
+const dest = rest ? `/solutions/about/${rest}/` : '/solutions/about/';
+return Astro.redirect(dest, 301);
+---
