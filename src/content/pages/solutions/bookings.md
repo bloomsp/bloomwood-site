@@ -33,4 +33,4 @@ If you expect to need help more than once, a pre‑paid pack can save money.
 ## Questions?
 
 - WhatsApp: [Chat via WhatsApp](https://wa.me/61492991759)
-- Or: [Contact us](/solutions/contact-us/)
+- Or: [Contact us](/solutions/bloomwood-solutions-contact-us/)

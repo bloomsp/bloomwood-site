@@ -95,7 +95,7 @@ Do note that if you do not allow us to collect or process the required personal 
 
 # Cookies etc. 
 
-To learn more about how we use these and your choices in relation to these tracking technologies, please refer to our [Cookie Policy](/solutions/about/cookiepolicy).  
+To learn more about how we use these and your choices in relation to these tracking technologies, please refer to our [Cookie Policy](/solutions/about-bloomwood-solutions/bloomwood-solutions-cookie-policy/).  
 
 # Security 
 
