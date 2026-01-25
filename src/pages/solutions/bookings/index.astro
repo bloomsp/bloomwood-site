@@ -1,0 +1,83 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import { getEntryBySlug } from 'astro:content';
+
+export const prerender = true;
+
+const entry = await getEntryBySlug('pages', 'solutions/bookings');
+if (!entry) throw new Error('Missing content entry: solutions/bookings');
+
+const { Content } = await entry.render();
+const data = entry.data;
+---
+
+<PageLayout title={data.title} description={data.description} ogImage={data.ogImage}>
+  <Fragment slot="head">
+    <link rel="dns-prefetch" href="//app.cal.com" />
+    <script>
+      (function (C, A, L){
+        let p=function (a, ar){ a.q.push(ar); };
+        let d=C.document;
+        C.Cal=C.Cal||function (){
+          let cal=C.Cal;
+          let ar=arguments;
+          if(!cal.loaded){
+            cal.ns={};
+            cal.q=cal.q||[];
+            d.head.appendChild(d.createElement("script")).src=A;
+            cal.loaded=true;
+          }
+          if(ar[0]===L){
+            const api=function (){ p(api, arguments); };
+            const namespace=ar[1];
+            api.q=api.q||[];
+            if(typeof namespace==="string"){
+              cal.ns[namespace]=cal.ns[namespace]||api;
+              p(cal.ns[namespace], ar);
+              p(cal, ["initNamespace", namespace]);
+            } else p(cal, ar);
+            return;
+          }
+          p(cal, ar);
+        };
+      })(window, "https://app.cal.com/embed/embed.js", "init");
+      Cal("init", "onsite", {origin:"https://app.cal.com"});
+      Cal("init", "quick-chat", {origin:"https://app.cal.com"});
+      Cal("init", "remote-support", {origin:"https://app.cal.com"});
+    </script>
+  </Fragment>
+
+  <div class="not-prose mb-8 grid gap-3 sm:grid-cols-3">
+    <a
+      class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+      data-cal-link="bloomwood/onsite"
+      data-cal-namespace="onsite"
+      data-cal-config='{"layout":"month_view"}'
+      href="#"
+    >
+      Book Onsite Service
+    </a>
+
+    <a
+      class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+      data-cal-link="bloomwood/remote-support"
+      data-cal-namespace="remote-support"
+      data-cal-config='{"layout":"month_view"}'
+      href="#"
+    >
+      Book Remote Service
+    </a>
+
+    <a
+      class="inline-flex items-center justify-center rounded-lg bg-purple-700 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-800"
+      data-cal-link="bloomwood/quick-chat"
+      data-cal-namespace="quick-chat"
+      data-cal-config='{"layout":"month_view"}'
+      href="#"
+    >
+      Book a free 15min chat
+    </a>
+  </div>
+
+  <Content />
+</PageLayout>
