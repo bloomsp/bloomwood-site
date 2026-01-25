@@ -15,7 +15,6 @@ description: "Services  Backup Do you backup your computer? Tired of losing t
 
  
 
-
 
 #### Backup
 
@@ -23,7 +22,6 @@ Do you backup your computer? Tired of losing track of where all your photos are?
 
  
 
-
 
 #### Smart Phone Setup
 
@@ -31,7 +29,6 @@ New phone? Want all your data, apps, and photos on the new one? We’ll show you
 
  
 
-
 
 #### Social Content
 
@@ -41,7 +38,6 @@ We can help you manage your existing Social Media accounts.
 
  
 
-
 
 #### Web Design
 
@@ -49,7 +45,6 @@ We have experience with WordPress and Concrete CMS. Hundreds of layouts to choos
 
  
 
-
 
 #### WiFi Setup & Troubleshooting 
 
@@ -57,7 +52,6 @@ We know networking and the best way to configure your WiFi network. Don’t buy 
 
  
 
-
 
 #### Computer Checkups & Cleaning
 
