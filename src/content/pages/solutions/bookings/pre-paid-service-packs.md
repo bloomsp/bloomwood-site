@@ -21,13 +21,12 @@ Everyone needs a good support crew. With Bloomwood Solutions Service Packs, you 
 4. Hours may be used for onsite or remote work, billed by the increments above.
 5. Unused hours expire at the end of the validity period.
 6. Price includes GST
+7. Savings are dependent on your usage of onsite & remote hours.
 
 Level up your tech confidence. Save more, stress less, and keep your systems running smoother than a freshly installed printer ink cartridge.
 Ready to begin your adventure? Choose one these Service Packs today!
 
-- savings are dependent on your usage of onsite & remote hours.
-
-[Click to download a summary brochure](/images/solutions/BloomwoodSolutions_ServicePacks_20260131.pdf)
+<a href="/images/solutions/BloomwoodSolutions_ServicePacks_20260131.pdf" target="_blank">Click to download a summary brochure</a>
 
 ## Choose a Service Pack
 

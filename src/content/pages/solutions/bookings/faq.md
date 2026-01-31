@@ -11,121 +11,15 @@ description: "Simple and affordable pricing. No hidden fees. No call out or trav
 
 **No call out or travel fees within 80 km of Cairns!**
 
-We are ready to assist you with all your technology needs.\*\*\*\*
+We are ready to assist you with all your technology needs.
 
-#### **Simple Pricing**
-
-![Image](https://images.unsplash.com/photo-1625250564384-a46e5eb9d89c?ixid=M3w1ODkyNzF8MHwxfHNlYXJjaHw5fHx0ZWNobm9sb2d5JTIwd29ya3NwYWNlfGVufDB8Mnx8fDE3MzM2MzYyMzB8MA&ixlib=rb-4.0.3&fm=webp&fit=crop&crop=entropy&w=800&h=800&q=20&dpr=2)
-
-# Simple Booking Process
-
-# How to Book Your Service
-
-1. Select your service
-
-2. Pick a convenient time
-
-3. Confirm your booking
-
-## 1
-
-# Select Your Service
-
-Choose from a range of services tailored to meet your specific needs.
-
-## 2
-
-# Pick a Convenient Time
-
-Select a date and time that suits your schedule for our expert technician to assist you.
-
-## 3
-
-# Confirm Your Booking
-
-Review your details and confirm your appointment to secure your spot with Bloomwood Solutions.
-
-# Services
-
-### **1 Hour Onsite**
-
-#### Onsite service for any technology
-
-- Windows PC
-- Mac and macOS
-- Any smart phone
-- Any smart TV
-- Any of your technology
-
-### **Computer Setup**
-
-#### For new computers
-
-- Onsite service only
-- Windows PC – can take 2 hours depending on updates required and speed of internet
-- For Mac (macOS) it can take 1 hour
-
-### **Wifi Setup**
-
-#### Setup or troubleshoot your Wifi router/modem.
-
-- Onsite service only
-- Signal quality mapping and diagnostics
-- Signal interference check
-- Optimise positioning of Wifi access point
-- Optimise use of Mesh network
-
-### **Remote Support**
-
-#### For fully operational computers with high speed internet
-
-- Windows PC
-- Mac
-- Any smart phone
-- $40 to be paid at time of booking
-
-### **Printer Setup**
-
-#### For any printer you want to setup
-
-- Onsite service only
-- Set up printer via Wifi or USB
-- Print from smart phone
-- Printer troubleshooting
-
-### **Quick Chat**
-
-#### Have some questions? No obligation free chat!
-
-- Book a 15 minute phone call
-- No Fee
-- No obligation
-- No question too hard
-- Any technology topic
-
-![Image](https://images.unsplash.com/photo-1511181832407-791900ec318e?ixid=M3w1ODkyNzF8MHwxfHNlYXJjaHw5fHxDYWlybnMlMjBsYW5kc2NhcGV8ZW58MHwyfHx8MTczMzYzNjIzMHww&ixlib=rb-4.0.3&fm=webp&fit=crop&crop=entropy&w=800&h=800&q=20&dpr=2)
+# Frequently Asked Questions
 
 # Our Service Areas
 
 Bloomwood Solutions proudly serves the Cairns Queensland region, extending our expert I.T. support to both urban and regional areas. Whether you’re in the heart of Cairns or in the surrounding communities, our team is ready to assist you with all your technology needs.
 
 [Learn More](/solutions/bookings/service-area/)
-
-# Got another question
-
-Not ready to book a call or a service, then feel free to send us a question using this form.
-
-Name
-
-Email Address
-
-Message
-
-Submit
-
-# Common Questions About Our Services
-
-Find answers to the most frequently asked questions about our I.T. support services and booking process.
 
 # How do I book an appointment?
 
