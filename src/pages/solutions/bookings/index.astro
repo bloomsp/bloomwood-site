@@ -1,6 +1,7 @@
 ---
 import PageLayout from '../../../layouts/PageLayout.astro';
 import { getEntryBySlug } from 'astro:content';
+import { ServiceAccordion } from '../../../components/ServiceAccordion';
 
 export const prerender = true;
 
@@ -55,6 +56,10 @@ const data = entry.data;
     >
       Book a free 15min chat
     </a>
+  </div>
+
+  <div class="not-prose mb-8">
+    <ServiceAccordion client:load />
   </div>
 
   <Content />
