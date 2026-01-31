@@ -37,57 +37,57 @@ The terms below apply to our supply of services and goods to you (**Agreement**)
 
 ## Table of Contents
 
-[1. Purchasing services from us](#1purchasing)
+[1. Purchasing services from us](#1-purchasing-services-from-us)
 
-[1.1 On-demand services](#1purchasing)
+[1.1 On-demand services](#11-on-demand-services)
 
-[1.2 Service Packs](#1.2servicepacks)
+[1.2 Service Packs](#12-service-packs)
 
-[1.3 Service area](#1.3)
+[1.3 Service area](#13-service-area)
 
-[1.4 Business hours](#1.4)
+[1.4 Business hours](#14-business-hours)
 
-[1.5 Cancellation](#1.5)
+[1.5 Cancellation](#15-cancellation)
 
-[2. On-site services](#2.1)
+[2. On-site services](#2-on-site-services)
 
-[2.1 Your obligations](#2.1)
+[2.1 Your obligations](#21-your-obligations)
 
-[2.2 Same-day service](#2.2)
+[2.2 Same-day service](#22-same-day-service)
 
-[3. Remote services](#3.1)
+[3. Remote services](#3-remote-services)
 
-[3.1 Your remote service obligations](#3.1)
+[3.1 Your remote service obligations](#31-your-remote-service-obligations)
 
-[3.2 Limitations of remote support](#3.2)
+[3.2 Limitations of remote support](#32-limitations-of-remote-support)
 
-[3.3 Deposit for remote services](#3.3)
+[3.3 Deposit for remote services](#33-deposit-for-remote-services)
 
-[4. Repairs and goods](#4)
+[4. Repairs and goods](#4-repairs-and-goods)
 
-[5. Payment](#5.1)
+[5. Payment](#5-payment)
 
-[5.1 Fees and payment terms](#5.1)
+[5.1 Fees and payment terms](#51-fees-and-payment-terms)
 
-[5.2 Payment for Service Packs](#5.2)
+[5.2 Payment for Service Packs](#52-payment-for-service-packs)
 
-[5.3 Outstanding balances](#5.3)
+[5.3 Outstanding balances](#53-outstanding-balances)
 
-[5.4 Surcharges](#5.4)
+[5.4 Surcharges](#54-surcharges)
 
-[6. Data backup and privacy](#6)
+[6. Data backup and privacy](#6-data-backup-and-privacy)
 
-[7. Warranties and liability](#7.1)
+[7. Warranties and liability](#7-warranties-and-liability)
 
-[7.1 Australian Consumer Law](#7.1)
+[7.1 Australian Consumer Law](#71-australian-consumer-law)
 
-[7.2 Limitations](#7.2)
+[7.2 Limitations](#72-limitations)
 
-[8. Termination](#8)
+[8. Termination](#8-termination)
 
-[9. Changes to Terms](#9)
+[9. Changes to Terms](#9-changes-to-terms)
 
-[10. Force Majeure](#10)
+[10. Force Majeure](#10-force-majeure)
 
 ## 1. Purchasing services from us
 
