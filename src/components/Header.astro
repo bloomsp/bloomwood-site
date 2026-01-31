@@ -1,5 +1,4 @@
 ---
-import { ThemeToggle } from './ThemeToggle';
 import { SiteNav, type NavItem } from './SiteNav';
 
 export interface Props {
@@ -29,12 +28,10 @@ const {
     {/* Desktop nav */}
     <nav class="hidden items-center gap-2 md:flex">
       <SiteNav nav={nav} client:load />
-      <ThemeToggle client:load />
     </nav>
 
     {/* Mobile nav (hamburger) */}
     <div class="flex items-center gap-2 md:hidden">
-      <ThemeToggle client:load />
       <details class="relative">
         <summary
           class="list-none rounded-lg border border-border bg-background p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
