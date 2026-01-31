@@ -7,15 +7,10 @@ description: "Book onsite support, remote support, or a free 15‑minute quick c
 
 Use the booking buttons above to schedule:
 
-- _Onsite IT support_
-- _Remote support_
+- _Onsite IT support_: $120/hour
+- _Remote support_: $80/hour (all remote bookings require\__$40 pre‑payment_ at time of booking; credited to your time)
 - _free 15‑minute quick chat_
-
-## Rates and service types
-
-- Onsite IT service: $120/hour
-- Remote support: $80/hour (all remote bookings require\__$40 pre‑payment_ at time of booking; credited to your time)
-- Flat pack furniture assembly: _$40/hour\__ (please allow\__1 hour_ per flat pack)
+- Flat pack furniture assembly: \_$40/hour\_\_ (please allow\__1 hour_ per flat pack)
 
 More details:
 

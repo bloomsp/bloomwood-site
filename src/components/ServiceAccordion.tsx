@@ -11,13 +11,17 @@ const services = [
   {
     key: "onsite-1h",
     title: "1 Hour Onsite",
-    subtitle: "Onsite service for any technology",
+    subtitle: "Onsite service for any tech support or flatpack service",
     bullets: [
       "Windows PC",
       "Mac and macOS",
+      "Virus removal",
+      "Backup strategy",
+      "Help with OneDrive, Google Cloud, Apple iCloud, or other cloud service",
       "Any smart phone",
       "Any smart TV",
       "Any of your technology",
+      "Flat pack furniture assembly - allow 1 hour per flat pack",
     ],
   },
   {
@@ -26,8 +30,8 @@ const services = [
     subtitle: "For new computers",
     bullets: [
       "Onsite service only",
-      "Windows PC – can take 2 hours depending on updates required and speed of internet",
-      "For Mac (macOS) it can take 1 hour",
+      "Windows PC – typically takes 2 hours depending on updates required and speed of internet",
+      "For Mac (macOS) typically takes 1 hour",
     ],
   },
   {
@@ -60,7 +64,7 @@ const services = [
     bullets: [
       "Onsite service only",
       "Set up printer via Wifi or USB",
-      "Print from smart phone",
+      "Set up printing from smart phone",
       "Printer troubleshooting",
     ],
   },
@@ -88,17 +92,26 @@ export function ServiceAccordion() {
         </p>
       </div>
 
-      <Accordion type="multiple" className="w-full rounded-xl border border-border">
+      <Accordion
+        type="multiple"
+        className="w-full rounded-xl border border-border"
+      >
         {services.map((s, idx) => (
           <AccordionItem
             key={s.key}
             value={s.key}
-            className={idx === services.length - 1 ? "border-b-0" : "border-b border-border"}
+            className={
+              idx === services.length - 1
+                ? "border-b-0"
+                : "border-b border-border"
+            }
           >
             <AccordionTrigger className="px-4 py-3 text-left">
               <div>
                 <div className="font-medium">{s.title}</div>
-                <div className="mt-0.5 text-sm font-normal text-muted-foreground">{s.subtitle}</div>
+                <div className="mt-0.5 text-sm font-normal text-muted-foreground">
+                  {s.subtitle}
+                </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
