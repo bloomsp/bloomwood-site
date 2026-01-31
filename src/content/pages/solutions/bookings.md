@@ -16,8 +16,8 @@ More details:
 
 - [Other Services](/solutions/bookings/services/)
 - [Service area](/solutions/bookings/service-area/)
-- [FAQ](/solutions/bookings/faq/)
-- [Terms & Conditions](/solutions/bookings/terms-conditions/)
+- [FAQ](/solutions/about/faq/)
+- [Terms & Conditions](/solutions/about/terms-conditions/)
 
 ## Save money with a pre‑paid service pack
 
