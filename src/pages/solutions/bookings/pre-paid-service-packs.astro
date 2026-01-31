@@ -1,0 +1,21 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import { getEntryBySlug } from 'astro:content';
+import { ServicePacks } from '../../../components/ServicePacks';
+
+export const prerender = true;
+
+const entry = await getEntryBySlug('pages', 'solutions/bookings/pre-paid-service-packs');
+if (!entry) throw new Error('Missing content entry: solutions/bookings/pre-paid-service-packs');
+
+const { Content } = await entry.render();
+const data = entry.data;
+---
+
+<PageLayout title={data.title} description={data.description} ogImage={data.ogImage}>
+  <Content />
+
+  <div class="not-prose mt-8">
+    <ServicePacks client:load />
+  </div>
+</PageLayout>
