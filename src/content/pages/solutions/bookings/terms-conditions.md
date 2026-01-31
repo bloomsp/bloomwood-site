@@ -3,9 +3,52 @@ title: "Terms & Conditions"
 description: "Terms and conditions for supply of services & goods by Bloomwood Solutions – Expert, friendly IT support and tech help in Cairns for homes & small business...."
 ---
 
-# Bloomwood Solutions – Terms & Conditions – Supply of Services & Goods
+# Terms & Conditions – Supply of Services & Goods
 
-Updated: 9 November 2025
+Updated: 31 January 2026
+
+<div class="sticky top-10 bg-white z-10 py-2 border-b mb-4">
+
+<label for="toc" class="font-bold block mb-2">Table of Contents</label>
+<select id="toc" class="w-full p-2 border rounded bg-white" onchange="document.getElementById(this.value).scrollIntoView({behavior: 'smooth'})">
+
+<option value="" disabled selected>Jump to section...</option>
+<option value="0-introduction">0. Introduction</option>
+<option value="1-purchasing-services-from-us">1. Purchasing services from us</option>
+<option value="11-on-demand-services">1.1 On-demand services</option>
+<option value="12-service-packs">1.2 Service Packs</option>
+<option value="13-service-area">1.3 Service area</option>
+<option value="14-business-hours">1.4 Business hours</option>
+<option value="15-cancellation">1.5 Cancellation</option>
+<option value="2-on-site-services">2. On-site services</option>
+<option value="21-your-obligations">2.1 Your obligations</option>
+<option value="22-same-day-service">2.2 Same-day service</option>
+<option value="3-remote-services">3. Remote services</option>
+<option value="31-your-remote-service-obligations">3.1 Your remote service obligations</option>
+<option value="32-limitations-of-remote-support">3.2 Limitations of remote support</option>
+<option value="33-deposit-for-remote-services">3.3 Deposit for remote services</option>
+<option value="4-repairs-and-goods">4. Repairs and goods</option>
+<option value="5-payment">5. Payment</option>
+<option value="51-fees-and-payment-terms">5.1 Fees and payment terms</option>
+<option value="52-payment-for-service-packs">5.2 Payment for Service Packs</option>
+<option value="53-outstanding-balances">5.3 Outstanding balances</option>
+<option value="54-surcharges">5.4 Surcharges</option>
+<option value="6-data-backup-and-privacy">6. Data backup and privacy</option>
+<option value="7-warranties-and-liability">7. Warranties and liability</option>
+<option value="71-australian-consumer-law">7.1 Australian Consumer Law</option>
+<option value="72-limitations">7.2 Limitations</option>
+<option value="8-termination">8. Termination</option>
+<option value="9-changes-to-terms">9. Changes to Terms</option>
+<option value="10-force-majeure">10. Force Majeure</option>
+</select>
+
+</div>
+
+<div class="h-150 overflow-y-auto border rounded p-4 scroll-smooth">
+
+## 0. Introduction
+
+### Definition of terms
 
 The terms below apply to our supply of services and goods to you (**Agreement**). All references to:
 
@@ -29,65 +72,11 @@ The terms below apply to our supply of services and goods to you (**Agreement**)
 
 **(j) “Service area”** means the geographical area within an 80 km radius of Cairns, Queensland, Australia.
 
-**(k) “Service Pack”** means a pre-paid bundle of hours for onsite and/or remote support purchased in advance at a discounted rate, such as the_Explorer*, *Adventure*, *Hero, or Legend\* pack, subject to the inclusions, rates, and expiry periods published on our website at the time of purchase.
+**(k) “Service Pack”** means a pre-paid bundle of hours for onsite and/or remote support purchased in advance at a discounted rate, such as the _Explorer_, _Adventure_, _Hero_, or _Legend_ pack, subject to the inclusions, rates, and expiry periods published on our website at the time of purchase.
 
 **(l) “Pack hours”** means the total number of service hours included in a Service Pack, recorded and deducted in the increments specified in clause 1.2(b).
 
 **(m) “Expiry date”** means the date 12 months from the purchase of a Service Pack, after which any unused Pack hours will automatically expire and be forfeited.
-
-## Table of Contents
-
-[1. Purchasing services from us](#1-purchasing-services-from-us)
-
-[1.1 On-demand services](#11-on-demand-services)
-
-[1.2 Service Packs](#12-service-packs)
-
-[1.3 Service area](#13-service-area)
-
-[1.4 Business hours](#14-business-hours)
-
-[1.5 Cancellation](#15-cancellation)
-
-[2. On-site services](#2-on-site-services)
-
-[2.1 Your obligations](#21-your-obligations)
-
-[2.2 Same-day service](#22-same-day-service)
-
-[3. Remote services](#3-remote-services)
-
-[3.1 Your remote service obligations](#31-your-remote-service-obligations)
-
-[3.2 Limitations of remote support](#32-limitations-of-remote-support)
-
-[3.3 Deposit for remote services](#33-deposit-for-remote-services)
-
-[4. Repairs and goods](#4-repairs-and-goods)
-
-[5. Payment](#5-payment)
-
-[5.1 Fees and payment terms](#51-fees-and-payment-terms)
-
-[5.2 Payment for Service Packs](#52-payment-for-service-packs)
-
-[5.3 Outstanding balances](#53-outstanding-balances)
-
-[5.4 Surcharges](#54-surcharges)
-
-[6. Data backup and privacy](#6-data-backup-and-privacy)
-
-[7. Warranties and liability](#7-warranties-and-liability)
-
-[7.1 Australian Consumer Law](#71-australian-consumer-law)
-
-[7.2 Limitations](#72-limitations)
-
-[8. Termination](#8-termination)
-
-[9. Changes to Terms](#9-changes-to-terms)
-
-[10. Force Majeure](#10-force-majeure)
 
 ## 1. Purchasing services from us
 
@@ -269,7 +258,7 @@ There are no additional surcharges for weekend, public holiday or same-day servi
 
 (a) You acknowledge that you are solely responsible for ensuring that your data is backed up before we access your systems. To the extent permitted by law, we will not be responsible for any data loss or corruption.
 
-(b) We handle your personal information in accordance with our [Privacy Policy](/solutions/privacy-policy/), which forms part of these terms.
+(b) We handle your personal information in accordance with our [Privacy Policy](/solutions/about/privacy-policy/), which forms part of these terms.
 
 ## 7. Warranties and liability
 
@@ -318,3 +307,5 @@ We may change these terms from time to time by updating them on our website. For
 ## 10. Force Majeure
 
 We will not be liable for any failure to perform our obligations caused by external events
+
+</div>

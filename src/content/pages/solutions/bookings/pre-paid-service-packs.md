@@ -16,7 +16,7 @@ Everyone needs a good support crew. With Bloomwood Solutions Service Packs, you 
 **Terms & Conditions**
 
 1. Packs valid for 12 months from purchase.
-2. Non-refundable and non-transferable without approval from Bloomwood Solutions..
+2. Non-refundable and non-transferable without approval from Bloomwood Solutions.
 3. Travel surcharges apply outside 80 km from Cairns.
 4. Hours may be used for onsite or remote work, billed by the increments above.
 5. Unused hours expire at the end of the validity period.
@@ -27,7 +27,7 @@ Ready to begin your adventure? Choose one these Service Packs today!
 
 - savings are dependent on your usage of onsite & remote hours.
 
-[Click to download a summary brochure](/solutions/bloomwoodsolutions_servicepacks_clean/)
+[Click to download a summary brochure](/images/solutions/BloomwoodSolutions_ServicePacks_20260131.pdf)
 
 ## Choose a Service Pack
 

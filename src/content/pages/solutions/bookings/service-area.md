@@ -1,67 +1,51 @@
 ---
 title: "Service Area"
-description: "Cairns Region Coverage Map This map highlights the extensive coverage area of Bloomwood Soltuions onsite services, ensuring that both residential and busines..."
+description: "Cairns Region Coverage Map This map highlights the extensive coverage area of Bloomwood Solutions onsite services, ensuring that both residential and business..."
 ---
 
-# Cairns Region Coverage Map 
+# Cairns Region Coverage Map
 
-This map highlights the extensive coverage area of Bloomwood Soltuions onsite services, ensuring that both residential and business clients within an 80KM radius of Cairns CBD receive top-notch I.T. support. From the heart of the city to the surrounding suburbs and out into the region, our team is ready to provide solutions for your technology problems. 
+This map highlights the extensive coverage area of Bloomwood Solutions onsite services, ensuring that both residential and business clients within an 80KM radius of Cairns CBD receive top-notch I.T. support. From the heart of the city to the surrounding suburbs and out into the region, our team is ready to provide solutions for your technology problems.
 
-## What about beyond Cairns? 
+## What about beyond Cairns?
 
-We also service beyond the Cairns Region using a state-of-the-art remote access service.  
+We also service beyond the Cairns Region using a state-of-the-art remote access service.
 
-# Remote Access Service 
+# Remote Access Service
 
-Our remote access service is provided by Helpwire. Security features include: 
+Our remote access service is provided by Helpwire. Security features include:
 
 ### Direct Connections
- 
 
 By default, HelpWire connects operators and clients directly, with no relay servers in between. That means faster sessions, less exposure, and stronger end-to-end security.
- 
 
-### Secure Data Centers 
+### Secure Data Centers
 
-If a direct connection isn’t possible, HelpWire routes traffic through trusted AWS infrastructure, used by NASA, Netflix, and BMW. All data stays encrypted and fully anonymized. 
+If a direct connection isn’t possible, HelpWire routes traffic through trusted AWS infrastructure, used by NASA, Netflix, and BMW. All data stays encrypted and fully anonymized.
 
- 
+### Protected Data Flow
 
-### Protected Data Flow 
+All remote session data is encrypted in transit using WSS and HTTPS protocols, shielding every interaction from interception or tampering.
 
-All remote session data is encrypted in transit using WSS and HTTPS protocols, shielding every interaction from interception or tampering. 
+### TLS/SSL and AES Encryption
 
-### TLS/SSL and AES Encryption 
+HelpWire uses TLS/SSL protocols and AES-256 encryption to ensure strong, reliable protection for every remote session.
 
-HelpWire uses TLS/SSL protocols and AES-256 encryption to ensure strong, reliable protection for every remote session. 
+### User-Controlled Access
 
-### User-Controlled Access 
+Clients grant access on their terms and can revoke it at any time, using a shortcut or the in-app button.
 
-Clients grant access on their terms and can revoke it at any time, using a shortcut or the in-app button. 
+### Trustworthy Authentication
 
- 
+HelpWire uses Auth0 for secure, standards-based login, trusted by Microsoft, AWS, and Siemens.
 
-### Trustworthy Authentication 
+### Signed Applications
 
-HelpWire uses Auth0 for secure, standards-based login, trusted by Microsoft, AWS, and Siemens. 
+All HelpWire apps are DigiCert-signed to prevent tampering, just like IBM and Cloudflare rely on.
 
- 
+You can read more about [Helpwire security](https://www.helpwire.app/security) on their [website](https://www.helpwire.app).
 
-### Signed Applications 
-
-All HelpWire apps are DigiCert-signed to prevent tampering, just like IBM and Cloudflare rely on.  
-
-You can read more about [Helpwire security](https://www.helpwire.app/security) on their [website](https://www.helpwire.app).   
-
- 
-
-![80km radius from Cairns](/images/solutions/uploads/2024/12/calcmaps-map-radius-130711-08122024.png)    
-
- 
-
- 
-
- 
+![80km radius from Cairns](/images/solutions/uploads/2024/12/calcmaps-map-radius-130711-08122024.png)
 
 # Service Areas Covered
 
@@ -103,65 +87,34 @@ You can read more about [Helpwire security](https://www.helpwire.app/security) o
   </ul>
 </div>
 
-# Comprehensive I.T. Services 
+# Comprehensive I.T. Services
 
-## Our Key Offerings   
-
- 
-
- 
-
+## Our Key Offerings
 
 #### Remote Support
 
-Access expert assistance from the comfort of your home or office with our efficient remote support services.   
-
- 
-
+Access expert assistance from the comfort of your home or office with our efficient remote support services.
 
 #### On-Site Assistance
 
-Our technicians come to you, providing hands-on solutions for all your technology needs.     
+Our technicians come to you, providing hands-on solutions for all your technology needs.
 
- 
+# What Our Clients Say
 
- 
+“Bloomwood Solutions transformed our business operations with their prompt and reliable service. Highly recommended!”
 
- 
+# Emily R.
 
-# What Our Clients Say   
+“The team at Bloomwood Solutions is always ready to help, no matter the issue. Their expertise is unmatched!”
 
- 
+# Michael T.
 
- 
+“Thanks to Bloomwood Solutions, our home network has never run smoother. Their support is invaluable!”
 
+# Sarah L.
 
-“Bloomwood Solutions transformed our business operations with their prompt and reliable service. Highly recommended!”  
+# Get in Touch Today
 
-# Emily R.  
-
- 
-
-
-“The team at Bloomwood Solutions is always ready to help, no matter the issue. Their expertise is unmatched!”  
-
-# Michael T.  
-
- 
-
-
-“Thanks to Blkoomwood Solutions, our home network has never run smoother. Their support is invaluable!”  
-
-# Sarah L.    
-
- 
-
- 
-
- 
-
-# Get in Touch Today 
-
-Ready to solve your technology problems? Contact Bloomwood Solutions to book a service or learn more about how we can assist you.  
+Ready to solve your technology problems? Contact Bloomwood Solutions to book a service or learn more about how we can assist you.
 
 [Contact Us](/solutions/bookings/)
