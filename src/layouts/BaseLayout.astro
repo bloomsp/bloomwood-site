@@ -21,6 +21,30 @@ const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : unde
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    {/* Apply theme as early as possible to avoid a flash of incorrect theme. */}
+    <script is:inline>
+      (function () {
+        try {
+          var key = 'theme';
+          var theme = localStorage.getItem(key) || 'system';
+          var root = document.documentElement;
+
+          root.classList.remove('dark');
+
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+          if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+            root.classList.add('dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.style.colorScheme = 'light';
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
+
     <title>{fullTitle}</title>
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical.toString()} />
@@ -39,7 +63,7 @@ const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : unde
 
     <slot name="head" />
   </head>
-  <body class="min-h-dvh bg-white text-slate-900">
+  <body class="min-h-dvh bg-background text-foreground">
     <slot />
   </body>
 </html>
