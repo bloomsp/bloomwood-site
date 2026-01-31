@@ -11,5 +11,14 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
 
+  // Explicitly set the session driver so the Cloudflare adapter doesn't auto-enable
+  // sessions (and print the "Enabling sessions..." message) during config setup.
+  session: {
+    driver: 'cloudflare-kv-binding',
+    options: {
+      binding: 'SESSION'
+    }
+  },
+
   adapter: cloudflare()
 });

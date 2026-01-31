@@ -5,12 +5,22 @@ import PageLayout from '../layouts/PageLayout.astro';
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const pages = await getCollection('pages', ({ data }) => !data.draft);
+  // Exclude content slugs that have dedicated Astro routes.
+  // Otherwise, `[...slug]` will try to prerender them too, causing route conflicts.
+  const EXCLUDE_SLUGS = new Set([
+    'solutions/bookings', // handled by src/pages/solutions/bookings/index.astro
+  ]);
+
+  const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));
   // For rest params, Astro expects a single string (e.g. "a/b/c").
   return pages.map((p) => ({ params: { slug: p.slug } }));
 }
 
-const pages = await getCollection('pages', ({ data }) => !data.draft);
+const EXCLUDE_SLUGS = new Set([
+  'solutions/bookings', // handled by src/pages/solutions/bookings/index.astro
+]);
+
+const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));
 
 const slug = Astro.params.slug ?? '';
 const key = Array.isArray(slug) ? slug.join('/') : slug;

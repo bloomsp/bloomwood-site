@@ -6,6 +6,12 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "20fb0ad2a0a94ae3bb99d3b300d3b53e"
+    }
+  ],
 	"assets": {
 		"binding": "ASSETS",
 		"directory": "./dist"
