@@ -16,23 +16,37 @@ const isMedia = pathname === '/media/' || pathname.startsWith('/media/');
 const isSolutions = pathname === '/solutions/' || pathname.startsWith('/solutions/');
 
 const umbrellaNav = [
-  { href: '/', label: 'Bloomwood Home' },
-  { href: '/solutions/', label: 'Solutions Home' },
+  { href: '/solutions/', label: 'Solutions' },
   { href: '/media/', label: 'Media' },
 ];
 
 const solutionsNav = [
-  { href: '/', label: 'Bloomwood Home' },
   { href: '/solutions/', label: 'Solutions Home' },
-  { href: '/solutions/bookings/', label: 'Bookings' },
+  {
+    label: 'Bookings',
+    items: [
+      { href: '/solutions/bookings/', label: 'Make a booking' },
+      { href: '/solutions/bookings/service-area/', label: 'Service Area' },
+      { href: '/solutions/bookings/services/', label: 'Other Services' },
+      { href: '/solutions/bookings/faq/', label: 'FAQ' },
+    ],
+  },
   { href: '/solutions/bookings/pre-paid-service-packs/', label: 'Service Packs' },
-  { href: '/solutions/bookings/service-area/', label: 'Service Area' },
-  { href: '/solutions/about/', label: 'About' },
+  {
+    label: 'About',
+    items: [
+      { href: '/solutions/about/', label: 'About' },
+      { href: '/solutions/about/privacy-policy/', label: 'Privacy Policy' },
+      { href: '/solutions/about/cookie-policy/', label: 'Cookie Policy' },
+      { href: '/solutions/about/website-terms-of-use/', label: 'Website Terms of Use' },
+      { href: '/solutions/about/terms-conditions/', label: 'Terms & Conditions (Supply of Services & Goods)' },
+    ],
+  },
 ];
 
 const mediaNav = [
   { href: '/', label: 'Bloomwood Home' },
-  { href: '/media/', label: 'Media' },
+  { href: '/media/', label: 'Media Home' },
   // Add when ready:
   // { href: '/media/services/', label: 'Services' },
   // { href: '/media/portfolio/', label: 'Portfolio' },

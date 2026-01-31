@@ -1,10 +1,6 @@
 ---
 import { ThemeToggle } from './ThemeToggle';
-
-export interface NavItem {
-  href: string;
-  label: string;
-}
+import { SiteNav, type NavItem } from './SiteNav';
 
 export interface Props {
   homeHref?: string;
@@ -31,10 +27,8 @@ const {
     </a>
 
     {/* Desktop nav */}
-    <nav class="hidden items-center gap-4 md:flex">
-      {nav.map((i) => (
-        <a class="text-sm text-muted-foreground hover:text-foreground" href={i.href}>{i.label}</a>
-      ))}
+    <nav class="hidden items-center gap-2 md:flex">
+      <SiteNav nav={nav} client:load />
       <ThemeToggle client:load />
     </nav>
 
@@ -64,14 +58,31 @@ const {
           </svg>
         </summary>
 
-        <div class="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-background p-2 shadow-lg">
+        <div class="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-border bg-background p-2 shadow-lg">
           {nav.map((i) => (
-            <a
-              class="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              href={i.href}
-            >
-              {i.label}
-            </a>
+            'items' in i ? (
+              <div class="px-2 py-2" key={i.label}>
+                <div class="px-1 pb-1 text-xs font-semibold text-muted-foreground">{i.label}</div>
+                <div class="grid gap-1">
+                  {i.items.map((sub) => (
+                    <a
+                      class="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      href={sub.href}
+                    >
+                      {sub.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <a
+                class="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                href={i.href}
+                key={i.href}
+              >
+                {i.label}
+              </a>
+            )
           ))}
         </div>
       </details>
