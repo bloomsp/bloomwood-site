@@ -29,41 +29,6 @@ Ready to begin your adventure? Choose one these Service Packs today!
 
 [Click to download a summary brochure](/solutions/bloomwoodsolutions_servicepacks_clean/)
 
-## Explorer5 Hours Onsite Support
+## Choose a Service Pack
 
-Price: $540
-
-- Hours can be used for Onsite or Remote Support
-- Value $600
-- _Save up to $60 off standard onsite rate_
-
-<a class="not-prose inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href="https://www.paypal.com/ncp/payment/HKPT5UNC9B9EQ" target="_blank" rel="noopener noreferrer">Buy 5 hours</a>
-
-## Adventurer10 Hours Onsite Support
-
-Price: $1080
-
-- Hours can be used for Onsite or Remote Support
-- Value $1200
-- _Save up to $120 off standard onsite rate_
-
-<a class="not-prose inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href="https://www.paypal.com/ncp/payment/HPMQT4H3K9EGJ" target="_blank" rel="noopener noreferrer">Buy 10 hours</a>
-
-## Hero20 Hours Onsite Support
-
-Price: $2040
-
-- Hours can be used for Onsite or Remote Support
-- Value $2400
-- _Save up to $360 off standard onsite rate_
-
-<a class="not-prose inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href="https://www.paypal.com/ncp/payment/TKYRXWZBGNBAJ" target="_blank" rel="noopener noreferrer">Buy 20 hours</a>
-
-## Legend40 Hours Onsite Support
-
-Price: $3840
-
-- Hours can be used for Onsite or Remote Support
-- Value $4800 -_Save up to $960 off standard onsite rate_
-
-<a class="not-prose inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href="https://www.paypal.com/ncp/payment/W63EWRTTHU4GC" target="_blank" rel="noopener noreferrer">Buy 40 hours</a>
+Pick a pack below. Each one can be used for onsite or remote support.
