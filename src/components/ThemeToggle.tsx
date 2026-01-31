@@ -13,6 +13,23 @@ type Theme = "light" | "dark" | "system";
 
 const STORAGE_KEY = "theme";
 
+function safeStorageGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    // iOS Safari (especially Private Browsing) can throw on localStorage access.
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore: theme will still work for this session, just won't persist.
+  }
+}
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
 
@@ -40,7 +57,7 @@ function applyTheme(theme: Theme) {
 }
 
 function getStoredTheme(): Theme {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = safeStorageGet(STORAGE_KEY);
   if (raw === "light" || raw === "dark" || raw === "system") return raw;
   return "system";
 }
@@ -61,12 +78,22 @@ export function ThemeToggle() {
       }
     };
 
+    // addEventListener is the modern API; older Safari uses addListener/removeListener.
+    // @ts-expect-error - older Safari types
     mql?.addEventListener?.("change", onChange);
-    return () => mql?.removeEventListener?.("change", onChange);
+    // @ts-expect-error - older Safari types
+    mql?.addListener?.(onChange);
+
+    return () => {
+      // @ts-expect-error - older Safari types
+      mql?.removeEventListener?.("change", onChange);
+      // @ts-expect-error - older Safari types
+      mql?.removeListener?.(onChange);
+    };
   }, []);
 
   const setAndStore = (next: Theme) => {
-    localStorage.setItem(STORAGE_KEY, next);
+    safeStorageSet(STORAGE_KEY, next);
     setTheme(next);
     applyTheme(next);
   };
