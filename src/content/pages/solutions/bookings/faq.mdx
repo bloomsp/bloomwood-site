@@ -1,0 +1,55 @@
+---
+title: "FAQ"
+description: "Common questions about bookings, service areas, and service packs."
+---
+
+import { FAQAccordion } from "@/components/FAQAccordion";
+
+## FAQ
+
+<FAQAccordion
+  heading="Bookings FAQ"
+  intro="Click a question to expand the answer."
+  items={[
+    {
+      key: "make-booking",
+      question: "How do I make a booking?",
+      answer:
+        "Use the booking button on the Make a booking page. If you have an urgent request, use the urgent request page.",
+      links: [
+        { label: "Make a booking", href: "/solutions/bookings/" },
+        { label: "Urgent requests", href: "/solutions/urgent-requests/" },
+      ],
+    },
+    {
+      key: "service-packs",
+      question: "Do you offer pre-paid service packs?",
+      answer:
+        "Yes — see Service Packs for current options and terms.",
+      links: [
+        {
+          label: "Service Packs",
+          href: "/solutions/bookings/pre-paid-service-packs/",
+        },
+      ],
+    },
+    {
+      key: "service-area",
+      question: "What areas do you service?",
+      answer: "See the service area page for the current coverage.",
+      links: [{ label: "Service area", href: "/solutions/bookings/service-area/" }],
+    },
+    {
+      key: "reschedule",
+      question: "Can I reschedule or cancel?",
+      answer:
+        "Yes. Please use the link in your booking confirmation, or contact us if you’re stuck.",
+      links: [
+        {
+          label: "Contact us",
+          href: "/solutions/bloomwood-solutions-contact-us/",
+        },
+      ],
+    },
+  ]}
+/>
