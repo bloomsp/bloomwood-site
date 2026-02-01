@@ -13,7 +13,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 
 [Chat with us on WhatsApp!](https://wa.me/61492991759)
 
-# Get in Touch with Us
+## Get in Touch with Us
 
 #### Phone
 
@@ -27,7 +27,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 
 7 Hook Close, Brinsmead, QLD 4870
 
-# Or you can fill in the form and we will get back to you!
+## Or you can fill in the form and we will get back to you!
 
 <div id="contact-success" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
   Thanks — we’ve received your message and will get back to you shortly.
@@ -77,6 +77,7 @@ Get expert assistance for all your technology needs, right here in the Far North
     Submit
   </button>
 </form>
+<br>
 
 # Need more information?
 
