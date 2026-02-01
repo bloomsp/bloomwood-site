@@ -21,7 +21,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 
 #### Email
 
-[info@bloomwood.com.au](mailto:info@geeksquadfnq.com)
+[help@bloomwood.com.au](mailto:help@bloomwood.com.au)
 
 #### Address
 
