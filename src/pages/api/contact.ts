@@ -1,16 +1,28 @@
-export const onRequestPost: PagesFunction = async (context) => {
-  const { request, env } = context;
+import type { APIRoute } from "astro";
 
-  const API_TOKEN = env.MAILERSEND_API_TOKEN as string | undefined;
-  const FROM_EMAIL = (env.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
-  const TO_EMAIL = (env.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
+export const prerender = false;
+
+export const POST: APIRoute = async (context) => {
+  const { request } = context;
+
+  // Cloudflare runtime env (Astro Cloudflare adapter)
+  const env = (context.locals as any)?.runtime?.env as
+    | Record<string, unknown>
+    | undefined;
+
+  const API_TOKEN = (env?.MAILERSEND_API_TOKEN as string | undefined) ?? undefined;
+  const FROM_EMAIL = (env?.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
+  const TO_EMAIL = (env?.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
 
   if (!API_TOKEN) {
     return new Response("MailerSend is not configured.", { status: 500 });
   }
 
   const contentType = request.headers.get("content-type") || "";
-  if (!contentType.includes("application/x-www-form-urlencoded") && !contentType.includes("multipart/form-data")) {
+  if (
+    !contentType.includes("application/x-www-form-urlencoded") &&
+    !contentType.includes("multipart/form-data")
+  ) {
     return new Response("Unsupported content type.", { status: 415 });
   }
 
@@ -77,7 +89,9 @@ export const onRequestPost: PagesFunction = async (context) => {
     return new Response(`MailerSend error: ${resp.status}\n${body}`, { status: 502 });
   }
 
-  // Redirect back to the contact page with a success flag
   const url = new URL(request.url);
-  return Response.redirect(`${url.origin}/solutions/bloomwood-solutions-contact-us/?sent=1`, 303);
+  return Response.redirect(
+    `${url.origin}/solutions/bloomwood-solutions-contact-us/?sent=1`,
+    303
+  );
 };
