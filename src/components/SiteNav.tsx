@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 
 import {
   NavigationMenu,
@@ -8,24 +8,24 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
 
 export type NavLink = {
-  label: string
-  href: string
-  description?: string
-}
+  label: string;
+  href: string;
+  description?: string;
+};
 
 export type NavItem =
   | NavLink
   | {
-      label: string
-      items: NavLink[]
-    }
+      label: string;
+      items: NavLink[];
+    };
 
 function isGroup(item: NavItem): item is { label: string; items: NavLink[] } {
-  return (item as any).items?.length >= 0
+  return (item as any).items?.length >= 0;
 }
 
 export function SiteNav({ nav }: { nav: NavItem[] }) {
@@ -42,21 +42,21 @@ export function SiteNav({ nav }: { nav: NavItem[] }) {
                   </NavigationMenuLink>
                 </a>
               </NavigationMenuItem>
-            )
+            );
           }
 
           return (
             <NavigationMenuItem key={item.label}>
               <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
               <NavigationMenuContent>
-                <ul className="grid w-[360px] gap-1 p-2">
+                <ul className="grid w-90 gap-1 p-2">
                   {item.items.map((sub) => (
                     <li key={sub.href}>
                       <a
                         href={sub.href}
                         className={cn(
                           "block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors",
-                          "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                         )}
                       >
                         <div className="text-sm font-medium leading-none">
@@ -73,9 +73,9 @@ export function SiteNav({ nav }: { nav: NavItem[] }) {
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-          )
+          );
         })}
       </NavigationMenuList>
     </NavigationMenu>
-  )
+  );
 }
