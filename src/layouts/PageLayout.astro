@@ -2,6 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import BackToTop from '../components/BackToTop';
 
 export interface Props {
   title: string;
@@ -94,4 +95,6 @@ const siteName = isMedia ? 'Bloomwood Media' : isSolutions ? 'Bloomwood Solution
     </article>
   </main>
   <Footer />
+
+  <BackToTop client:idle />
 </BaseLayout>
