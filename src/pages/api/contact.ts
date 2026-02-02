@@ -31,6 +31,10 @@ export const POST: APIRoute = async (context) => {
   const name = String(form.get("name") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
   const message = String(form.get("message") ?? "").trim();
+  const phone = String(form.get("phone") ?? "").trim();
+  const urgency = String(form.get("urgency") ?? "").trim();
+  const formName = String(form.get("form") ?? "contact").trim() || "contact";
+  const redirectTo = String(form.get("redirect") ?? "").trim();
   const newsletter = form.get("newsletter") ? "Yes" : "No";
 
   // Honeypot field (should be left empty by humans)
@@ -39,27 +43,26 @@ export const POST: APIRoute = async (context) => {
     return new Response("OK", { status: 200 });
   }
 
-  // Optional simple math check from the existing UI (13 + 12 = 25)
-  const captcha = String(form.get("captcha") ?? "").trim();
-  if (captcha && captcha !== "25") {
-    return new Response("Captcha incorrect.", { status: 400 });
-  }
+  const effectiveMessage = message || urgency;
 
-  if (!name || !email || !message) {
+  if (!name || !email || !effectiveMessage) {
     return new Response("Missing required fields.", { status: 400 });
   }
 
-  const subject = `Website contact form: ${name}`;
+  const subject = `Website ${formName} form: ${name}`;
   const text = [
-    "New website contact form submission:",
+    `New website ${formName} form submission:`,
     "",
     `Name: ${name}`,
     `Email: ${email}`,
+    phone ? `Phone: ${phone}` : "",
     `Newsletter: ${newsletter}`,
-    "",
-    "Message:",
-    message,
-  ].join("\n");
+    urgency ? "" : "",
+    urgency ? "Urgency details:" : "Message:",
+    effectiveMessage,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const payload = {
     from: {
@@ -90,8 +93,9 @@ export const POST: APIRoute = async (context) => {
   }
 
   const url = new URL(request.url);
-  return Response.redirect(
-    `${url.origin}/solutions/bloomwood-solutions-contact-us/?sent=1`,
-    303
-  );
+  const safePath = redirectTo && redirectTo.startsWith("/")
+    ? redirectTo
+    : "/solutions/bloomwood-solutions-contact-us/?sent=1";
+
+  return Response.redirect(`${url.origin}${safePath}`, 303);
 };

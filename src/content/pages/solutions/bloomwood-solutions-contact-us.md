@@ -38,13 +38,17 @@ Get expert assistance for all your technology needs, right here in the Far North
       var params = new URLSearchParams(window.location.search);
       if (params.get('sent') === '1') {
         var el = document.getElementById('contact-success');
-        if (el) el.classList.remove('hidden');
+        if (el) {
+          el.classList.remove('hidden');
+          try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+        }
       }
     } catch (e) {}
   })();
 </script>
 
 <form class="space-y-6" method="post" action="/api/contact">
+  <input type="hidden" name="redirect" value="/solutions/bloomwood-solutions-contact-us/?sent=1" />
   <!-- Honeypot field: should be left blank by humans -->
   <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
     <label for="company">Company</label>
@@ -69,10 +73,7 @@ Get expert assistance for all your technology needs, right here in the Far North
       I would like to join your email newsletter. (We promise not to send more than once per month!)
     </label>
   </div>
-  <div class="space-y-2">
-    <label for="captcha" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">13 + 12 =</label>
-    <input name="captcha" type="text" id="captcha" class="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-  </div>
+  <!-- Captcha removed (honeypot only). -->
   <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-slate-900 text-slate-50 hover:bg-slate-900/90 h-10 px-4 py-2">
     Submit
   </button>
