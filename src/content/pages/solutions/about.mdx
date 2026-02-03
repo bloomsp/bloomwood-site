@@ -4,6 +4,7 @@ description: "Discover tech support from Bloomwood Solutions, your local experts
 ---
 
 import { TeamMemberCard } from "@/components/TeamMemberCard";
+import { Button } from "@/components/ui/button";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 
 # About Bloomwood Solutions
@@ -154,6 +155,12 @@ Real feedback from clients around Cairns and beyond.
 
 Discover how Bloomwood Solutions can resolve your technology challenges with our expert support services. Whether you’re a home user or a small business, our dedicated team is here to help. Reach out now to learn more about our tailored solutions and experience unparalleled customer satisfaction.
 
-[Contact Us Today](/solutions/bloomwood-solutions-contact-us/)
-or
-[Book a free 15 minute, no obligation call from our Bookings page](/solutions/bookings/)
+<div className="not-prose mt-4 flex flex-col gap-3 sm:flex-row">
+  <Button asChild>
+    <a href="/solutions/bloomwood-solutions-contact-us/">Contact Us Today</a>
+  </Button>
+
+  <Button variant="outline" asChild>
+    <a href="/solutions/bookings/">Book a free 15 minute, no obligation call</a>
+  </Button>
+</div>
