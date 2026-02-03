@@ -5,17 +5,47 @@ description: "Discover tech support from Bloomwood Solutions, your local experts
 
 # About Bloomwood Solutions
 
-- [Privacy Policy](/solutions/about/privacy-policy/)
-- [Cookie Policy](/solutions/about/cookie-policy/)
-- [Website Terms of Use](/solutions/about/website-terms-of-use/)
-- [FAQ](/solutions/about/faq/)
-- [Terms & Conditions (Supply of Services & Goods)](/solutions/about/terms-conditions/)
+_Bloomwood Solutions delivers expert, friendly IT support in Cairns for homes and small businesses, specialising in solving hi‑tech problems, Wi‑Fi networks, home automation, backups and smart‑tech in general._
 
 # Meet Our Expert Team
 
-_Bloomwood Solutions delivers expert, friendly IT support in Cairns for homes and small businesses, specialising in solving hi‑tech problems, Wi‑Fi networks, home automation, backups and smart‑tech in general._
+Our team at Bloomwood Solutions is dedicated to providing top-notch I.T. support services, ensuring your technology works as expected.
 
-![Steven Bloom, founder of Bloomwood Solutions](/images/solutions/uploads/2025/01/IMG_7304.jpeg)
+<div className="not-prose mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+  <Card>
+    <CardHeader>
+      <CardTitle>Steven Bloom</CardTitle>
+      <CardDescription>Head Techie</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <img
+        src="/images/solutions/IMG_7304.jpeg"
+        width="256"
+        height="256"
+        alt="Steven Bloom"
+        className="h-48 w-48 rounded-xl object-cover"
+        loading="lazy"
+      />
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardHeader>
+      <CardTitle>Jason Lockwood</CardTitle>
+      <CardDescription>Head Tech Writer &amp; Publisher</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <img
+        src="/images/solutions/jlockwood.png"
+        width="256"
+        height="256"
+        alt="Jason Lockwood"
+        className="h-48 w-48 rounded-xl object-cover"
+        loading="lazy"
+      />
+    </CardContent>
+  </Card>
+</div>
 
 Bloomwood Solutions founder, Steven Bloom, has loved technology since he was a young boy. With a career spanning enterprise technology he’s been part of deploying hardware and software systems across the Asia Pacific region.
 
