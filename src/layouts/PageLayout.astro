@@ -8,13 +8,50 @@ export interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  jsonLd?: Record<string, any> | Array<Record<string, any>>;
 }
 
-const { title, description, ogImage } = Astro.props;
+const { title, description, ogImage, jsonLd } = Astro.props;
 
 const pathname = Astro.url.pathname;
 const isMedia = pathname === '/media/' || pathname.startsWith('/media/');
 const isSolutions = pathname === '/solutions/' || pathname.startsWith('/solutions/');
+
+// Default JSON-LD by section (can be overridden per-page by passing jsonLd)
+import { organizationSchema, websiteSchema, localBusinessSchema, serviceSchema } from '../lib/schema';
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+
+const defaultJsonLd = (() => {
+  // Always include the general WebSite + Organization on every page.
+  const base = [websiteSchema(), organizationSchema()];
+
+  if (isSolutions) {
+    // Strong local SEO signal for the Solutions section.
+    base.push(
+      localBusinessSchema({
+        name: 'Bloomwood Solutions',
+        url: new URL('/solutions/', Astro.site ?? Astro.url).toString(),
+      })
+    );
+
+    // For key pages, add Service schema to describe the offering.
+    if (pathname === '/solutions/' || pathname === '/solutions/bookings/' || pathname === '/solutions/bookings/services/') {
+      base.push(
+        serviceSchema({
+          name: 'IT Support & Tech Help (Onsite and Remote)',
+          url: canonical,
+          serviceType: 'IT support',
+          description:
+            description ??
+            'Friendly IT support and general tech help for homes and small business in the Cairns region.',
+        })
+      );
+    }
+  }
+
+  // Media can stay as Organization/WebSite for now (until you want PublishingService, etc.)
+  return base;
+})();
 
 const umbrellaNav = [
   { href: '/solutions/', label: 'Solutions' },
@@ -83,7 +120,13 @@ const headerProps = isMedia
 const siteName = isMedia ? 'Bloomwood Media' : isSolutions ? 'Bloomwood Solutions' : 'Bloomwood';
 ---
 
-<BaseLayout title={title} siteName={siteName} description={description} ogImage={ogImage}>
+<BaseLayout
+  title={title}
+  siteName={siteName}
+  description={description}
+  ogImage={ogImage}
+  jsonLd={jsonLd ?? defaultJsonLd}
+>
   <Fragment slot="head">
     <slot name="head" />
   </Fragment>

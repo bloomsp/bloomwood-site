@@ -1,0 +1,15 @@
+---
+/**
+ * Minimal JSON-LD helper.
+ * Pass either a single object or an array of objects.
+ */
+export interface Props {
+  jsonLd?: Record<string, any> | Array<Record<string, any>>;
+}
+
+const { jsonLd } = Astro.props;
+const items = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+---
+{items.map((obj) => (
+  <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+))}

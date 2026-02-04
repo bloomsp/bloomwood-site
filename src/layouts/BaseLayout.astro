@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Schema from '../components/Schema.astro';
 
 export interface Props {
   title: string;
@@ -7,9 +8,11 @@ export interface Props {
   description?: string;
   canonicalUrl?: URL;
   ogImage?: string;
+  /** JSON-LD schema object(s) */
+  jsonLd?: Record<string, any> | Array<Record<string, any>>;
 }
 
-const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage } = Astro.props;
+const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage, jsonLd } = Astro.props;
 
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
@@ -68,6 +71,8 @@ const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : unde
     <meta name="twitter:title" content={fullTitle} />
     {description && <meta name="twitter:description" content={description} />}
     {og && <meta name="twitter:image" content={og} />}
+
+    <Schema jsonLd={jsonLd} />
 
     <slot name="head" />
   </head>

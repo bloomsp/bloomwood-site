@@ -1,0 +1,21 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import { localBusinessSchema } from '../lib/schema';
+---
+
+<PageLayout
+  title="Book a time"
+  description="Book onsite or remote IT support with Bloomwood Solutions in Cairns. Choose a time that suits you."
+  jsonLd={localBusinessSchema({
+    name: 'Bloomwood Solutions',
+    url: 'https://bloomwood.com.au/solutions/bookings/',
+  })}
+>
+  <h1>Book a time</h1>
+  <p>
+    For IT support bookings, head to our Solutions booking page.
+  </p>
+  <p>
+    <a href="/solutions/bookings/">Go to Solutions bookings →</a>
+  </p>
+</PageLayout>

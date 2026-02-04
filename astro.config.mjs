@@ -7,9 +7,14 @@ import cloudflare from '@astrojs/cloudflare';
 
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+  // IMPORTANT: Used for canonical URLs, OpenGraph URLs, and sitemap generation.
+  // Without this, prerendered pages can end up with localhost canonicals.
+  site: 'https://bloomwood.com.au',
+
   vite: {
     plugins: [tailwindcss()]
   },
@@ -24,5 +29,5 @@ export default defineConfig({
   },
 
   adapter: cloudflare(),
-  integrations: [react(), mdx()]
+  integrations: [react(), mdx(), sitemap()]
 });
