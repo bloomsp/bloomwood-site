@@ -15,8 +15,10 @@ export function organizationSchema() {
     '@type': 'Organization',
     name: SITE.name,
     url: SITE.url,
-    // logo: `${SITE.url}/logo.svg`, // enable if you want
   };
+  if ((SITE as any).logoUrl) org.logo = (SITE as any).logoUrl;
+  if ((SITE as any).imageUrl) org.image = (SITE as any).imageUrl;
+  if ((SITE as any).sameAs) org.sameAs = (SITE as any).sameAs;
   if (SITE.phone) org.telephone = SITE.phone;
   if (SITE.email) org.email = SITE.email;
   if ((SITE as any).address) {
@@ -68,6 +70,9 @@ export function localBusinessSchema(overrides: Record<string, any> = {}) {
     };
   }
   if ((SITE as any).googleMapsUrl) base.hasMap = (SITE as any).googleMapsUrl;
+  if ((SITE as any).logoUrl) base.logo = (SITE as any).logoUrl;
+  if ((SITE as any).imageUrl) base.image = (SITE as any).imageUrl;
+  if ((SITE as any).sameAs) base.sameAs = (SITE as any).sameAs;
 
   const ohSpec = openingHoursSpecification();
   if (ohSpec) base.openingHoursSpecification = ohSpec;
