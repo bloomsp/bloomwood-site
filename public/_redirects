@@ -1,0 +1,48 @@
+# Cloudflare Pages redirects
+# Generated from WordPress export (WXR) on 2026-02-06
+
+# Core section reshuffle
+/about-bloomwood-solutions/                 /solutions/about/                           301
+/about-bloomwood-solutions                 /solutions/about/                           301
+/about-bloomwood-solutions/privacy-policy/ /solutions/about/privacy-policy/            301
+/about-bloomwood-solutions/privacy-policy  /solutions/about/privacy-policy/            301
+/about-bloomwood-solutions/bloomwood-solutions-cookie-policy/ /solutions/about/cookie-policy/ 301
+/about-bloomwood-solutions/bloomwood-solutions-cookie-policy  /solutions/about/cookie-policy/ 301
+/about-bloomwood-solutions/social-media-policy/ /solutions/about/social-media-policy/  301
+/about-bloomwood-solutions/social-media-policy  /solutions/about/social-media-policy/  301
+/about-bloomwood-solutions/website-terms-of-use/ /solutions/about/website-terms-of-use/ 301
+/about-bloomwood-solutions/website-terms-of-use  /solutions/about/website-terms-of-use/ 301
+
+# Old booking paths (WordPress) → current Solutions booking paths
+/bookings/                                 /solutions/bookings/                        301
+/bookings                                  /solutions/bookings/                        301
+/bookings/services/                        /solutions/bookings/services/               301
+/bookings/services                         /solutions/bookings/services/               301
+/bookings/service-area/                    /solutions/bookings/service-area/           301
+/bookings/service-area                     /solutions/bookings/service-area/           301
+/bookings/pre-paid-service-packs/          /solutions/bookings/pre-paid-service-packs/ 301
+/bookings/pre-paid-service-packs           /solutions/bookings/pre-paid-service-packs/ 301
+
+# Pricing page no longer exists; best match is Service Packs
+/bookings/pricing/                         /solutions/service-packs/                   301
+/bookings/pricing                          /solutions/service-packs/                   301
+
+# Old Terms & Conditions lived under /bookings/
+/bookings/terms-conditions/                /solutions/about/terms-conditions/          301
+/bookings/terms-conditions                 /solutions/about/terms-conditions/          301
+
+# Standalone pages
+/bloomwood-solutions-contact-us/           /solutions/bloomwood-solutions-contact-us/  301
+/bloomwood-solutions-contact-us            /solutions/bloomwood-solutions-contact-us/  301
+/urgent-requests/                          /solutions/urgent-requests/                 301
+/urgent-requests                           /solutions/urgent-requests/                 301
+
+# Content that doesn't have a 1:1 destination anymore
+/blog/                                     /media/                                     301
+/blog                                      /media/                                     301
+/shop/                                     /solutions/                                 301
+/shop                                      /solutions/                                 301
+/my-account/                               /solutions/                                 301
+/my-account                                /solutions/                                 301
+/hello-world/                              /media/                                     301
+/hello-world                               /media/                                     301
