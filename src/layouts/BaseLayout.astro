@@ -16,7 +16,8 @@ const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage, jsonL
 
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
-const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : undefined;
+const defaultOgImage = '/images/solutions/Bloomwood-Solutions-gslogo-512.png';
+const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString();
 ---
 <!doctype html>
 <html lang="en">
@@ -61,16 +62,17 @@ const og = ogImage ? new URL(ogImage, Astro.site ?? Astro.url).toString() : unde
     <link rel="canonical" href={canonical.toString()} />
 
     <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content="en_AU" />
     <meta property="og:title" content={fullTitle} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical.toString()} />
-    {og && <meta property="og:image" content={og} />}
+    <meta property="og:image" content={og} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     {description && <meta name="twitter:description" content={description} />}
-    {og && <meta name="twitter:image" content={og} />}
+    <meta name="twitter:image" content={og} />
 
     <Schema jsonLd={jsonLd} />
 
