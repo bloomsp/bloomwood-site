@@ -91,7 +91,9 @@ const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString(
         s1.async = true;
         s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
         s1.charset = 'UTF-8';
-        s1.setAttribute('crossorigin', '*');
+        // Use a valid CORS mode for cross-origin script loads.
+        // `*` is not a valid value for the `crossorigin` attribute and can trigger CORS errors.
+        s1.crossOrigin = 'anonymous';
         s0.parentNode.insertBefore(s1, s0);
       })();
     </script>
