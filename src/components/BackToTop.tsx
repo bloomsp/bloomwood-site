@@ -11,8 +11,12 @@ function prefersReducedMotion() {
 
 export default function BackToTop() {
   const [visible, setVisible] = React.useState(false);
+  // Avoid hydration mismatch by not reading browser-only preferences during the initial render.
+  const [reduced, setReduced] = React.useState(false);
 
   React.useEffect(() => {
+    setReduced(prefersReducedMotion());
+
     let raf = 0;
 
     const update = () => {
@@ -38,8 +42,6 @@ export default function BackToTop() {
       window.removeEventListener("resize", onScroll);
     };
   }, []);
-
-  const reduced = prefersReducedMotion();
 
   const onClick = () => {
     window.scrollTo({
