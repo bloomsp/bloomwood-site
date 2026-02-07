@@ -1,9 +1,9 @@
 ---
-title: "Services"
-description: "Services  Backup Do you backup your computer? Tired of losing track of where all your photos are? We will show you how to consolidate your photo library, an..."
+title: "Computer and Tech Help Services (Cairns Region)"
+description: "Explore the computer and tech help services we offer across the Cairns region — Wi‑Fi troubleshooting, device setup, backups, printers, and more."
 ---
 
-# Services
+# Computer and tech help services
 
 Bloomwood Solutions can help with many aspects of your technology including:
 

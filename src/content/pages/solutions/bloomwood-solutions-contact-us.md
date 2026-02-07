@@ -1,6 +1,6 @@
 ---
-title: "Contact Us"
-description: "Connect with Geek Squad FNQ Your Trusted Tech Support in Cairns Get expert assistance for all your technology needs, right here in the Far North Queensland...."
+title: "Contact Bloomwood Solutions"
+description: "Need help with your computer or tech? Call, email, or chat with Bloomwood Solutions for fast, friendly support across the Cairns region."
 ---
 
 ## Connect with Bloomwood Solutions

@@ -1,9 +1,9 @@
 ---
-title: "Bookings"
-description: "Book onsite support, remote support, or a free 15‑minute quick chat with Bloomwood Solutions."
+title: "Book Computer and Tech Help (Cairns Region)"
+description: "Book onsite or remote computer and tech help in the Cairns region. Choose a time that suits you, including a free 15‑minute quick chat."
 ---
 
-# Book a service
+# Book computer and tech help (Cairns region)
 
 Use the booking buttons above to schedule:
 

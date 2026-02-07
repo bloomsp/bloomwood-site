@@ -18,12 +18,31 @@ const isMedia = pathname === '/media/' || pathname.startsWith('/media/');
 const isSolutions = pathname === '/solutions/' || pathname.startsWith('/solutions/');
 
 // Default JSON-LD by section (can be overridden per-page by passing jsonLd)
-import { organizationSchema, websiteSchema, localBusinessSchema, serviceSchema } from '../lib/schema';
+import { organizationSchema, websiteSchema, localBusinessSchema, serviceSchema, breadcrumbSchema } from '../lib/schema';
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 
+function titleCaseSegment(seg: string) {
+  return seg
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function breadcrumbsForPath(pathname: string) {
+  const parts = pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+  const crumbs: Array<{ name: string; url: string }> = [{ name: 'Home', url: new URL('/', Astro.site ?? Astro.url).toString() }];
+
+  let acc = '';
+  for (const p of parts) {
+    acc += `/${p}`;
+    crumbs.push({ name: titleCaseSegment(p), url: new URL(`${acc}/`, Astro.site ?? Astro.url).toString() });
+  }
+
+  return crumbs;
+}
+
 const defaultJsonLd = (() => {
-  // Always include the general WebSite + Organization on every page.
-  const base = [websiteSchema(), organizationSchema()];
+  // Always include the general WebSite + Organization + breadcrumbs on every page.
+  const base = [websiteSchema(), organizationSchema(), breadcrumbSchema(breadcrumbsForPath(pathname))];
 
   if (isSolutions) {
     // Strong local SEO signal for the Solutions section.
