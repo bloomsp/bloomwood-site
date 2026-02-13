@@ -36,11 +36,9 @@ export function SiteNav({ nav }: { nav: NavItem[] }) {
           if (!isGroup(item)) {
             return (
               <NavigationMenuItem key={item.href}>
-                <a href={item.href}>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    {item.label}
-                  </NavigationMenuLink>
-                </a>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <a href={item.href}>{item.label}</a>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             );
           }
