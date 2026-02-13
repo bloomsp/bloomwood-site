@@ -46,7 +46,7 @@ export function SiteNav({ nav }: { nav: NavItem[] }) {
           }
 
           return (
-            <NavigationMenuItem key={item.label}>
+            <NavigationMenuItem key={item.label} className="relative">
               <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul className="grid w-90 gap-1 p-2">
