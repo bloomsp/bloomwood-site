@@ -16,11 +16,11 @@ export type Testimonial = {
   title?: string;
 };
 
-function VerticalControls() {
-  const { scrollPrev, scrollNext } = useCarousel();
+function VerticalPrevControl() {
+  const { scrollPrev } = useCarousel();
 
   return (
-    <div className="mt-4 flex flex-col items-center gap-3">
+    <div className="mb-3 flex justify-center">
       <Button
         type="button"
         variant="outline"
@@ -31,7 +31,15 @@ function VerticalControls() {
       >
         <ArrowUp className="h-5 w-5" />
       </Button>
+    </div>
+  );
+}
 
+function VerticalNextControl() {
+  const { scrollNext } = useCarousel();
+
+  return (
+    <div className="mt-3 flex justify-center">
       <Button
         type="button"
         variant="outline"
@@ -78,6 +86,8 @@ export default function TestimonialsCarousel({
         opts={{ loop: true, align: "start", slidesToScroll: scrollBy }}
         className={isVertical ? verticalViewportHeightClass : undefined}
       >
+        {isVertical ? <VerticalPrevControl /> : null}
+
         {/* NOTE: Embla doesn't measure well with CSS `gap` on the track. Use padding on items instead. */}
         <CarouselContent className={isVertical ? "flex-col -mt-4" : undefined}>
           {safeItems.map((t, i) => (
@@ -105,7 +115,7 @@ export default function TestimonialsCarousel({
           ))}
         </CarouselContent>
 
-        {isVertical ? <VerticalControls /> : null}
+        {isVertical ? <VerticalNextControl /> : null}
       </Carousel>
     </div>
   );
