@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useCarousel } from "@/components/ui/carousel";
+import type { CarouselApi } from "@/components/ui/carousel";
 
 export type Testimonial = {
   quote: string;
@@ -16,17 +16,15 @@ export type Testimonial = {
   title?: string;
 };
 
-function VerticalPrevControl() {
-  const { scrollPrev } = useCarousel();
-
+function VerticalPrevControl({ onClick }: { onClick: () => void }) {
   return (
-    <div className="mb-4 flex justify-center">
+    <div className="mb-6 flex justify-center">
       <Button
         type="button"
         variant="outline"
         size="icon"
         className="h-10 w-10 rounded-full"
-        onClick={scrollPrev}
+        onClick={onClick}
         aria-label="Previous testimonials"
       >
         <ArrowUp className="h-5 w-5" />
@@ -35,17 +33,15 @@ function VerticalPrevControl() {
   );
 }
 
-function VerticalNextControl() {
-  const { scrollNext } = useCarousel();
-
+function VerticalNextControl({ onClick }: { onClick: () => void }) {
   return (
-    <div className="mt-3 flex justify-center">
+    <div className="mt-6 flex justify-center">
       <Button
         type="button"
         variant="outline"
         size="icon"
         className="h-10 w-10 rounded-full"
-        onClick={scrollNext}
+        onClick={onClick}
         aria-label="Next testimonials"
       >
         <ArrowDown className="h-5 w-5" />
@@ -71,6 +67,19 @@ export default function TestimonialsCarousel({
   if (!safeItems.length) return null;
 
   const isVertical = orientation === "vertical";
+  const [api, setApi] = React.useState<CarouselApi | null>(null);
+
+  const scrollByN = React.useCallback(
+    (delta: number) => {
+      if (!api) return;
+      const snaps = api.scrollSnapList();
+      if (!snaps?.length) return;
+      const current = api.selectedScrollSnap();
+      const next = current + delta;
+      api.scrollTo(next);
+    },
+    [api]
+  );
 
   // For vertical carousels, Embla determines how many slides are visible based on the
   // *height* of each slide and the viewport height.
@@ -86,19 +95,18 @@ export default function TestimonialsCarousel({
     <div className="not-prose">
       <Carousel
         orientation={orientation}
-        opts={{ ...opts, axis: isVertical ? "y" : "x" }}
-        // align:start helps multi-slide layouts feel predictable
-        className={
-          isVertical
-            ? `flex flex-col ${verticalViewportHeightClass} [&>div.overflow-hidden]:flex-1 [&>div.overflow-hidden]:min-h-0`
-            : undefined
-        }
+        opts={opts}
+        setApi={setApi}
+        className={isVertical ? `flex flex-col ${verticalViewportHeightClass}` : undefined}
       >
-        {isVertical ? <VerticalPrevControl /> : null}
+        {isVertical ? (
+          <VerticalPrevControl onClick={() => scrollByN(-scrollBy)} />
+        ) : null}
 
         {/* NOTE: Embla doesn't measure well with CSS `gap` on the track. Use padding on items instead. */}
         <CarouselContent
-          className={isVertical ? "-mt-4 flex-col flex-1 min-h-0" : undefined}
+          viewportClassName={isVertical ? "flex-1 min-h-0" : undefined}
+          className={isVertical ? "-mt-4 flex-col" : undefined}
         >
           {safeItems.map((t, i) => (
             <CarouselItem
@@ -108,7 +116,7 @@ export default function TestimonialsCarousel({
             >
               <Card className="h-full overflow-hidden">
                 <CardContent className="flex h-full min-h-0 flex-col gap-4 p-6">
-                  <div className="flex-1">
+                  <div className="min-h-0 flex-1 overflow-auto">
                     <blockquote className="text-base leading-relaxed">
                       “{t.quote}”
                     </blockquote>
@@ -128,7 +136,9 @@ export default function TestimonialsCarousel({
           ))}
         </CarouselContent>
 
-        {isVertical ? <VerticalNextControl /> : null}
+        {isVertical ? (
+          <VerticalNextControl onClick={() => scrollByN(scrollBy)} />
+        ) : null}
       </Carousel>
     </div>
   );
