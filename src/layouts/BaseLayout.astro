@@ -18,6 +18,18 @@ const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const defaultOgImage = '/images/solutions/Bloomwood-Solutions-gslogo-512.png';
 const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString();
+
+/**
+ * Tawk.to loading toggle
+ * - Default: enabled in production, disabled in dev.
+ * - Override with env var: TAWK_ENABLED=true|false
+ * - Runtime override with URL param: ?tawk=1 (enable) / ?tawk=0 (disable)
+ *   (we also persist it to localStorage).
+ */
+const envTawk = import.meta.env.TAWK_ENABLED;
+const enableTawkByDefault = envTawk
+  ? envTawk === 'true'
+  : import.meta.env.PROD;
 ---
 <!doctype html>
 <html lang="en">
@@ -81,20 +93,39 @@ const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString(
   <body class="min-h-dvh bg-background text-foreground">
     <slot />
 
-    <!--Start of Tawk.to Script-->
+
+    <!--Start of Tawk.to Script (conditionally loaded)-->
     <script is:inline type="text/javascript">
-      var Tawk_API = Tawk_API || {},
-        Tawk_LoadStart = new Date();
       (function () {
-        var s1 = document.createElement('script'),
-          s0 = document.getElementsByTagName('script')[0];
-        s1.async = true;
-        s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
-        s1.charset = 'UTF-8';
-        // Use a valid CORS mode for cross-origin script loads.
-        // `*` is not a valid value for the `crossorigin` attribute and can trigger CORS errors.
-        s1.crossOrigin = 'anonymous';
-        s0.parentNode.insertBefore(s1, s0);
+        try {
+          var defaultEnabled = {enableTawkByDefault ? 'true' : 'false'};
+
+          // URL override: ?tawk=1 / ?tawk=0
+          var params = new URLSearchParams(window.location.search);
+          var qp = params.get('tawk');
+          if (qp === '1' || qp === '0') {
+            localStorage.setItem('tawk:enabled', qp);
+          }
+
+          var stored = localStorage.getItem('tawk:enabled');
+          var enabled = stored === null ? defaultEnabled : stored === '1';
+          if (!enabled) return;
+
+          // Load Tawk
+          window.Tawk_API = window.Tawk_API || {};
+          window.Tawk_LoadStart = new Date();
+          var s1 = document.createElement('script');
+          var s0 = document.getElementsByTagName('script')[0];
+          s1.async = true;
+          s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
+          s1.charset = 'UTF-8';
+          // Use a valid CORS mode for cross-origin script loads.
+          // `*` is not a valid value for the `crossorigin` attribute and can trigger CORS errors.
+          s1.crossOrigin = 'anonymous';
+          s0.parentNode.insertBefore(s1, s0);
+        } catch (e) {
+          // ignore
+        }
       })();
     </script>
     <!--End of Tawk.to Script-->
