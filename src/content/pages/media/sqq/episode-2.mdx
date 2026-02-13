@@ -3,6 +3,7 @@ title: 'Steven&#039;s Quantum Qitchen - Ep 2'
 ---
 
 import { RecipeAccordion } from "@/components/RecipeAccordion";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 # Steven&#039;s Quantum Qitchen - Ep 2
 
@@ -40,6 +41,19 @@ Subscribe to be notified about future episodes which will include more cooking, 
 />
 
 ## Watch
-- https://www.youtube.com/watch?v=zgzetGVtCrY
+
+<div class="not-prose">
+  <AspectRatio ratio={16 / 9}>
+    <iframe
+      className="h-full w-full rounded-xl border border-border"
+      src="https://www.youtube.com/embed/zgzetGVtCrY"
+      title="Steven's Quantum Qitchen - Ep 2"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
+  </AspectRatio>
+</div>
 
 <p class="text-sm text-muted-foreground">Source: <a href="https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-ep-2">https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-ep-2</a></p>

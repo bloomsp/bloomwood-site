@@ -3,6 +3,7 @@ title: 'Steven&#039;s Quantum Qitchen - Ep 6'
 ---
 
 import { RecipeAccordion } from "@/components/RecipeAccordion";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 # Steven&#039;s Quantum Qitchen - Ep 6
 
@@ -15,6 +16,19 @@ In the meantime have a look at a video we did documenting our world trip in 2017
 <RecipeAccordion client:idle title="(No recipe yet)" summary="This episode doesn’t have a recipe listed (yet)." />
 
 ## Watch
-- https://www.youtube.com/watch?v=0Cjm0BOw5yo
+
+<div class="not-prose">
+  <AspectRatio ratio={16 / 9}>
+    <iframe
+      className="h-full w-full rounded-xl border border-border"
+      src="https://www.youtube.com/embed/0Cjm0BOw5yo"
+      title="Steven's Quantum Qitchen - Ep 6"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
+  </AspectRatio>
+</div>
 
 <p class="text-sm text-muted-foreground">Source: <a href="https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-5-1">https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-5-1</a></p>

@@ -3,6 +3,7 @@ title: 'Steven&#039;s Quantum Qitchen - Ep 3'
 ---
 
 import { RecipeAccordion } from "@/components/RecipeAccordion";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 # Steven&#039;s Quantum Qitchen - Ep 3
 
@@ -11,6 +12,19 @@ In this episode T.E.S.S. takes over as we begin our quest for a new Qitchen! Wha
 <RecipeAccordion client:idle title="(No recipe yet)" summary="This episode doesn’t have a recipe listed (yet)." />
 
 ## Watch
-- https://www.youtube.com/watch?v=DzTAo2nKDzM
+
+<div class="not-prose">
+  <AspectRatio ratio={16 / 9}>
+    <iframe
+      className="h-full w-full rounded-xl border border-border"
+      src="https://www.youtube.com/embed/DzTAo2nKDzM"
+      title="Steven's Quantum Qitchen - Ep 3"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
+  </AspectRatio>
+</div>
 
 <p class="text-sm text-muted-foreground">Source: <a href="https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-3">https://stevenbloom.com.au/concrete/sqq/stevens-quantum-qitchen-3</a></p>
