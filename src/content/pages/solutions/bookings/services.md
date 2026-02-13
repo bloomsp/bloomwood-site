@@ -185,10 +185,10 @@ Customer experience is of utmost importance, that’s why we deliver excellence 
 
 We transcend the typical geek that doesn’t speak in your language – we are experts that understand you, and explain things in simple terms.
 
-# Need help now?
+## Need help now?
 
 [Yes! Take me to the booking page!](/solutions/bookings/)
 
 <div class="grid place-content-center">
-<img src="/public/logo.svg" width="200">
+  <img src="/logo.svg" width="200" alt="Bloomwood Solutions logo" loading="lazy" />
 </div>

@@ -3,7 +3,7 @@ title: "Pre-paid Service Packs"
 description: "With Bloomwood Solutions Service Packs, you can pre-purchase your hours, save money, and call in help whenever your next tech quest begins. Whether you need..."
 ---
 
-## Pre-paid Service Packs.
+# Pre-paid Service Packs
 
 Everyone needs a good support crew. With Bloomwood Solutions Service Packs, you can pre-purchase your hours, save money, and call in help whenever your next tech quest begins. Whether you need remote assistance from HQ or a field visit to your home base, your hours are ready when you are.
 

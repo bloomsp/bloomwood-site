@@ -3,7 +3,7 @@ title: "Contact Bloomwood Solutions"
 description: "Need help with your computer or tech? Call, email, or chat with Bloomwood Solutions for fast, friendly support across the Cairns region."
 ---
 
-## Connect with Bloomwood Solutions
+# Contact Bloomwood Solutions
 
 ## Your Trusted Tech Support in Cairns
 
@@ -15,15 +15,15 @@ Get expert assistance for all your technology needs, right here in the Far North
 
 ## Get in Touch with Us
 
-#### Phone
+### Phone
 
 [0492 991 759](tel:0492991759)
 
-#### Email
+### Email us
 
 [help@bloomwood.com.au](mailto:help@bloomwood.com.au)
 
-#### Address
+### Address
 
 7 Hook Close, Brinsmead, QLD 4870
 
@@ -80,7 +80,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 </form>
 <br>
 
-# Need more information?
+## Need more information?
 
 Try our [FAQ](/solutions/about/faq/)
 
