@@ -10,11 +10,14 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { Home } from "lucide-react";
 
 export type NavLink = {
   label: string;
   href: string;
   description?: string;
+  /** Optional icon-only nav item (label still used for screen readers). */
+  icon?: "home";
 };
 
 export type NavItem =
@@ -34,10 +37,27 @@ export function SiteNav({ nav }: { nav: NavItem[] }) {
       <NavigationMenuList>
         {nav.map((item) => {
           if (!isGroup(item)) {
+            const isIconOnly = item.icon === "home";
+
             return (
               <NavigationMenuItem key={item.href}>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <a href={item.href}>{item.label}</a>
+                <NavigationMenuLink
+                  asChild
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    isIconOnly && "px-2",
+                  )}
+                >
+                  <a href={item.href} aria-label={isIconOnly ? item.label : undefined}>
+                    {isIconOnly ? (
+                      <>
+                        <Home className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{item.label}</span>
+                      </>
+                    ) : (
+                      item.label
+                    )}
+                  </a>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             );
