@@ -106,10 +106,41 @@ const solutionsNav = [
 const mediaNav = [
   { href: '/', label: 'Bloomwood Home' },
   { href: '/media/', label: 'Media Home' },
-  // Add when ready:
-  // { href: '/media/services/', label: 'Services' },
-  // { href: '/media/portfolio/', label: 'Portfolio' },
-  // { href: '/media/contact/', label: 'Contact' },
+  {
+    label: 'Services',
+    items: [
+      { href: '/media/services/editing/', label: 'Editing' },
+      { href: '/media/services/publishing/', label: 'Publishing' },
+      { href: '/media/services/technical-writing/', label: 'Technical Writing' },
+      { href: '/media/services/video-editing/', label: 'Video Editing' },
+      { href: '/media/services/website-design/', label: 'Website Design' },
+      { href: '/media/resources/', label: 'Resources' },
+    ],
+  },
+  { href: '/media/testimonials/', label: 'Testimonials' },
+  { href: '/media/blog/', label: 'Blog' },
+  {
+    label: "Steven's Quantum Qitchen",
+    items: [
+      { href: '/media/sqq/episode-1/', label: 'SQQ Episode 1' },
+      { href: '/media/sqq/episode-2/', label: 'SQQ Episode 2' },
+      { href: '/media/sqq/episode-3/', label: 'SQQ Episode 3' },
+      { href: '/media/sqq/episode-4/', label: 'SQQ Episode 4' },
+      { href: '/media/sqq/episode-5/', label: 'SQQ Episode 5' },
+      { href: '/media/sqq/episode-6/', label: 'SQQ Episode 6' },
+      { href: '/media/sqq/recipes/', label: 'Recipes' },
+    ],
+  },
+  {
+    label: 'About',
+    items: [
+      { href: '/media/about/faq/', label: 'FAQ' },
+      { href: '/media/about/contact-us/', label: 'Contact Us' },
+      { href: '/media/about/privacy-policy/', label: 'Privacy Policy' },
+      { href: '/media/about/website-terms-and-conditions-of-use/', label: 'Website Terms & Conditions of Use' },
+    ],
+  },
+  { href: '/media/shop/', label: 'Shop' },
 ];
 
 const headerProps = isMedia

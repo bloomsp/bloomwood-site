@@ -1,0 +1,70 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../../../layouts/PageLayout.astro';
+
+export const prerender = true;
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .filter((p) => p.slug.startsWith('media/'))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+const tagCounts = new Map<string, number>();
+for (const p of posts) {
+  for (const tag of p.data.tags ?? []) {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+}
+const tags = Array.from(tagCounts.entries())
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .map(([tag, count]) => ({ tag, count }));
+---
+
+<PageLayout title="Blog" description="Bloomwood Media blog">
+  <h1>Blog</h1>
+  <p>Articles and updates from Bloomwood Media.</p>
+
+  <div class="not-prose mt-4 flex flex-wrap items-center gap-2">
+    <a
+      class="rounded-full border border-border px-3 py-1 text-sm hover:bg-accent"
+      href="/media/blog/rss.xml"
+    >
+      RSS
+    </a>
+    {tags.map((t) => (
+      <a
+        class="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        href={`/media/blog/tags/${t.tag}/`}
+      >
+        {t.tag} ({t.count})
+      </a>
+    ))}
+  </div>
+
+  <div class="not-prose mt-8 grid gap-4">
+    {posts.map((p) => (
+      <a
+        href={`/media/blog/${p.slug.replace(/^media\//, '')}/`}
+        class="rounded-xl border border-border bg-card p-5 hover:bg-accent"
+      >
+        <div class="text-sm text-muted-foreground">
+          {p.data.pubDate.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </div>
+        <div class="mt-1 text-lg font-semibold">{p.data.title}</div>
+
+        {p.data.tags?.length ? (
+          <div class="mt-2 flex flex-wrap gap-2">
+            {p.data.tags.map((tag) => (
+              <span class="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {p.data.description ? (
+          <div class="mt-2 text-sm text-muted-foreground">{p.data.description}</div>
+        ) : null}
+      </a>
+    ))}
+  </div>
+</PageLayout>

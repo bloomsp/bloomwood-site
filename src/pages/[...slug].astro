@@ -10,6 +10,7 @@ export async function getStaticPaths() {
   const EXCLUDE_SLUGS = new Set([
     'solutions/bookings', // handled by src/pages/solutions/bookings/index.astro
     'solutions/bookings/pre-paid-service-packs', // handled by src/pages/solutions/bookings/pre-paid-service-packs.astro
+    'media/blog', // handled by src/pages/media/blog/index.astro
   ]);
 
   const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));
@@ -20,6 +21,7 @@ export async function getStaticPaths() {
 const EXCLUDE_SLUGS = new Set([
   'solutions/bookings', // handled by src/pages/solutions/bookings/index.astro
   'solutions/bookings/pre-paid-service-packs', // handled by src/pages/solutions/bookings/pre-paid-service-packs.astro
+  'media/blog', // handled by src/pages/media/blog/index.astro
 ]);
 
 const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));

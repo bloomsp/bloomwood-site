@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../../../../layouts/PageLayout.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const mediaPosts = posts.filter((p) => p.slug.startsWith('media/'));
+
+  const tags = new Set<string>();
+  for (const p of mediaPosts) {
+    for (const t of p.data.tags ?? []) tags.add(t);
+  }
+
+  return Array.from(tags).sort().map((tag) => ({ params: { tag } }));
+}
+
+const tag = Astro.params.tag;
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .filter((p) => p.slug.startsWith('media/'))
+  .filter((p) => (p.data.tags ?? []).includes(tag))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<PageLayout title={`Blog: ${tag}`} description={`Bloomwood Media blog posts tagged ${tag}`}> 
+  <h1>Tag: {tag}</h1>
+  <p>
+    <a href="/media/blog/" class="underline">← Back to blog</a>
+  </p>
+
+  <div class="not-prose mt-8 grid gap-4">
+    {posts.map((p) => (
+      <a
+        href={`/media/blog/${p.slug.replace(/^media\//, '')}/`}
+        class="rounded-xl border border-border bg-card p-5 hover:bg-accent"
+      >
+        <div class="text-sm text-muted-foreground">
+          {p.data.pubDate.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </div>
+        <div class="mt-1 text-lg font-semibold">{p.data.title}</div>
+        {p.data.description ? (
+          <div class="mt-2 text-sm text-muted-foreground">{p.data.description}</div>
+        ) : null}
+      </a>
+    ))}
+  </div>
+</PageLayout>

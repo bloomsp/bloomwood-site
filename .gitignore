@@ -8,6 +8,9 @@ dist/
 # OS
 .DS_Store
 
+# Local scratch
+/tmp/
+
 # Python
 __pycache__/
 *.pyc
