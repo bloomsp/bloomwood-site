@@ -1,14 +1,8 @@
 import * as React from "react";
 
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import type { CarouselApi } from "@/components/ui/carousel";
 
 export type Testimonial = {
   quote: string;
@@ -67,73 +61,82 @@ export default function TestimonialsCarousel({
   if (!safeItems.length) return null;
 
   const isVertical = orientation === "vertical";
-  const [api, setApi] = React.useState<CarouselApi | null>(null);
 
-  const scrollPrevN = React.useCallback(() => {
-    if (!api) return;
-    for (let i = 0; i < scrollBy; i++) api.scrollPrev();
-  }, [api, scrollBy]);
+  // Vertical layout on the Media testimonials page needs strict “3-at-a-time” paging.
+  // Using Embla here has been brittle across SSR/hydration and layout measurement.
+  // So we implement deterministic paging in React.
+  if (isVertical) {
+    const pageSize = perView;
+    const step = scrollBy;
 
-  const scrollNextN = React.useCallback(() => {
-    if (!api) return;
-    for (let i = 0; i < scrollBy; i++) api.scrollNext();
-  }, [api, scrollBy]);
+    const [start, setStart] = React.useState(0);
 
-  // For vertical carousels, Embla determines how many slides are visible based on the
-  // *height* of each slide and the viewport height.
-  // We set an explicit slide height so exactly 3 are visible at once.
-  const verticalViewportHeightClass = "h-[60vh] min-h-[30rem]";
+    const wrap = React.useCallback(
+      (n: number) => {
+        const len = safeItems.length;
+        if (len === 0) return 0;
+        return ((n % len) + len) % len;
+      },
+      [safeItems.length]
+    );
 
-  const opts = React.useMemo(
-    () => ({ loop: true, align: "start" as const, slidesToScroll: scrollBy }),
-    [scrollBy],
-  );
+    const visible = React.useMemo(() => {
+      const len = safeItems.length;
+      if (len === 0) return [] as Testimonial[];
 
-  return (
-    <div className="not-prose">
-      <Carousel
-        orientation={orientation}
-        opts={opts}
-        setApi={setApi}
-        className={isVertical ? `flex flex-col ${verticalViewportHeightClass}` : undefined}
-      >
-        {isVertical ? <VerticalPrevControl onClick={scrollPrevN} /> : null}
+      const out: Testimonial[] = [];
+      for (let i = 0; i < Math.min(pageSize, len); i++) {
+        out.push(safeItems[wrap(start + i)]);
+      }
+      return out;
+    }, [safeItems, start, pageSize, wrap]);
 
-        {/* NOTE: Embla doesn't measure well with CSS `gap` on the track. Use padding on items instead. */}
-        <CarouselContent
-          viewportClassName={isVertical ? "flex-1 min-h-0" : undefined}
-          className={isVertical ? "-mt-4 flex-col" : undefined}
-        >
-          {safeItems.map((t, i) => (
-            <CarouselItem
-              key={i}
-              style={{ flexBasis: `${100 / perView}%` }}
-              className={isVertical ? "pt-4" : "pl-4"}
-            >
-              <Card className="h-full overflow-hidden">
-                <CardContent className="flex h-full min-h-0 flex-col gap-4 p-6">
-                  <div className="min-h-0 flex-1 overflow-auto">
-                    <blockquote className="text-base leading-relaxed">
-                      “{t.quote}”
-                    </blockquote>
-                  </div>
+    const prev = () => setStart((s) => wrap(s - step));
+    const next = () => setStart((s) => wrap(s + step));
 
-                  <div>
-                    <div className="font-semibold">{t.name}</div>
-                    {t.title ? (
-                      <div className="text-muted-foreground text-sm">
-                        {t.title}
-                      </div>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
-            </CarouselItem>
+    return (
+      <div className="not-prose">
+        <VerticalPrevControl onClick={prev} />
+
+        <div className="space-y-4">
+          {visible.map((t, idx) => (
+            <Card key={`${t.name}-${idx}`} className="overflow-hidden">
+              <CardContent className="flex flex-col gap-4 p-6">
+                <blockquote className="text-base leading-relaxed">
+                  “{t.quote}”
+                </blockquote>
+                <div>
+                  <div className="font-semibold">{t.name}</div>
+                  {t.title ? (
+                    <div className="text-muted-foreground text-sm">{t.title}</div>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
           ))}
-        </CarouselContent>
+        </div>
 
-        {isVertical ? <VerticalNextControl onClick={scrollNextN} /> : null}
-      </Carousel>
+        <VerticalNextControl onClick={next} />
+      </div>
+    );
+  }
+
+  // Fallback (horizontal) uses simple list for now.
+  return (
+    <div className="not-prose space-y-4">
+      {safeItems.map((t, i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardContent className="flex flex-col gap-4 p-6">
+            <blockquote className="text-base leading-relaxed">“{t.quote}”</blockquote>
+            <div>
+              <div className="font-semibold">{t.name}</div>
+              {t.title ? (
+                <div className="text-muted-foreground text-sm">{t.title}</div>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
