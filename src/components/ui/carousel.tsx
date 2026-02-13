@@ -102,14 +102,11 @@ const CarouselContent = React.forwardRef<
   const { carouselRef } = useCarousel();
 
   return (
-    <div ref={carouselRef} className="overflow-hidden">
+    // `carouselRef` is the Embla viewport element. Constrain height/overflow here.
+    <div ref={carouselRef} className={cn("overflow-hidden h-full", className)}>
       <div
         ref={ref}
-        className={cn(
-          "flex",
-          "touch-pan-y touch-pinch-zoom",
-          className
-        )}
+        className={cn("flex", "touch-pan-y touch-pinch-zoom", className)}
         {...props}
       />
     </div>

@@ -36,7 +36,7 @@ export default function TestimonialsCarousel({
   // For vertical carousels, Embla determines how many slides are visible based on the
   // *height* of each slide and the viewport height.
   // We set an explicit slide height so exactly 3 are visible at once.
-  const verticalSlideHeightClass = "h-72"; // 18rem
+  const verticalSlideHeightClass = "flex-none h-72"; // 18rem
   const verticalViewportHeightClass = "h-[54rem]"; // 3 * 18rem
 
   return (
