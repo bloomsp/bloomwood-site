@@ -33,23 +33,25 @@ export default function TestimonialsCarousel({
 
   const isVertical = orientation === "vertical";
 
+  // For vertical carousels, Embla determines how many slides are visible based on the
+  // *height* of each slide and the viewport height.
+  // We set an explicit slide height so exactly 3 are visible at once.
+  const verticalSlideHeightClass = "h-72"; // 18rem
+  const verticalViewportHeightClass = "h-[54rem]"; // 3 * 18rem
+
   return (
     <div className="not-prose">
       <Carousel
         orientation={orientation}
         // align:start helps multi-slide layouts feel predictable
         opts={{ loop: true, align: "start", slidesToScroll: scrollBy }}
-        className={isVertical ? "h-[54rem]" : undefined}
+        className={isVertical ? verticalViewportHeightClass : undefined}
       >
         <CarouselContent className={isVertical ? "flex-col" : undefined}>
           {safeItems.map((t, i) => (
             <CarouselItem
               key={i}
-              className={
-                isVertical
-                  ? "basis-[calc(100%/3)]"
-                  : undefined
-              }
+              className={isVertical ? verticalSlideHeightClass : undefined}
             >
               <Card className="h-full">
                 <CardContent className="flex h-full flex-col justify-between gap-4 p-6">
