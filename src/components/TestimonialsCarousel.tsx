@@ -75,29 +75,40 @@ export default function TestimonialsCarousel({
   // For vertical carousels, Embla determines how many slides are visible based on the
   // *height* of each slide and the viewport height.
   // We set an explicit slide height so exactly 3 are visible at once.
-  const verticalSlideHeightClass = "flex-none h-72 pt-4"; // 18rem + spacing
-  const verticalViewportHeightClass = "h-[54rem]"; // 3 * 18rem
+  const verticalViewportHeightClass = "h-[60vh] min-h-[30rem]";
+
+  const opts = React.useMemo(
+    () => ({ loop: true, align: "start" as const, slidesToScroll: scrollBy }),
+    [scrollBy],
+  );
 
   return (
     <div className="not-prose">
       <Carousel
         orientation={orientation}
         // align:start helps multi-slide layouts feel predictable
-        opts={{ loop: true, align: "start", slidesToScroll: scrollBy }}
-        className={isVertical ? verticalViewportHeightClass : undefined}
+        opts={opts}
+        className={
+          isVertical
+            ? `flex flex-col ${verticalViewportHeightClass}`
+            : undefined
+        }
       >
         {isVertical ? <VerticalPrevControl /> : null}
 
         {/* NOTE: Embla doesn't measure well with CSS `gap` on the track. Use padding on items instead. */}
-        <CarouselContent className={isVertical ? "flex-col -mt-4" : undefined}>
+        <CarouselContent
+          className={isVertical ? "-mt-4 flex-col flex-1 min-h-0" : undefined}
+        >
           {safeItems.map((t, i) => (
             <CarouselItem
               key={i}
-              className={isVertical ? verticalSlideHeightClass : undefined}
+              style={{ flexBasis: `${100 / perView}%` }}
+              className={isVertical ? "pt-4" : "pl-4"}
             >
               <Card className="h-full overflow-hidden">
                 <CardContent className="flex h-full min-h-0 flex-col gap-4 p-6">
-                  <div className="min-h-0 flex-1 overflow-auto">
+                  <div className="flex-1">
                     <blockquote className="text-base leading-relaxed">
                       “{t.quote}”
                     </blockquote>
@@ -106,7 +117,9 @@ export default function TestimonialsCarousel({
                   <div>
                     <div className="font-semibold">{t.name}</div>
                     {t.title ? (
-                      <div className="text-muted-foreground text-sm">{t.title}</div>
+                      <div className="text-muted-foreground text-sm">
+                        {t.title}
+                      </div>
                     ) : null}
                   </div>
                 </CardContent>
