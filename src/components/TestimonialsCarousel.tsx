@@ -47,7 +47,7 @@ export default function TestimonialsCarousel({
         opts={{ loop: true, align: "start", slidesToScroll: scrollBy }}
         className={isVertical ? verticalViewportHeightClass : undefined}
       >
-        <CarouselContent className={isVertical ? "flex-col" : undefined}>
+        <CarouselContent className={isVertical ? "flex-col gap-4" : "gap-4"}>
           {safeItems.map((t, i) => (
             <CarouselItem
               key={i}
