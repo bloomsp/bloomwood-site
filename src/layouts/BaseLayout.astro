@@ -50,7 +50,9 @@ const enableTawkByDefault = envTawk
       (function () {
         try {
           var key = 'theme';
-          var theme = localStorage.getItem(key) || 'system';
+          // Default to light mode so the site remains readable even when the OS/browser is in dark mode.
+          // Users can still opt into 'dark' (or 'system') by setting localStorage.theme.
+          var theme = localStorage.getItem(key) || 'light';
           var root = document.documentElement;
 
           root.classList.remove('dark');
