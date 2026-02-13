@@ -21,11 +21,12 @@ type CarouselContextProps = {
   scrollNext: () => void;
   canScrollPrev: boolean;
   canScrollNext: boolean;
+  loop: boolean;
 };
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
 
-function useCarousel() {
+export function useCarousel() {
   const context = React.useContext(CarouselContext);
   if (!context) throw new Error("useCarousel must be used within a <Carousel />");
   return context;
@@ -33,6 +34,8 @@ function useCarousel() {
 
 const Carousel = React.forwardRef<HTMLDivElement, CarouselProps>(
   ({ orientation = "horizontal", opts, setApi, plugins, className, children, ...props }, ref) => {
+    const loop = Boolean(opts?.loop);
+
     const [carouselRef, api] = useEmblaCarousel(
       {
         ...opts,
@@ -44,11 +47,20 @@ const Carousel = React.forwardRef<HTMLDivElement, CarouselProps>(
     const [canScrollPrev, setCanScrollPrev] = React.useState(false);
     const [canScrollNext, setCanScrollNext] = React.useState(false);
 
-    const onSelect = React.useCallback((api: CarouselApi) => {
-      if (!api) return;
-      setCanScrollPrev(api.canScrollPrev());
-      setCanScrollNext(api.canScrollNext());
-    }, []);
+    const onSelect = React.useCallback(
+      (api: CarouselApi) => {
+        if (!api) return;
+        // When looping, disable-gating makes controls appear broken.
+        if (loop) {
+          setCanScrollPrev(true);
+          setCanScrollNext(true);
+          return;
+        }
+        setCanScrollPrev(api.canScrollPrev());
+        setCanScrollNext(api.canScrollNext());
+      },
+      [loop]
+    );
 
     const scrollPrev = React.useCallback(() => api?.scrollPrev(), [api]);
     const scrollNext = React.useCallback(() => api?.scrollNext(), [api]);
@@ -78,6 +90,7 @@ const Carousel = React.forwardRef<HTMLDivElement, CarouselProps>(
           scrollNext,
           canScrollPrev,
           canScrollNext,
+          loop,
         }}
       >
         <div
