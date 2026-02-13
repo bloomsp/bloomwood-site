@@ -69,17 +69,15 @@ export default function TestimonialsCarousel({
   const isVertical = orientation === "vertical";
   const [api, setApi] = React.useState<CarouselApi | null>(null);
 
-  const scrollByN = React.useCallback(
-    (delta: number) => {
-      if (!api) return;
-      const snaps = api.scrollSnapList();
-      if (!snaps?.length) return;
-      const current = api.selectedScrollSnap();
-      const next = current + delta;
-      api.scrollTo(next);
-    },
-    [api]
-  );
+  const scrollPrevN = React.useCallback(() => {
+    if (!api) return;
+    for (let i = 0; i < scrollBy; i++) api.scrollPrev();
+  }, [api, scrollBy]);
+
+  const scrollNextN = React.useCallback(() => {
+    if (!api) return;
+    for (let i = 0; i < scrollBy; i++) api.scrollNext();
+  }, [api, scrollBy]);
 
   // For vertical carousels, Embla determines how many slides are visible based on the
   // *height* of each slide and the viewport height.
@@ -99,9 +97,7 @@ export default function TestimonialsCarousel({
         setApi={setApi}
         className={isVertical ? `flex flex-col ${verticalViewportHeightClass}` : undefined}
       >
-        {isVertical ? (
-          <VerticalPrevControl onClick={() => scrollByN(-scrollBy)} />
-        ) : null}
+        {isVertical ? <VerticalPrevControl onClick={scrollPrevN} /> : null}
 
         {/* NOTE: Embla doesn't measure well with CSS `gap` on the track. Use padding on items instead. */}
         <CarouselContent
@@ -136,9 +132,7 @@ export default function TestimonialsCarousel({
           ))}
         </CarouselContent>
 
-        {isVertical ? (
-          <VerticalNextControl onClick={() => scrollByN(scrollBy)} />
-        ) : null}
+        {isVertical ? <VerticalNextControl onClick={scrollNextN} /> : null}
       </Carousel>
     </div>
   );
