@@ -1,8 +1,73 @@
 ---
-title: 'Home'
+title: "Home"
+description: "Bloomwood Media — editing, publishing, and content services."
 ---
-# Home
 
-<div class="concrete-import">
-<p>Content to be migrated from: <a href="https://stevenbloom.com.au/concrete">https://stevenbloom.com.au/concrete</a></p>
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+<div className="not-prose mb-8">
+  <img
+    src="/images/media/bloomwood-media-logo-square.png"
+    width="256"
+    height="256"
+    alt="Bloomwood Media"
+    className="h-32 w-32 rounded-xl object-contain"
+    loading="eager"
+  />
+</div>
+
+# Content is king!
+
+We hear that expression all the time these days. But is it?
+
+If you inspect the quality of the content some people produce, you might conclude that content is a losing pawn. For all the talk about delivering clear, concise, and carefully considered content to customers, more often than not, you find the messages are muddled at best, and in a less-than-pleasing format.
+
+Bloomwood Media specialises in assuring that content is the highest ranking monarch in your books, articles, blogs, case studies and press releases. We take stock of your words and help you deliver the best quality content to your customers.
+
+We work to ensure your publishing success. Drop us a line and let us know how we can help you deliver your best story.
+
+## Meet Our Expert Team
+
+Our team at Bloomwood Solutions is dedicated to providing top-notch I.T. support services, ensuring your technology works as expected.
+
+<div className="not-prose mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+  <Card>
+    <CardHeader>
+      <CardTitle>Steven Bloom</CardTitle>
+      <CardDescription>Head Techie</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <img
+        src="/images/solutions/IMG_7304.jpeg"
+        width="256"
+        height="256"
+        alt="Steven Bloom"
+        className="h-48 w-48 rounded-xl object-cover"
+        loading="lazy"
+      />
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardHeader>
+      <CardTitle>Jason Lockwood</CardTitle>
+      <CardDescription>Head Tech Writer &amp; Publisher</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <img
+        src="/images/solutions/jlockwood.png"
+        width="256"
+        height="256"
+        alt="Jason Lockwood"
+        className="h-48 w-48 rounded-xl object-cover"
+        loading="lazy"
+      />
+    </CardContent>
+  </Card>
 </div>
