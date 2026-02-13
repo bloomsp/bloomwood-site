@@ -85,11 +85,12 @@ export default function TestimonialsCarousel({
   return (
     <div className="not-prose">
       <Carousel
+        orientation={orientation}
         opts={{ ...opts, axis: isVertical ? "y" : "x" }}
         // align:start helps multi-slide layouts feel predictable
         className={
           isVertical
-            ? `flex flex-col ${verticalViewportHeightClass}`
+            ? `flex flex-col ${verticalViewportHeightClass} [&>div.overflow-hidden]:flex-1 [&>div.overflow-hidden]:min-h-0`
             : undefined
         }
       >
