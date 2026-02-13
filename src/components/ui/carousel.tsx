@@ -110,13 +110,13 @@ Carousel.displayName = "Carousel";
 
 const CarouselContent = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> & { viewportClassName?: string }
+>(({ className, viewportClassName, ...props }, ref) => {
   const { carouselRef } = useCarousel();
 
   return (
     // `carouselRef` is the Embla viewport element. Constrain height/overflow here.
-    <div ref={carouselRef} className={cn("overflow-hidden h-full", className)}>
+    <div ref={carouselRef} className={cn("overflow-hidden h-full", viewportClassName)}>
       <div
         ref={ref}
         className={cn("flex", "touch-pan-y touch-pinch-zoom", className)}

@@ -20,7 +20,7 @@ function VerticalPrevControl() {
   const { scrollPrev } = useCarousel();
 
   return (
-    <div className="mb-3 flex justify-center">
+    <div className="mb-4 flex justify-center">
       <Button
         type="button"
         variant="outline"
