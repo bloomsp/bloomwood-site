@@ -97,10 +97,9 @@ const enableTawkByDefault = envTawk
 
 
     <!--Start of Tawk.to Script (conditionally loaded)-->
-    <script is:inline type="text/javascript">
+    <script is:inline define:vars={{ defaultEnabled: enableTawkByDefault }}>
       (function () {
         try {
-          var defaultEnabled = {enableTawkByDefault ? 'true' : 'false'};
 
           // URL override: ?tawk=1 / ?tawk=0
           var params = new URLSearchParams(window.location.search);
