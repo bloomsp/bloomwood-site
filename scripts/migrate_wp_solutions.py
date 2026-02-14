@@ -35,6 +35,8 @@ UPLOADS_RE = re.compile(r"https?://[^\s\"')]+?/wp-content/uploads/[^\s\"')]+", r
 
 
 def fetch_json(url: str) -> list:
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError("URL must start with http:// or https://")
     with urllib.request.urlopen(url, timeout=30) as r:
         data = r.read().decode("utf-8")
     return json.loads(data)
@@ -121,6 +123,8 @@ def download(url: str, out_path: Path) -> None:
     if out_path.exists() and out_path.stat().st_size > 0:
         return
     req = urllib.request.Request(url, headers={"User-Agent": "clawdbot-migrate/1.0"})
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError("URL must start with http:// or https://")
     with urllib.request.urlopen(req, timeout=30) as r:
         data = r.read()
     out_path.write_bytes(data)
