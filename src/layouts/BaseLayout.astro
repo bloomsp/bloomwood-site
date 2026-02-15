@@ -19,6 +19,9 @@ const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astr
 const defaultOgImage = '/images/solutions/Bloomwood-Solutions-gslogo-512.png';
 const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString();
 
+// Treat Pages preview domains as non-indexable.
+const isPreview = Astro.url.hostname.endsWith('pages.dev');
+
 /**
  * Tawk.to loading toggle
  * - Default: enabled in production, disabled in dev.
@@ -72,6 +75,7 @@ const enableTawkByDefault = envTawk
     </script>
 
     <title>{fullTitle}</title>
+    {isPreview && <meta name="robots" content="noindex,nofollow" />}
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical.toString()} />
 
@@ -123,6 +127,23 @@ const enableTawkByDefault = envTawk
           // Load Tawk
           window.Tawk_API = window.Tawk_API || {};
           window.Tawk_LoadStart = new Date();
+
+          // Some chat widgets try to update `document.title` (e.g. "1 new message").
+          // Preserve the page title for UX/SEO.
+          (function lockTitle() {
+            var original = document.title;
+            var titleEl = document.querySelector('title');
+            if (!titleEl) return;
+            try {
+              var obs = new MutationObserver(function () {
+                if (document.title !== original) document.title = original;
+              });
+              obs.observe(titleEl, { childList: true, subtree: true, characterData: true });
+            } catch (e) {
+              // ignore
+            }
+          })();
+
           var s1 = document.createElement('script');
           var s0 = document.getElementsByTagName('script')[0];
           s1.async = true;
