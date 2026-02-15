@@ -11,6 +11,12 @@ import {
 type Section = "solutions" | "media";
 
 export function SiteSwitcher({ current }: { current: Section }) {
+  const go = (href: string) => {
+    // iOS Safari can be flaky with <a> inside Radix portal menus.
+    // Use explicit navigation on select.
+    window.location.assign(href);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -21,21 +27,25 @@ export function SiteSwitcher({ current }: { current: Section }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start">
-        {current === "solutions" ? (
-          <DropdownMenuItem disabled>Switch to Bloomwood Solutions</DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem asChild>
-            <a href="/solutions">Switch to Bloomwood Solutions</a>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          disabled={current === "solutions"}
+          onSelect={(e) => {
+            e.preventDefault();
+            if (current !== "solutions") go("/solutions");
+          }}
+        >
+          Switch to Bloomwood Solutions
+        </DropdownMenuItem>
 
-        {current === "media" ? (
-          <DropdownMenuItem disabled>Switch to Bloomwood Media</DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem asChild>
-            <a href="/media">Switch to Bloomwood Media</a>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          disabled={current === "media"}
+          onSelect={(e) => {
+            e.preventDefault();
+            if (current !== "media") go("/media");
+          }}
+        >
+          Switch to Bloomwood Media
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
