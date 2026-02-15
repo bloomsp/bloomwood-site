@@ -1,5 +1,6 @@
 ---
 import { SiteNav, type NavItem } from './SiteNav';
+import { SiteSwitcher } from './SiteSwitcher';
 
 export interface Props {
   homeHref?: string;
@@ -16,13 +17,24 @@ const {
   logoAlt = brandLabel,
   nav = [],
 } = Astro.props;
+
+const path = Astro.url.pathname;
+const section = path.startsWith('/solutions')
+  ? 'solutions'
+  : path.startsWith('/media')
+    ? 'media'
+    : null;
 ---
 
 <header class="border-b border-border">
   <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-    <a href={homeHref} class="flex min-w-0 items-center gap-3" aria-label={brandLabel}>
-      <span class="truncate text-lg font-semibold font-[Raleway]">{brandLabel}</span>
-    </a>
+    <div class="flex min-w-0 items-center gap-1">
+      <a href={homeHref} class="flex min-w-0 items-center gap-3" aria-label={brandLabel}>
+        <span class="truncate text-lg font-semibold font-[Raleway]">{brandLabel}</span>
+      </a>
+
+      {section && <SiteSwitcher client:idle current={section} />}
+    </div>
 
     {/* Desktop nav */}
     <nav class="hidden items-center gap-2 md:flex">
