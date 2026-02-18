@@ -33,7 +33,7 @@ const section = path.startsWith('/solutions')
         <span class="truncate text-lg font-semibold font-[Raleway]">{brandLabel}</span>
       </a>
 
-      {section && <SiteSwitcher client:idle current={section} />}
+      {section && <SiteSwitcher client:load current={section} />}
     </div>
 
     {/* Desktop nav */}
