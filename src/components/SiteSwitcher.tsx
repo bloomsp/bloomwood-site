@@ -31,7 +31,7 @@ export function SiteSwitcher({ current }: { current: Section }) {
           disabled={current === "solutions"}
           onSelect={(e) => {
             e.preventDefault();
-            if (current !== "solutions") go("/solutions");
+            if (current !== "solutions") go("/solutions/");
           }}
         >
           Switch to Bloomwood Solutions
@@ -41,7 +41,7 @@ export function SiteSwitcher({ current }: { current: Section }) {
           disabled={current === "media"}
           onSelect={(e) => {
             e.preventDefault();
-            if (current !== "media") go("/media");
+            if (current !== "media") go("/media/");
           }}
         >
           Switch to Bloomwood Media

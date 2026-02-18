@@ -14,8 +14,8 @@ export interface Props {
 const { title, description, ogImage, jsonLd } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const isMedia = pathname === '/media/' || pathname.startsWith('/media/');
-const isSolutions = pathname === '/solutions/' || pathname.startsWith('/solutions/');
+const isMedia = pathname === '/media' || pathname === '/media/' || pathname.startsWith('/media/');
+const isSolutions = pathname === '/solutions' || pathname === '/solutions/' || pathname.startsWith('/solutions/');
 
 // Default JSON-LD by section (can be overridden per-page by passing jsonLd)
 import { organizationSchema, websiteSchema, localBusinessSchema, serviceSchema, breadcrumbSchema } from '../lib/schema';
