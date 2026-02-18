@@ -1,4 +1,178 @@
 ---
-title: 'Shop'
+title: "Shop"
+description: "Books and other items available from Bloomwood Media."
 ---
+
+import BookDescriptionAccordion from "../../../components/BookDescriptionAccordion";
+
 # Shop
+
+<p className="not-prose mt-2">
+  <a
+    href="https://www.amazon.com/stores/author/B0140DHS5M"
+    target="_blank"
+    rel="noreferrer noopener"
+    className="text-sm font-medium text-orange-600 underline underline-offset-4 hover:text-orange-500"
+  >
+    Also available from Amazon
+  </a>
+</p>
+
+<div className="not-prose grid gap-6 md:grid-cols-3">
+  {/*
+    TODO: Replace `imageSrc` + `stripeUrl` + copy with real values.
+    Images should live under: `public/images/media/shop/`
+  */}
+
+  <div className="rounded-xl border bg-card text-card-foreground shadow">
+    <div className="p-6">
+      <img
+        src="/images/media/shop/banana-peels-on-the-tracks.jpg"
+        alt="Banana Peels on the Tracks book cover"
+        className="mb-4 aspect-[4/5] w-full rounded-lg border object-cover"
+        loading="lazy"
+      />
+
+      <h2 className="text-xl font-semibold leading-tight">Banana Peels on the Tracks</h2>
+      <BookDescriptionAccordion client:load>
+        He had a car, an apartment and a decent job, but he was bored. Then he saw an ad in an online forum: Teach
+        English in Czechoslovakia. The year was 1991 and he thought: why not? So he applied and received his
+        acceptance letter months later. In the autumn of 1992, just three years after the Berlin Wall came down, Jason
+        Lockwood arrived in the Slovak Republic to teach English for a year. He went with few expectations and too
+        much luggage. What he found was a torn country grasping at new beginnings, struggling to recover from decades
+        of oppression and dictatorship. In this memoir, Jason Lockwood brings back for Western audiences a snapshot of
+        an historic period in a far-off country, and offers prescriptions not only for that world, but for our own,
+        too.
+      </BookDescriptionAccordion>
+
+      <dl className="mt-4 grid gap-2 text-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">ISBN-10</dt>
+          <dd className="font-medium">151689698X</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">ISBN-13</dt>
+          <dd className="font-medium">978-1516896981</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Price</dt>
+          <dd className="font-medium">$30 (including GST)</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Postage</dt>
+          <dd className="font-medium">$13.50 (Australia only)</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Optional</dt>
+          <dd className="font-medium">Signed with custom message</dd>
+        </div>
+      </dl>
+
+      <a
+        href="https://buy.stripe.com/6oU8wRbvj6gc60fcMi8Vi00"
+        target="_blank"
+        rel="noreferrer noopener"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+      >
+        Buy direct from author
+      </a>
+    </div>
+
+  </div>
+
+  <div className="rounded-xl border bg-card text-card-foreground shadow">
+    <div className="p-6">
+      <img
+        src="/images/media/shop/two-weeks-in-phoenix.jpg"
+        alt="Two Weeks in Phoenix book cover"
+        className="mb-4 aspect-[4/5] w-full rounded-lg border object-cover"
+        loading="lazy"
+      />
+
+      <h2 className="text-xl font-semibold leading-tight">Two Weeks in Phoenix</h2>
+      <BookDescriptionAccordion client:load>
+        It started as a simple trip. Two weeks in Phoenix, Arizona, during the 2017 Christmas holidays, where Jason’s
+        family and old friends live. Five years after the passing of his father, Jason and his partner Steven reckoned
+        it was time to make a return visit. But then travel planning took on a life of its own when Steven mused they
+        could perhaps add New York to the itinerary. With airfare creeping up to $4,000 per person, the duo decided on
+        another option: what about a round-the-world holiday, which costs much less in airfare, but would extend the
+        trip by several weeks. Join Jason, Steven, and Steven’s teenage daughter Zoe, on their 51-day quest for
+        excitement in Los Angeles, Phoenix, Jerome, Williams, the Grand Canyon, Sedona, Tucson, New York, London,
+        Oxford, Paris, Brussels, and Singapore.
+      </BookDescriptionAccordion>
+
+      <dl className="mt-4 grid gap-2 text-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">ISBN-10</dt>
+          <dd className="font-medium">0646813080</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">ISBN-13</dt>
+          <dd className="font-medium">978-0646813080</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Price</dt>
+          <dd className="font-medium">$30 (including GST)</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Postage</dt>
+          <dd className="font-medium">$13.50 (Australia only)</dd>
+        </div><div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Optional</dt>
+          <dd className="font-medium">Signed with custom message</dd>
+        </div>
+      </dl>
+
+      <a
+        href="https://buy.stripe.com/4gM8wR7f37kg9cr7rY8Vi01"
+        target="_blank"
+        rel="noreferrer noopener"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+      >
+        Buy direct from author
+      </a>
+    </div>
+
+  </div>
+
+  <div className="rounded-xl border bg-card text-card-foreground shadow">
+    <div className="p-6">
+      <img
+        src="/images/media/shop/BPOTTandTWIP.jpg"
+        alt="Banana Peels on the Tracks and Two Weeks in Phoenix bundle"
+        className="mb-4 aspect-[4/5] w-full rounded-lg border object-cover"
+        loading="lazy"
+      />
+
+      <h2 className="text-xl font-semibold leading-tight">Both books (bundle)</h2>
+      <BookDescriptionAccordion client:load>
+        Buy both books. They will be signed by the author!
+      </BookDescriptionAccordion>
+
+      <dl className="mt-4 grid gap-2 text-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Price</dt>
+          <dd className="font-medium">$60 (including GST)</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Postage</dt>
+          <dd className="font-medium">$20 (Australia only)</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <dt className="text-muted-foreground">Default</dt>
+          <dd className="font-medium">Both books signed unless otherwise selected. Optional custom message</dd>
+        </div>
+      </dl>
+
+      <a
+        href="https://buy.stripe.com/REPLACE_ME"
+        target="_blank"
+        rel="noreferrer noopener"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+      >
+        Buy direct from author
+      </a>
+    </div>
+
+  </div>
+</div>
