@@ -1,7 +1,33 @@
 ---
 title: 'FAQ'
+description: 'Frequently asked questions about Bloomwood Media services.'
 ---
+
+import { FAQAccordion } from '../../../../components/FAQAccordion';
+
 # FAQ
 
-
-Content to be migrated from: [https://stevenbloom.com.au/concrete/about/faq](https://stevenbloom.com.au/concrete/about/faq)
+<FAQAccordion
+  client:load
+  heading="Frequently Asked Questions"
+  items={[
+    {
+      key: 'publish-book',
+      question: 'I have written a book, will you publish it?',
+      answer:
+        'We can step you through the process of self-publishing so you have full control of your book content, where it is published, and how it is published. We charge a small fee for this service.',
+    },
+    {
+      key: 'self-publish-cost',
+      question: 'What do you charge to help me self-publish?',
+      answer:
+        'It depends on how much of the process you want us to help with. The fee ranges from $500 for us to guide you through self-publishing. Up to $2500 for us to provide a Full Copyedit, Book cover design, Internal book design, formatting for hard copy and e-book.',
+      links: [
+        {
+          label: 'Publishing services',
+          href: '/media/services/publishing/',
+        },
+      ],
+    },
+  ]}
+/>
