@@ -20,7 +20,13 @@ const defaultOgImage = '/images/solutions/Bloomwood-Solutions-gslogo-512.png';
 const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString();
 
 // Treat Pages preview domains as non-indexable.
-const isPreview = Astro.url.hostname.endsWith('pages.dev');
+// NOTE: On Cloudflare Pages, `Astro.url.hostname` can reflect the underlying *.pages.dev URL even
+// when a custom domain is used. Prefer request headers for accurate host detection.
+const requestHost =
+  Astro.request?.headers?.get('x-forwarded-host') ??
+  Astro.request?.headers?.get('host') ??
+  Astro.url.hostname;
+const isPreview = requestHost.endsWith('pages.dev');
 
 /**
  * Tawk.to loading toggle

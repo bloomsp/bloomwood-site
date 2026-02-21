@@ -10,7 +10,10 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
-const siteUrl = process.env.CF_PAGES_URL || process.env.SITE_URL || 'https://bloomwood.com.au';
+// IMPORTANT: Cloudflare sets CF_PAGES_URL to the *.pages.dev deployment URL even on production.
+// We do NOT want that used for canonical URLs or OpenGraph on the custom domain.
+// If you ever need preview-specific URLs, set SITE_URL explicitly in that environment.
+const siteUrl = process.env.SITE_URL || 'https://bloomwood.com.au';
 
 export default defineConfig({
   // IMPORTANT: Used for canonical URLs, OpenGraph URLs, and sitemap generation.
