@@ -1,6 +1,57 @@
+# .pages.yml
+
+media:
+  - name: media
+    label: Media uploads
+    input: public/media
+    output: /media
+    categories: [image, document, video, audio]
+  - name: images
+    label: Images
+    input: public/images
+    output: /images
+    categories: [image]
+
 content:
-  - name: posts
-    label: Posts
-    path: src/content/blog/media
+  - name: media_blog
+    label: Blog (Media)
     type: collection
-    fields: [title, pubDate,description,"tags[0]"]
+    path: src/content/blog/media
+    format: yaml-frontmatter
+    filename: "{primary}.mdx"
+    view:
+      primary: title
+      fields: [title, pubDate, "tags[0]"]
+      sort: [pubDate, title]
+      default:
+        sort: pubDate
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: text
+
+      - name: pubDate
+        label: Publish date
+        type: date
+        options:
+          format: yyyy-MM-dd
+
+      - name: description
+        label: Description
+        type: text
+        options:
+          autoresize: true
+          rows: 4
+
+      - name: tags
+        label: Tags
+        type: select
+        options:
+          multiple: true
+          creatable: true
+
+      # This maps to the Markdown/MDX "body" content (below the frontmatter)
+      - name: body
+        label: Body
+        type: rich-text
