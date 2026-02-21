@@ -1,6 +1,8 @@
 # Bloomwood Site
 
 Astro + MDX + Tailwind site for Bloomwood Solutions.
+## Bloomwood Media Blog
+To update the blog, use files located in [src > content > blog > media](https://github.com/bloomsp/bloomwood-site/tree/main/src/content/blog/media)
 
 ## Development
 
