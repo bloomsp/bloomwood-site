@@ -1,0 +1,6 @@
+content:
+  - name: posts
+    label: Posts
+    path: src/content/blog/media
+    type: collection
+    fields:[title, pubDate,description,"tags[0]"]
