@@ -16,7 +16,18 @@ const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage, jsonL
 
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
-const defaultOgImage = '/images/solutions/Bloomwood-Solutions-gslogo-512.png';
+
+// Section-aware default OG image (so shares match the Solutions vs Media branding)
+const pathname = Astro.url.pathname;
+const isMedia = pathname === '/media' || pathname === '/media/' || pathname.startsWith('/media/');
+const isSolutions = pathname === '/solutions' || pathname === '/solutions/' || pathname.startsWith('/solutions/');
+
+const defaultOgImage = isMedia
+  ? '/og/og-media.png'
+  : isSolutions
+    ? '/og/og-solutions.png'
+    : '/og/og-home.png';
+
 const og = new URL(ogImage ?? defaultOgImage, Astro.site ?? Astro.url).toString();
 
 // Treat Pages preview domains as non-indexable.
@@ -45,6 +56,9 @@ const enableTawkByDefault = envTawk
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <!-- Raleway for Bloomwood Solutions heading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -92,6 +106,8 @@ const enableTawkByDefault = envTawk
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical.toString()} />
     <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1260" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
