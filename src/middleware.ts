@@ -55,6 +55,7 @@ const cspDirectives = {
   ],
   'connect-src': [
     "'self'",
+    'https://app.cal.com',
     'https://challenges.cloudflare.com',
     'https://cdn-cookieyes.com',
     'https://log.cookieyes.com',
@@ -70,6 +71,8 @@ const cspDirectives = {
     'https://challenges.cloudflare.com',
     'https://embed.tawk.to',
     'https://va.tawk.to',
+    'https://www.youtube.com',
+    'https://www.youtube-nocookie.com',
   ],
   'worker-src': ["'self'", 'blob:'],
   'media-src': ["'self'", 'blob:', 'https://*.tawk.to'],
