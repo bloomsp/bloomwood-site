@@ -1,21 +1,15 @@
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
 export const POST: APIRoute = async (context) => {
   try {
     const { request } = context;
-
-    // Cloudflare runtime env (Astro Cloudflare adapter)
-    const env = (context.locals as any)?.runtime?.env as
-      | Record<string, unknown>
-      | undefined;
-
-    const API_TOKEN = (env?.MAILERSEND_API_TOKEN as string | undefined) ?? undefined;
-    const FROM_EMAIL = (env?.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
-    const TO_EMAIL = (env?.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
-    const TURNSTILE_SECRET_KEY =
-      (env?.TURNSTILE_SECRET_KEY as string | undefined) ?? undefined;
+    const API_TOKEN = env.MAILERSEND_API_TOKEN;
+    const FROM_EMAIL = env.MAIL_FROM ?? "help@bloomwood.com.au";
+    const TO_EMAIL = env.MAIL_TO ?? "help@bloomwood.com.au";
+    const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 
     if (!API_TOKEN) {
       return new Response("MailerSend is not configured.", { status: 500 });
