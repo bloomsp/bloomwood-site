@@ -19,6 +19,18 @@ npm run build
 
 ## Deployment (Cloudflare Pages)
 
+## Contact form environment variables
+
+Set the following **Cloudflare Pages environment variables** for the contact form:
+
+- `MAILERSEND_API_TOKEN`
+- `MAIL_FROM` (optional, defaults to `help@bloomwood.com.au`)
+- `MAIL_TO` (optional, defaults to `help@bloomwood.com.au`)
+- `TURNSTILE_SECRET_KEY` (required for Cloudflare Turnstile server-side validation)
+
+The Turnstile site key is rendered in the contact form markup.
+
+
 This project deploys via **Cloudflare Pages Git integration** (push to `main` → Pages builds and deploys).
 
 ### KV binding (required)

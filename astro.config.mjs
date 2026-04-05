@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, sessionDrivers } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -27,10 +27,9 @@ export default defineConfig({
   // Explicitly set the session driver so the Cloudflare adapter doesn't auto-enable
   // sessions (and print the "Enabling sessions..." message) during config setup.
   session: {
-    driver: 'cloudflare-kv-binding',
-    options: {
+    driver: sessionDrivers.cloudflareKVBinding({
       binding: 'SESSION'
-    }
+    })
   },
 
   adapter: cloudflare({

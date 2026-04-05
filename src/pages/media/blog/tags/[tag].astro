@@ -6,7 +6,7 @@ export const prerender = true;
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
-  const mediaPosts = posts.filter((p) => p.slug.startsWith('media/'));
+  const mediaPosts = posts.filter((p) => p.id.startsWith('media/'));
 
   const tags = new Set<string>();
   for (const p of mediaPosts) {
@@ -19,7 +19,7 @@ export async function getStaticPaths() {
 const tag = Astro.params.tag;
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .filter((p) => p.slug.startsWith('media/'))
+  .filter((p) => p.id.startsWith('media/'))
   .filter((p) => (p.data.tags ?? []).includes(tag))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 ---
@@ -33,7 +33,7 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   <div class="not-prose mt-8 grid gap-4">
     {posts.map((p) => (
       <a
-        href={`/media/blog/${p.slug.replace(/^media\//, '')}/`}
+        href={`/media/blog/${p.id.replace(/^media\//, '')}/`}
         class="rounded-xl border border-border bg-card p-5 hover:bg-accent"
       >
         <div class="text-sm text-muted-foreground">

@@ -32,7 +32,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 <div id="contact-success" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
   Thanks — we’ve received your message and will get back to you shortly.
 </div>
-<script>
+<script data-cfasync="false">
   (function () {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -46,6 +46,8 @@ Get expert assistance for all your technology needs, right here in the Far North
     } catch (e) {}
   })();
 </script>
+
+<script data-cfasync="false" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <form class="space-y-6" method="post" action="/api/contact">
   <input type="hidden" name="redirect" value="/solutions/bloomwood-solutions-contact-us/?sent=1" />
@@ -73,7 +75,11 @@ Get expert assistance for all your technology needs, right here in the Far North
       I would like to join your email newsletter. (We promise not to send more than once per month!)
     </label>
   </div>
-  <!-- Captcha removed (honeypot only). -->
+  <div class="space-y-2">
+    <p class="text-sm text-slate-700">Please confirm you’re human before submitting.</p>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAAC0DUFBV-rkbsjNy"></div>
+  </div>
+
   <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-slate-900 text-slate-50 hover:bg-slate-900/90 h-10 px-4 py-2">
     Submit
   </button>

@@ -1,14 +1,14 @@
 ---
 import PageLayout from '../../../layouts/PageLayout.astro';
-import { getEntryBySlug } from 'astro:content';
+import { getEntry, render } from 'astro:content';
 import { ServiceAccordion } from '../../../components/ServiceAccordion';
 
 export const prerender = true;
 
-const entry = await getEntryBySlug('pages', 'solutions/bookings');
+const entry = await getEntry('pages', 'solutions/bookings');
 if (!entry) throw new Error('Missing content entry: solutions/bookings');
 
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 const data = entry.data;
 ---
 
