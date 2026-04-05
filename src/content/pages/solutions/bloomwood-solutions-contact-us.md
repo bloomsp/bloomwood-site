@@ -32,7 +32,7 @@ Get expert assistance for all your technology needs, right here in the Far North
 <div id="contact-success" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
   Thanks — we’ve received your message and will get back to you shortly.
 </div>
-<script>
+<script data-cfasync="false">
   (function () {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -47,7 +47,7 @@ Get expert assistance for all your technology needs, right here in the Far North
   })();
 </script>
 
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script data-cfasync="false" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <form class="space-y-6" method="post" action="/api/contact">
   <input type="hidden" name="redirect" value="/solutions/bloomwood-solutions-contact-us/?sent=1" />
