@@ -3,149 +3,156 @@ import type { APIRoute } from "astro";
 export const prerender = false;
 
 export const POST: APIRoute = async (context) => {
-  const { request } = context;
+  try {
+    const { request } = context;
 
-  // Cloudflare runtime env (Astro Cloudflare adapter)
-  const env = (context.locals as any)?.runtime?.env as
-    | Record<string, unknown>
-    | undefined;
+    // Cloudflare runtime env (Astro Cloudflare adapter)
+    const env = (context.locals as any)?.runtime?.env as
+      | Record<string, unknown>
+      | undefined;
 
-  const API_TOKEN = (env?.MAILERSEND_API_TOKEN as string | undefined) ?? undefined;
-  const FROM_EMAIL = (env?.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
-  const TO_EMAIL = (env?.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
-  const TURNSTILE_SECRET_KEY =
-    (env?.TURNSTILE_SECRET_KEY as string | undefined) ?? undefined;
+    const API_TOKEN = (env?.MAILERSEND_API_TOKEN as string | undefined) ?? undefined;
+    const FROM_EMAIL = (env?.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
+    const TO_EMAIL = (env?.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
+    const TURNSTILE_SECRET_KEY =
+      (env?.TURNSTILE_SECRET_KEY as string | undefined) ?? undefined;
 
-  if (!API_TOKEN) {
-    return new Response("MailerSend is not configured.", { status: 500 });
-  }
+    if (!API_TOKEN) {
+      return new Response("MailerSend is not configured.", { status: 500 });
+    }
 
-  if (!TURNSTILE_SECRET_KEY) {
-    return new Response("Turnstile is not configured.", { status: 500 });
-  }
+    if (!TURNSTILE_SECRET_KEY) {
+      return new Response("Turnstile is not configured.", { status: 500 });
+    }
 
-  const contentType = request.headers.get("content-type") || "";
-  if (
-    !contentType.includes("application/x-www-form-urlencoded") &&
-    !contentType.includes("multipart/form-data")
-  ) {
-    return new Response("Unsupported content type.", { status: 415 });
-  }
+    const contentType = request.headers.get("content-type") || "";
+    if (
+      !contentType.includes("application/x-www-form-urlencoded") &&
+      !contentType.includes("multipart/form-data")
+    ) {
+      return new Response("Unsupported content type.", { status: 415 });
+    }
 
-  const form = await request.formData();
+    const form = await request.formData();
 
-  const name = String(form.get("name") ?? "").trim();
-  const email = String(form.get("email") ?? "").trim();
-  const message = String(form.get("message") ?? "").trim();
-  const phone = String(form.get("phone") ?? "").trim();
-  const urgency = String(form.get("urgency") ?? "").trim();
-  const formName = String(form.get("form") ?? "contact").trim() || "contact";
-  const redirectTo = String(form.get("redirect") ?? "").trim();
-  const newsletter = form.get("newsletter") ? "Yes" : "No";
-  const turnstileToken = String(form.get("cf-turnstile-response") ?? "").trim();
+    const name = String(form.get("name") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    const message = String(form.get("message") ?? "").trim();
+    const phone = String(form.get("phone") ?? "").trim();
+    const urgency = String(form.get("urgency") ?? "").trim();
+    const formName = String(form.get("form") ?? "contact").trim() || "contact";
+    const redirectTo = String(form.get("redirect") ?? "").trim();
+    const newsletter = form.get("newsletter") ? "Yes" : "No";
+    const turnstileToken = String(form.get("cf-turnstile-response") ?? "").trim();
 
-  // Honeypot field (should be left empty by humans)
-  const company = String(form.get("company") ?? "").trim();
-  if (company) {
-    return new Response("OK", { status: 200 });
-  }
+    // Honeypot field (should be left empty by humans)
+    const company = String(form.get("company") ?? "").trim();
+    if (company) {
+      return new Response("OK", { status: 200 });
+    }
 
-  if (!turnstileToken) {
-    return new Response("Turnstile token is missing.", { status: 400 });
-  }
+    if (!turnstileToken) {
+      return new Response("Turnstile token is missing.", { status: 400 });
+    }
 
-  const remoteIp =
-    request.headers.get("CF-Connecting-IP") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    undefined;
+    const remoteIp =
+      request.headers.get("CF-Connecting-IP") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      undefined;
 
-  const verificationPayload = new URLSearchParams({
-    secret: TURNSTILE_SECRET_KEY,
-    response: turnstileToken,
-  });
+    const verificationPayload = new URLSearchParams({
+      secret: TURNSTILE_SECRET_KEY,
+      response: turnstileToken,
+    });
 
-  if (remoteIp) {
-    verificationPayload.set("remoteip", remoteIp);
-  }
+    if (remoteIp) {
+      verificationPayload.set("remoteip", remoteIp);
+    }
 
-  const verificationResponse = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    {
+    const verificationResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: verificationPayload,
+      },
+    );
+
+    if (!verificationResponse.ok) {
+      return new Response("Turnstile verification failed.", { status: 502 });
+    }
+
+    const verificationResult = (await verificationResponse.json()) as {
+      success?: boolean;
+      [key: string]: unknown;
+    };
+
+    if (!verificationResult.success) {
+      return new Response("Turnstile verification was unsuccessful.", { status: 403 });
+    }
+
+    const effectiveMessage = message || urgency;
+
+    if (!name || !email || !effectiveMessage) {
+      return new Response("Missing required fields.", { status: 400 });
+    }
+
+    const subject = `Website ${formName} form: ${name}`;
+    const text = [
+      `New website ${formName} form submission:`,
+      "",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      phone ? `Phone: ${phone}` : "",
+      `Newsletter: ${newsletter}`,
+      urgency ? "" : "",
+      urgency ? "Urgency details:" : "Message:",
+      effectiveMessage,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const payload = {
+      from: {
+        email: FROM_EMAIL,
+        name: "Bloomwood Solutions",
+      },
+      to: [{ email: TO_EMAIL }],
+      reply_to: {
+        email,
+        name,
+      },
+      subject,
+      text,
+    };
+
+    const resp = await fetch("https://api.mailersend.com/v1/email", {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Bearer ${API_TOKEN}`,
+        "Content-Type": "application/json",
       },
-      body: verificationPayload,
-    },
-  );
+      body: JSON.stringify(payload),
+    });
 
-  if (!verificationResponse.ok) {
-    return new Response("Turnstile verification failed.", { status: 502 });
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => "");
+      return new Response(`MailerSend error: ${resp.status}\n${body}`, { status: 502 });
+    }
+
+    const url = new URL(request.url);
+    const safePath =
+      redirectTo && redirectTo.startsWith("/")
+        ? redirectTo
+        : "/solutions/bloomwood-solutions-contact-us/?sent=1";
+
+    return Response.redirect(`${url.origin}${safePath}`, 303);
+  } catch (error) {
+    console.error("Contact form submission failed", error);
+    return new Response("The contact form could not be submitted right now.", {
+      status: 500,
+    });
   }
-
-  const verificationResult = (await verificationResponse.json()) as {
-    success?: boolean;
-    [key: string]: unknown;
-  };
-
-  if (!verificationResult.success) {
-    return new Response("Turnstile verification was unsuccessful.", { status: 403 });
-  }
-
-  const effectiveMessage = message || urgency;
-
-  if (!name || !email || !effectiveMessage) {
-    return new Response("Missing required fields.", { status: 400 });
-  }
-
-  const subject = `Website ${formName} form: ${name}`;
-  const text = [
-    `New website ${formName} form submission:`,
-    "",
-    `Name: ${name}`,
-    `Email: ${email}`,
-    phone ? `Phone: ${phone}` : "",
-    `Newsletter: ${newsletter}`,
-    urgency ? "" : "",
-    urgency ? "Urgency details:" : "Message:",
-    effectiveMessage,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const payload = {
-    from: {
-      email: FROM_EMAIL,
-      name: "Bloomwood Solutions",
-    },
-    to: [{ email: TO_EMAIL }],
-    reply_to: {
-      email,
-      name,
-    },
-    subject,
-    text,
-  };
-
-  const resp = await fetch("https://api.mailersend.com/v1/email", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${API_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    return new Response(`MailerSend error: ${resp.status}\n${body}`, { status: 502 });
-  }
-
-  const url = new URL(request.url);
-  const safePath =
-    redirectTo && redirectTo.startsWith("/")
-      ? redirectTo
-      : "/solutions/bloomwood-solutions-contact-us/?sent=1";
-
-  return Response.redirect(`${url.origin}${safePath}`, 303);
 };

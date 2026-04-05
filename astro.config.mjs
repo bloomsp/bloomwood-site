@@ -19,6 +19,12 @@ export default defineConfig({
   // IMPORTANT: Used for canonical URLs, OpenGraph URLs, and sitemap generation.
   // Without this, prerendered pages can end up with localhost canonicals.
   site: siteUrl,
+  security: {
+    // Astro enables same-origin form checks by default for on-demand routes.
+    // In production behind Cloudflare Workers/custom domains this can reject valid form posts,
+    // while the contact form already has Turnstile + a honeypot for abuse protection.
+    checkOrigin: false,
+  },
 
   vite: {
     plugins: [tailwindcss()]
