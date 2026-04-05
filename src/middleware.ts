@@ -41,6 +41,7 @@ const cspDirectives = {
   'font-src': [
     "'self'",
     'data:',
+    'https://cal.com',
     'https://fonts.gstatic.com',
     'https://embed.tawk.to',
   ],
