@@ -4,6 +4,21 @@ import { join, relative } from 'node:path';
 
 const BASE_URL = 'https://bloomwood.com.au';
 const MAX_PAGES = 200;
+const baseOrigin = new URL(BASE_URL);
+
+function isAllowedPageUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return false;
+
+    const isBaseHost = url.hostname === baseOrigin.hostname;
+    const isSubdomain = url.hostname.endsWith(`.${baseOrigin.hostname}`);
+
+    return (isBaseHost || isSubdomain) && url.origin.endsWith(baseOrigin.hostname);
+  } catch {
+    return false;
+  }
+}
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -33,7 +48,7 @@ async function getSitemapUrls() {
       try {
         const xml = await fetchText(sitemapUrl);
         for (const url of extractLocs(xml)) {
-          if (url.startsWith(BASE_URL)) pageUrls.add(url);
+          if (isAllowedPageUrl(url)) pageUrls.add(url);
         }
       } catch {
         // Ignore missing sitemap endpoints and fall back to built routes below.

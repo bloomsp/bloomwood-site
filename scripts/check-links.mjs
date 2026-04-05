@@ -20,7 +20,8 @@ function stripHashAndQuery(href) {
 }
 
 function isExternal(href) {
-  return /^(https?:)?\/\//i.test(href) || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('sms:') || href.startsWith('javascript:');
+  return /^(https?:)?\/\//i.test(href) ||
+    /^(mailto|tel|sms|javascript|data|vbscript):/i.test(href);
 }
 
 function normalizeInternalHref(href) {
