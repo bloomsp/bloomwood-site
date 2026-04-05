@@ -75,7 +75,7 @@ If you prefer dashboard-managed plain-text vars, you can add them to the Worker 
 
 - `npm run build` outputs static assets into `dist/client` and the Worker entry/config into `dist/server`.
 - `npm run deploy` publishes the generated Worker config from `dist/server/wrangler.json`, which keeps the Worker and static assets in sync and avoids the stale HTML / missing `_astro` chunk problems seen with the old Pages setup.
-- The legacy [wrangler.jsonc.old](./wrangler.jsonc.old) file is kept only as historical reference.
+- [.pages.yml](./.pages.yml) is kept because you are using Pages CMS for content editing, even though site deployment now runs through Workers.
 
 ## Dependabot / security advisories
 

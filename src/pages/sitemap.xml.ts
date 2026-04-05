@@ -1,6 +1,6 @@
 export async function GET({ site }: { site: URL }) {
   // Provide a conventional /sitemap.xml endpoint that points at the generated sitemap index.
-  // This stays correct on Cloudflare Pages preview domains because `site` is derived from Astro.site.
+  // This stays correct on preview/custom domains because `site` is derived from Astro.site.
   const loc = new URL('/sitemap-index.xml', site).toString();
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n` +

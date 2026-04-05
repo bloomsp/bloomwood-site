@@ -36,7 +36,7 @@ export default defineConfig({
     routes: {
       extend: {
         // Ensure sitemap files are served as static assets (not routed through the SSR worker).
-        // Otherwise Cloudflare Pages Functions can return HTML for these URLs.
+        // Otherwise the Worker can return HTML for these URLs.
         exclude: [
           { pattern: '/sitemap-index.xml' },
           { pattern: '/sitemap-*.xml' },
