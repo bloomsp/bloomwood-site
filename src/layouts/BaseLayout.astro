@@ -64,7 +64,7 @@ const enableTawkByDefault = envTawk
     />
 
     {/* Apply theme as early as possible to avoid a flash of incorrect theme. */}
-    <script is:inline>
+    <script is:inline data-cfasync="false">
       (function () {
         try {
           var key = 'theme';
@@ -115,6 +115,7 @@ const enableTawkByDefault = envTawk
     <script
       id="cookieyes"
       type="text/javascript"
+      data-cfasync="false"
       src="https://cdn-cookieyes.com/client_data/e7abd98f2e74bd76f22e4144/script.js"
     ></script>
     <!-- End cookieyes banner -->
@@ -126,7 +127,7 @@ const enableTawkByDefault = envTawk
 
 
     <!--Start of Tawk.to Script (conditionally loaded)-->
-    <script is:inline define:vars={{ defaultEnabled: enableTawkByDefault }}>
+    <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault }}>
       (function () {
         try {
 
@@ -166,9 +167,6 @@ const enableTawkByDefault = envTawk
           s1.async = true;
           s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
           s1.charset = 'UTF-8';
-          // Use a valid CORS mode for cross-origin script loads.
-          // `*` is not a valid value for the `crossorigin` attribute and can trigger CORS errors.
-          s1.crossOrigin = 'anonymous';
           s0.parentNode.insertBefore(s1, s0);
         } catch (e) {
           // ignore
