@@ -9,6 +9,17 @@ const cspDirectives = {
   'script-src': [
     "'self'",
     "'unsafe-inline'",
+    'https://app.cal.com',
+    'https://challenges.cloudflare.com',
+    'https://cdn-cookieyes.com',
+    'https://embed.tawk.to',
+    'https://static.cloudflareinsights.com',
+    'https://cdn.jsdelivr.net',
+  ],
+  'script-src-elem': [
+    "'self'",
+    "'unsafe-inline'",
+    'https://app.cal.com',
     'https://challenges.cloudflare.com',
     'https://cdn-cookieyes.com',
     'https://embed.tawk.to',
@@ -27,7 +38,12 @@ const cspDirectives = {
     'https://fonts.googleapis.com',
     'https://embed.tawk.to',
   ],
-  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+  'font-src': [
+    "'self'",
+    'data:',
+    'https://fonts.gstatic.com',
+    'https://embed.tawk.to',
+  ],
   'img-src': [
     "'self'",
     'data:',
@@ -50,6 +66,7 @@ const cspDirectives = {
   ],
   'frame-src': [
     "'self'",
+    'https://app.cal.com',
     'https://challenges.cloudflare.com',
     'https://embed.tawk.to',
     'https://va.tawk.to',
