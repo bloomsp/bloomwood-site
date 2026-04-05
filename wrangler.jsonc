@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bloomwood-site",
+  "compatibility_date": "2026-04-05",
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "20fb0ad2a0a94ae3bb99d3b300d3b53e"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

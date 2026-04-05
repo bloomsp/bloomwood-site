@@ -17,11 +17,11 @@ Build:
 npm run build
 ```
 
-## Deployment (Cloudflare Pages)
+## Deployment (Cloudflare Workers)
 
 ## Contact form environment variables
 
-Set the following **Cloudflare Pages environment variables** for the contact form:
+Set the following Cloudflare secrets / environment variables for the contact form:
 
 - `MAILERSEND_API_TOKEN`
 - `MAIL_FROM` (optional, defaults to `help@bloomwood.com.au`)
@@ -31,32 +31,56 @@ Set the following **Cloudflare Pages environment variables** for the contact for
 The Turnstile site key is rendered in the contact form markup.
 
 
-This project deploys via **Cloudflare Pages Git integration** (push to `main` → Pages builds and deploys).
+This project now deploys as a **Cloudflare Worker** using Wrangler.
+
+Install dependencies and deploy with:
+
+```bash
+npm install
+npm run deploy
+```
+
+Useful local commands:
+
+```bash
+npm run cf:check
+npm run cf:dev
+```
 
 ### KV binding (required)
 
 Astro sessions are configured to use a Cloudflare KV binding named `SESSION` (see `astro.config.mjs`).
 
-In **Cloudflare Pages → Project → Settings → Bindings → KV namespaces**, add:
+The root [wrangler.jsonc](./wrangler.jsonc) stores bindings and project metadata used during the Astro build. After `npm run build`, Astro generates the deployable Worker config at `dist/server/wrangler.json`.
+
+The deployment expects:
 
 - **Variable name:** `SESSION`
-- **KV namespace:** select the KV namespace you want to use for sessions
+- **KV namespace id:** `20fb0ad2a0a94ae3bb99d3b300d3b53e`
 
-After saving, trigger a new deployment (push to `main` or click “Retry deployment”).
+The Worker also expects an Images binding named `IMAGES`.
 
-### Wrangler config files
+Set application secrets before deploying:
 
-This repo does **not** rely on running `wrangler` locally for deployment.
+```bash
+npx wrangler secret put MAILERSEND_API_TOKEN
+npx wrangler secret put TURNSTILE_SECRET_KEY
+npx wrangler secret put MAIL_FROM
+npx wrangler secret put MAIL_TO
+```
 
-Cloudflare Pages may attempt to auto-detect Wrangler configuration during builds. If a `wrangler.json(c)` / `wrangler.toml` file is present, Pages may log warnings about Pages-specific properties.
+If you prefer dashboard-managed plain-text vars, you can add them to the Worker environment in Cloudflare, but secrets should stay out of git.
 
-If you are deploying via Git integration (recommended), you can keep Wrangler config files **out of the repo** (or renamed, e.g. `wrangler.jsonc.old`) and configure bindings in the Pages dashboard instead.
+### Notes
+
+- `npm run build` outputs static assets into `dist/client` and the Worker entry/config into `dist/server`.
+- `npm run deploy` publishes the generated Worker config from `dist/server/wrangler.json`, which keeps the Worker and static assets in sync and avoids the stale HTML / missing `_astro` chunk problems seen with the old Pages setup.
+- The legacy [wrangler.jsonc.old](./wrangler.jsonc.old) file is kept only as historical reference.
 
 ## Dependabot / security advisories
 
 You may see Dependabot alerts related to `wrangler`, `miniflare`, and `undici`. In this project, those packages are pulled in indirectly via `@astrojs/cloudflare` for build tooling.
 
-Because deployment uses **Cloudflare Pages Git integration** (not `wrangler pages deploy`), these advisories are generally **toolchain / build-time** concerns rather than production runtime issues.
+Because deployment now uses **Wrangler / Cloudflare Workers**, these dependencies are part of the actual deploy toolchain.
 
-- If you add CI steps that run `wrangler pages deploy`, reassess and update dependencies.
-- Otherwise, wait for `@astrojs/cloudflare` to bump its dependency constraints so patched versions can be installed.
+- Keep `astro`, `@astrojs/cloudflare`, and `wrangler` updated together when making platform upgrades.
