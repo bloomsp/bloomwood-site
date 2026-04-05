@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import PageLayout from '../layouts/PageLayout.astro';
 
 export const prerender = true;
@@ -13,9 +13,9 @@ export async function getStaticPaths() {
     'media/blog', // handled by src/pages/media/blog/index.astro
   ]);
 
-  const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));
+  const pages = await getCollection('pages', ({ data, id }) => !data.draft && !EXCLUDE_SLUGS.has(id));
   // For rest params, Astro expects a single string (e.g. "a/b/c").
-  return pages.map((p) => ({ params: { slug: p.slug } }));
+  return pages.map((p) => ({ params: { slug: p.id } }));
 }
 
 const EXCLUDE_SLUGS = new Set([
@@ -24,15 +24,15 @@ const EXCLUDE_SLUGS = new Set([
   'media/blog', // handled by src/pages/media/blog/index.astro
 ]);
 
-const pages = await getCollection('pages', ({ data, slug }) => !data.draft && !EXCLUDE_SLUGS.has(slug));
+const pages = await getCollection('pages', ({ data, id }) => !data.draft && !EXCLUDE_SLUGS.has(id));
 
 const slug = Astro.params.slug ?? '';
 const key = Array.isArray(slug) ? slug.join('/') : slug;
 
-const entry = pages.find((p) => p.slug === key);
+const entry = pages.find((p) => p.id === key);
 if (!entry) throw new Error(`Page not found: ${key}`);
 
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 const data = entry.data;
 ---
 

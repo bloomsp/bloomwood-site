@@ -5,7 +5,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
 export const prerender = true;
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .filter((p) => p.slug.startsWith('media/'))
+  .filter((p) => p.id.startsWith('media/'))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const tagCounts = new Map<string, number>();
@@ -43,7 +43,7 @@ const tags = Array.from(tagCounts.entries())
   <div class="not-prose mt-8 grid gap-4">
     {posts.map((p) => (
       <a
-        href={`/media/blog/${p.slug.replace(/^media\//, '')}/`}
+        href={`/media/blog/${p.id.replace(/^media\//, '')}/`}
         class="rounded-xl border border-border bg-card p-5 hover:bg-accent"
       >
         <div class="text-sm text-muted-foreground">

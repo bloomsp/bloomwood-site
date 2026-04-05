@@ -13,9 +13,15 @@ export const POST: APIRoute = async (context) => {
   const API_TOKEN = (env?.MAILERSEND_API_TOKEN as string | undefined) ?? undefined;
   const FROM_EMAIL = (env?.MAIL_FROM as string | undefined) ?? "help@bloomwood.com.au";
   const TO_EMAIL = (env?.MAIL_TO as string | undefined) ?? "help@bloomwood.com.au";
+  const TURNSTILE_SECRET_KEY =
+    (env?.TURNSTILE_SECRET_KEY as string | undefined) ?? undefined;
 
   if (!API_TOKEN) {
     return new Response("MailerSend is not configured.", { status: 500 });
+  }
+
+  if (!TURNSTILE_SECRET_KEY) {
+    return new Response("Turnstile is not configured.", { status: 500 });
   }
 
   const contentType = request.headers.get("content-type") || "";
@@ -36,11 +42,54 @@ export const POST: APIRoute = async (context) => {
   const formName = String(form.get("form") ?? "contact").trim() || "contact";
   const redirectTo = String(form.get("redirect") ?? "").trim();
   const newsletter = form.get("newsletter") ? "Yes" : "No";
+  const turnstileToken = String(form.get("cf-turnstile-response") ?? "").trim();
 
   // Honeypot field (should be left empty by humans)
   const company = String(form.get("company") ?? "").trim();
   if (company) {
     return new Response("OK", { status: 200 });
+  }
+
+  if (!turnstileToken) {
+    return new Response("Turnstile token is missing.", { status: 400 });
+  }
+
+  const remoteIp =
+    request.headers.get("CF-Connecting-IP") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    undefined;
+
+  const verificationPayload = new URLSearchParams({
+    secret: TURNSTILE_SECRET_KEY,
+    response: turnstileToken,
+  });
+
+  if (remoteIp) {
+    verificationPayload.set("remoteip", remoteIp);
+  }
+
+  const verificationResponse = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: verificationPayload,
+    },
+  );
+
+  if (!verificationResponse.ok) {
+    return new Response("Turnstile verification failed.", { status: 502 });
+  }
+
+  const verificationResult = (await verificationResponse.json()) as {
+    success?: boolean;
+    [key: string]: unknown;
+  };
+
+  if (!verificationResult.success) {
+    return new Response("Turnstile verification was unsuccessful.", { status: 403 });
   }
 
   const effectiveMessage = message || urgency;
@@ -93,9 +142,10 @@ export const POST: APIRoute = async (context) => {
   }
 
   const url = new URL(request.url);
-  const safePath = redirectTo && redirectTo.startsWith("/")
-    ? redirectTo
-    : "/solutions/bloomwood-solutions-contact-us/?sent=1";
+  const safePath =
+    redirectTo && redirectTo.startsWith("/")
+      ? redirectTo
+      : "/solutions/bloomwood-solutions-contact-us/?sent=1";
 
   return Response.redirect(`${url.origin}${safePath}`, 303);
 };
