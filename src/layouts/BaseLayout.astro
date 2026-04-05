@@ -125,55 +125,54 @@ const enableTawkByDefault = envTawk
   <body class="min-h-dvh bg-background text-foreground">
     <slot />
 
-<!-- comment out tawk.to to try cloudflare web tag management -->
+
     <!--Start of Tawk.to Script (conditionally loaded)-->
-  //  
-  <!--<script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault }}> 
-  //    (function () {
-  //      try {
+    <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault }}>
+      (function () {
+        try {
 
           // URL override: ?tawk=1 / ?tawk=0
-  //        var params = new URLSearchParams(window.location.search);
-  //        var qp = params.get('tawk');
-  //        if (qp === '1' || qp === '0') {
-  //          localStorage.setItem('tawk:enabled', qp);
-  //        }
+          var params = new URLSearchParams(window.location.search);
+          var qp = params.get('tawk');
+          if (qp === '1' || qp === '0') {
+            localStorage.setItem('tawk:enabled', qp);
+          }
 
-  //        var stored = localStorage.getItem('tawk:enabled');
-  //        var enabled = stored === null ? defaultEnabled : stored === '1';
-  //        if (!enabled) return;
+          var stored = localStorage.getItem('tawk:enabled');
+          var enabled = stored === null ? defaultEnabled : stored === '1';
+          if (!enabled) return;
 
           // Load Tawk
-   //       window.Tawk_API = window.Tawk_API || {};
-   //       window.Tawk_LoadStart = new Date();
+          window.Tawk_API = window.Tawk_API || {};
+          window.Tawk_LoadStart = new Date();
 
           // Some chat widgets try to update `document.title` (e.g. "1 new message").
           // Preserve the page title for UX/SEO.
-    //      (function lockTitle() {
-    //        var original = document.title;
-    //        var titleEl = document.querySelector('title');
-    //        if (!titleEl) return;
-    //        try {
-    //          var obs = new MutationObserver(function () {
-    //            if (document.title !== original) document.title = original;
-    //          });
-    //          obs.observe(titleEl, { childList: true, subtree: true, characterData: true });
-    //        } catch (e) {
+          (function lockTitle() {
+            var original = document.title;
+            var titleEl = document.querySelector('title');
+            if (!titleEl) return;
+            try {
+              var obs = new MutationObserver(function () {
+                if (document.title !== original) document.title = original;
+              });
+              obs.observe(titleEl, { childList: true, subtree: true, characterData: true });
+            } catch (e) {
               // ignore
-    //        }
-     //     })();
+            }
+          })();
 
-    //      var s1 = document.createElement('script');
-    //      var s0 = document.getElementsByTagName('script')[0];
-    //      s1.async = true;
-    //      s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
-    //      s1.charset = 'UTF-8';
-    //      s0.parentNode.insertBefore(s1, s0);
-    //    } catch (e) {
+          var s1 = document.createElement('script');
+          var s0 = document.getElementsByTagName('script')[0];
+          s1.async = true;
+          s1.src = 'https://embed.tawk.to/68a2f3cfd8c4f119281983d9/1j2u8gole';
+          s1.charset = 'UTF-8';
+          s0.parentNode.insertBefore(s1, s0);
+        } catch (e) {
           // ignore
-    //    }
-    //  })();
-  //  </script>
+        }
+      })();
+    </script>
     <!--End of Tawk.to Script-->
   </body>
 </html>
