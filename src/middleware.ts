@@ -15,7 +15,18 @@ const cspDirectives = {
     'https://static.cloudflareinsights.com',
     'https://cdn.jsdelivr.net',
   ],
-  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  'style-src': [
+    "'self'",
+    "'unsafe-inline'",
+    'https://fonts.googleapis.com',
+    'https://embed.tawk.to',
+  ],
+  'style-src-elem': [
+    "'self'",
+    "'unsafe-inline'",
+    'https://fonts.googleapis.com',
+    'https://embed.tawk.to',
+  ],
   'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
   'img-src': [
     "'self'",
