@@ -5,10 +5,22 @@
   "kv_namespaces": [
     {
       "binding": "SESSION",
-      "id": "20fb0ad2a0a94ae3bb99d3b300d3b53e"
-    }
+      "id": "20fb0ad2a0a94ae3bb99d3b300d3b53e",
+    },
   ],
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1,
+    },
+  },
 }
