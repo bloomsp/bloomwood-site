@@ -21,6 +21,7 @@ const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astr
 const pathname = Astro.url.pathname;
 const isMedia = pathname === '/media' || pathname === '/media/' || pathname.startsWith('/media/');
 const isSolutions = pathname === '/solutions' || pathname === '/solutions/' || pathname.startsWith('/solutions/');
+const disableTawkOnPage = pathname === '/solutions/bloomwood-solutions-contact-us/' || pathname === '/solutions/bloomwood-solutions-contact-us';
 
 const defaultOgImage = isMedia
   ? '/og/og-media.png'
@@ -127,7 +128,7 @@ const enableTawkByDefault = envTawk
 
 
     <!--Start of Tawk.to Script (conditionally loaded)-->
-    <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault }}>
+    <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault, disableTawkOnPage }}>
       (function () {
         try {
 
@@ -140,6 +141,7 @@ const enableTawkByDefault = envTawk
 
           var stored = localStorage.getItem('tawk:enabled');
           var enabled = stored === null ? defaultEnabled : stored === '1';
+          if (disableTawkOnPage) return;
           if (!enabled) return;
 
           // Load Tawk
