@@ -1,0 +1,98 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import { formatBytes, getDownloadAccess, logDownloadEvent, sha256Hex, type DownloadEnv } from '@/lib/server/downloads';
+
+export const prerender = false;
+
+const token = Astro.params.token ?? '';
+const env = (Astro.locals.runtime?.env ?? {}) as DownloadEnv;
+const access = await getDownloadAccess(env, token);
+
+const clientIp = Astro.request.headers.get('CF-Connecting-IP') ?? null;
+const ipHash = clientIp ? await sha256Hex(clientIp) : null;
+const userAgent = Astro.request.headers.get('user-agent') ?? null;
+const country = Astro.request.headers.get('CF-IPCountry') ?? null;
+
+if (access) {
+  await logDownloadEvent(env, {
+    tokenId: access.token.tokenId,
+    jobId: access.job.id,
+    fileId: null,
+    eventType: 'view',
+    ipHash,
+    userAgent,
+    country,
+  });
+} else if (token) {
+  await logDownloadEvent(env, {
+    tokenId: null,
+    jobId: null,
+    fileId: null,
+    eventType: 'blocked',
+    ipHash,
+    userAgent,
+    country,
+    detail: 'Invalid, expired, or revoked download token',
+  }).catch(() => {});
+}
+---
+
+<PageLayout title="Client download" description="Secure Bloomwood file download">
+  <section class="mx-auto max-w-4xl px-6 py-16">
+    <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      {access ? (
+        <>
+          <p class="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Secure download</p>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Files ready for download</h1>
+          <p class="mt-3 text-slate-600">
+            Reference <strong>{access.job.jobReference}</strong>
+            {access.job.clientName ? <> for <strong>{access.job.clientName}</strong></> : null}.
+            This link expires on {new Date(access.job.expiresAt).toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'short' })}.
+          </p>
+
+          {access.job.notes ? (
+            <div class="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+              <strong>Notes:</strong> {access.job.notes}
+            </div>
+          ) : null}
+
+          <ul class="mt-8 space-y-4">
+            {access.files.map((file) => (
+              <li class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div class="font-medium text-slate-900">{file.displayName}</div>
+                  <div class="text-sm text-slate-500">{formatBytes(file.sizeBytes)}</div>
+                </div>
+                <a
+                  class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-700"
+                  href={`/api/download/${token}/file/${file.id}`}
+                >
+                  Download
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          {access.files.length === 0 ? (
+            <p class="mt-8 text-slate-600">No files are currently attached to this download batch.</p>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <p class="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Secure download</p>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-900">This download link is not available</h1>
+          <p class="mt-3 text-slate-600">
+            The link may have expired, been revoked, or the URL may be incomplete. If you still need access,
+            please contact Bloomwood for a fresh link.
+          </p>
+          <a
+            class="mt-8 inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            href="/solutions/bloomwood-solutions-contact-us"
+          >
+            Contact Bloomwood
+          </a>
+        </>
+      )}
+    </div>
+  </section>
+</PageLayout>
