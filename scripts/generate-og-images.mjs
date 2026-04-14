@@ -163,7 +163,13 @@ async function render({ filename, ...spec }) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: size, deviceScaleFactor: 2 });
   await page.setContent(await htmlTemplate(spec), { waitUntil: "load" });
-  const outPath = path.join(outDir, filename);
+  const base = path.resolve(outDir);
+  const target = path.resolve(base, filename);
+  const relative = path.relative(base, target);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("Invalid file path");
+  }
+  const outPath = target;
   await page.screenshot({ path: outPath, type: "png" });
   await browser.close();
   console.log("wrote", path.relative(root, outPath));
