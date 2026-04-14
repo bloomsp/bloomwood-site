@@ -21,6 +21,9 @@ function isAllowedPageUrl(value) {
 }
 
 async function fetchText(url) {
+  if (!isAllowedPageUrl(url)) {
+    throw new Error(`Disallowed URL: ${url}`);
+  }
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status}`);
