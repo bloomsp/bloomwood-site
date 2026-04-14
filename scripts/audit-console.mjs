@@ -20,10 +20,35 @@ function isAllowedPageUrl(value) {
   }
 }
 
+function buildValidatedUrl(baseUrl) {
+  try {
+    // Minimal path validation
+    if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+      throw new Error('Invalid path');
+    }
+    
+    const url = new URL(baseUrl);
+    
+    // Protocol + host checks
+    const allowedDomains = ['bloomwood.com.au'];
+    if (!allowedDomains.includes(url.hostname)) {
+      throw new Error('Invalid host');
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+    
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 async function fetchText(url) {
-  const response = await fetch(url);
+  const validatedUrl = buildValidatedUrl(url);
+  const response = await fetch(validatedUrl);
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    throw new Error(`Failed to fetch ${validatedUrl}: ${response.status}`);
   }
   return response.text();
 }
