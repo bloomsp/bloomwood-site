@@ -1,20 +1,27 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
+import { env } from 'cloudflare:workers';
 
-export const prerender = true;
+export const prerender = false;
+
+const accessKey = env.DOWNLOAD_ADMIN_KEY;
+const providedKey = Astro.url.searchParams.get('key')?.trim() ?? '';
+const isAuthorized = Boolean(accessKey) && providedKey === accessKey;
 ---
 
 <PageLayout title="Download admin helper" description="Internal helper for Bloomwood client download issuance">
   <section class="space-y-8">
-    <div class="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-amber-950">
-      <h1 class="text-3xl font-semibold tracking-tight">Client download admin helper</h1>
-      <p class="mt-3 text-sm leading-6">
-        Internal helper only. This page does not upload files or write to D1 directly. It helps you prepare a
-        manifest and copy the exact CLI commands for the secure download workflow.
-      </p>
-    </div>
+    {isAuthorized ? (
+      <>
+        <div class="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-amber-950">
+          <h1 class="text-3xl font-semibold tracking-tight">Client download admin helper</h1>
+          <p class="mt-3 text-sm leading-6">
+            Internal helper only. This page does not upload files or write to D1 directly. It helps you prepare a
+            manifest and copy the exact CLI commands for the secure download workflow.
+          </p>
+        </div>
 
-    <form id="download-admin-form" class="grid gap-6 lg:grid-cols-2 not-prose">
+        <form id="download-admin-form" class="grid gap-6 lg:grid-cols-2 not-prose">
       <div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-xl font-semibold text-slate-900">Job details</h2>
 
@@ -78,9 +85,9 @@ export const prerender = true;
           </button>
         </div>
       </div>
-    </form>
+        </form>
 
-    <div class="grid gap-6 lg:grid-cols-2 not-prose">
+        <div class="grid gap-6 lg:grid-cols-2 not-prose">
       <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-xl font-semibold text-slate-900">Manifest preview</h2>
         <pre id="manifestPreview" class="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100"></pre>
@@ -90,9 +97,9 @@ export const prerender = true;
         <h2 class="text-xl font-semibold text-slate-900">CLI commands</h2>
         <pre id="commandPreview" class="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100"></pre>
       </section>
-    </div>
+        </div>
 
-    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm not-prose">
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm not-prose">
       <h2 class="text-xl font-semibold text-slate-900">Recommended workflow</h2>
       <ol class="mt-4 list-decimal space-y-2 pl-5 text-slate-700">
         <li>Upload the local recovery folder with <code>downloads:upload</code>.</li>
@@ -100,10 +107,24 @@ export const prerender = true;
         <li>Send the printed Bloomwood download URL to the client.</li>
         <li>Keep the raw URL private, regenerate instead of reusing old links.</li>
       </ol>
-    </section>
+        </section>
+      </>
+    ) : (
+      <div class="rounded-2xl border border-rose-300 bg-rose-50 p-6 text-rose-950">
+        <h1 class="text-3xl font-semibold tracking-tight">Restricted internal page</h1>
+        <p class="mt-3 text-sm leading-6">
+          This helper is intended for internal Bloomwood operations only.
+        </p>
+        <ul class="mt-4 list-disc space-y-2 pl-5 text-sm">
+          <li>Set the Cloudflare secret <code>DOWNLOAD_ADMIN_KEY</code>.</li>
+          <li>Open this page with <code>?key=&lt;your-secret&gt;</code>.</li>
+          <li>Consider protecting the route further with Cloudflare Access before public deployment.</li>
+        </ul>
+      </div>
+    )}
   </section>
 
-  <script is:inline>
+  {isAuthorized ? <script is:inline>
     const byId = (id) => document.getElementById(id);
 
     function shellQuote(value) {
@@ -198,5 +219,5 @@ export const prerender = true;
     }
 
     render();
-  </script>
+  </script> : null}
 </PageLayout>

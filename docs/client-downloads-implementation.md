@@ -110,9 +110,20 @@ Helpful flags:
 - `--dry-run`
 - `--local`
 
+## Internal admin helper
+
+A simple internal helper page now exists at:
+- `/solutions/download-admin`
+
+Current access pattern:
+- set Cloudflare secret `DOWNLOAD_ADMIN_KEY`
+- open the page with `?key=<your-secret>`
+
+This is intentionally lightweight. Before relying on it in production, I recommend adding Cloudflare Access or another stronger gate in front of the route.
+
 ## Recommended next implementation step
 
-The fastest next improvement is a tiny internal admin page so you can:
+The best next improvement is to turn the helper into a true internal tool so you can:
 - upload to R2
 - create the manifest automatically
 - issue the link in one flow
