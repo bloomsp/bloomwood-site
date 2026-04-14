@@ -13,6 +13,7 @@ Add these bindings when you wire the feature into deployment:
 - `src/lib/server/downloads.ts`
 - `src/pages/solutions/download/[token].astro`
 - `src/pages/api/download/[token]/file/[fileId].ts`
+- `scripts/upload-download-files.mjs`
 - `scripts/issue-download-link.mjs`
 
 ## What works now
@@ -87,9 +88,32 @@ Helpful flags:
 - `--local`
 - `--preview`
 
+## Upload helper usage
+
+Upload a local file or directory to R2 and emit a ready-to-issue manifest:
+
+```bash
+npm run downloads:upload -- \
+  --source ./recovery-2026-0042 \
+  --bucket bloomwood-client-downloads \
+  --job-reference 2026-0042 \
+  --client-name "Jane Citizen" \
+  --client-email jane@example.com \
+  --notes "Recovered family photos" \
+  --remote
+```
+
+Helpful flags:
+- `--manifest-out ./client-download.json`
+- `--prefix recoveries/2026-0042`
+- `--expires-days 7`
+- `--dry-run`
+- `--local`
+
 ## Recommended next implementation step
 
-The fastest next improvement is an internal upload helper or admin page so you can:
+The fastest next improvement is a tiny internal admin page so you can:
 - upload to R2
 - create the manifest automatically
 - issue the link in one flow
+- revoke/regenerate links without touching the CLI
