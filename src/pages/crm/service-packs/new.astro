@@ -18,6 +18,13 @@ const { data: serviceTypes } = supabase
   ? await supabase.from('service_types').select('id, name, item_code, pack_hours, pack_price').eq('is_service_pack', true).order('sort_order', { ascending: true })
   : { data: [] as any[] };
 
+const selectedClientId = String(Astro.url.searchParams.get('client_id') ?? '');
+const selectedServiceTypeId = String(Astro.url.searchParams.get('service_type_id') ?? '');
+const selectedServiceType = (serviceTypes ?? []).find((item: any) => item.id === selectedServiceTypeId) ?? null;
+const initialHoursPurchased = Astro.url.searchParams.get('hours_purchased') ?? (selectedServiceType?.pack_hours != null ? String(selectedServiceType.pack_hours) : '');
+const initialMinutesPurchased = Astro.url.searchParams.get('minutes_purchased') ?? (selectedServiceType?.pack_hours != null ? String(Math.round(Number(selectedServiceType.pack_hours) * 60)) : '');
+const initialPurchasePrice = Astro.url.searchParams.get('purchase_price') ?? (selectedServiceType?.pack_price != null ? String(selectedServiceType.pack_price) : '');
+
 if (Astro.request.method === 'POST') {
   if (!supabase) {
     formError = 'Supabase is not configured for this environment yet.';
@@ -71,23 +78,23 @@ if (Astro.request.method === 'POST') {
         Client
         <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
           <option value="">Select client</option>
-          {(clients ?? []).map((client: any) => <option value={client.id}>{client.display_name}</option>)}
+          {(clients ?? []).map((client: any) => <option value={client.id} selected={selectedClientId === client.id}>{client.display_name}</option>)}
         </select>
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Service pack
-        <select name="service_type_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+        <select id="service-pack-type" name="service_type_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
           <option value="">Select pack</option>
-          {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id}>{serviceType.name} ({serviceType.item_code})</option>)}
+          {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id} data-pack-hours={serviceType.pack_hours ?? ''} data-pack-price={serviceType.pack_price ?? ''} selected={selectedServiceTypeId === serviceType.id}>{serviceType.name} ({serviceType.item_code})</option>)}
         </select>
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Hours purchased
-        <input type="number" min="0" step="0.01" name="hours_purchased" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input id="service-pack-hours" type="number" min="0" step="0.01" name="hours_purchased" value={initialHoursPurchased} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Minutes purchased
-        <input type="number" min="0" name="minutes_purchased" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input id="service-pack-minutes" type="number" min="0" name="minutes_purchased" value={initialMinutesPurchased} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Minutes used
@@ -95,7 +102,7 @@ if (Astro.request.method === 'POST') {
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Purchase price
-        <input type="number" min="0" step="0.01" name="purchase_price" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input id="service-pack-price" type="number" min="0" step="0.01" name="purchase_price" value={initialPurchasePrice} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Purchase date
@@ -124,5 +131,23 @@ if (Astro.request.method === 'POST') {
       <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Create service pack</button>
     </div>
   </form>
-</CrmLayout>
 
+  <script is:inline>
+    const packSelect = document.getElementById('service-pack-type');
+    const hoursInput = document.getElementById('service-pack-hours');
+    const minutesInput = document.getElementById('service-pack-minutes');
+    const priceInput = document.getElementById('service-pack-price');
+
+    function applyPackDefaults() {
+      const selectedOption = packSelect?.selectedOptions?.[0];
+      if (!selectedOption) return;
+      const hours = selectedOption.getAttribute('data-pack-hours');
+      const price = selectedOption.getAttribute('data-pack-price');
+      if (hoursInput && hours) hoursInput.value = hours;
+      if (minutesInput && hours) minutesInput.value = String(Math.round(Number(hours) * 60));
+      if (priceInput && price) priceInput.value = price;
+    }
+
+    packSelect?.addEventListener('change', applyPackDefaults);
+  </script>
+</CrmLayout>

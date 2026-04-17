@@ -18,6 +18,8 @@ const { data: serviceTypes } = supabase
   ? await supabase.from('service_types').select('id, name, item_code, hourly_rate, billing_increment_minutes').eq('billing_mode', 'hourly').order('sort_order', { ascending: true })
   : { data: [] as any[] };
 
+const selectedClientId = String(Astro.url.searchParams.get('client_id') ?? '');
+
 if (Astro.request.method === 'POST') {
   if (!supabase) {
     formError = 'Supabase is not configured for this environment yet.';
@@ -88,14 +90,14 @@ if (Astro.request.method === 'POST') {
         Client
         <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
           <option value="">Select client</option>
-          {(clients ?? []).map((client: any) => <option value={client.id}>{client.display_name}</option>)}
+          {(clients ?? []).map((client: any) => <option value={client.id} selected={selectedClientId === client.id}>{client.display_name}</option>)}
         </select>
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Service type
-        <select name="service_type_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+        <select id="job-service-type" name="service_type_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
           <option value="">Select service</option>
-          {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id}>{serviceType.name} ({serviceType.item_code})</option>)}
+          {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id} data-hourly-rate={serviceType.hourly_rate ?? ''} data-billing-increment={serviceType.billing_increment_minutes ?? ''}>{serviceType.name} ({serviceType.item_code})</option>)}
         </select>
       </label>
       <label class="block text-sm font-medium text-slate-700">
@@ -156,11 +158,11 @@ if (Astro.request.method === 'POST') {
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Billable minutes
-        <input type="number" min="0" name="billable_minutes" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input id="job-billable-minutes" type="number" min="0" name="billable_minutes" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Calculated billable amount
-        <input type="number" min="0" step="0.01" name="calculated_billable_amount" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input id="job-calculated-billable" type="number" min="0" step="0.01" name="calculated_billable_amount" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Invoice number
@@ -191,5 +193,28 @@ if (Astro.request.method === 'POST') {
       <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Create job</button>
     </div>
   </form>
-</CrmLayout>
 
+  <script is:inline>
+    const serviceTypeSelect = document.getElementById('job-service-type');
+    const billableMinutesInput = document.getElementById('job-billable-minutes');
+    const calculatedBillableInput = document.getElementById('job-calculated-billable');
+
+    function recalculateBillableAmount() {
+      const selectedOption = serviceTypeSelect?.selectedOptions?.[0];
+      if (!selectedOption || !billableMinutesInput || !calculatedBillableInput) return;
+
+      const hourlyRate = Number(selectedOption.getAttribute('data-hourly-rate') || 0);
+      const increment = Number(selectedOption.getAttribute('data-billing-increment') || 0);
+      const minutes = Math.max(0, Number(billableMinutesInput.value || 0));
+
+      if (!hourlyRate) return;
+
+      const roundedMinutes = increment > 0 ? Math.ceil(minutes / increment) * increment : minutes;
+      const calculated = (roundedMinutes / 60) * hourlyRate;
+      calculatedBillableInput.value = calculated.toFixed(2);
+    }
+
+    serviceTypeSelect?.addEventListener('change', recalculateBillableAmount);
+    billableMinutesInput?.addEventListener('input', recalculateBillableAmount);
+  </script>
+</CrmLayout>

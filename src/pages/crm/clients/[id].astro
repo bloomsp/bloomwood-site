@@ -108,8 +108,8 @@ function formatHours(minutes: number) {
           <div class="grid gap-3 md:w-[24rem]">
             <div class="flex flex-wrap justify-end gap-2">
               <a href={`/crm/clients/${id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit client</a>
-              <a href="/crm/jobs/new" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add job</a>
-              <a href="/crm/service-packs/new" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add pack</a>
+              <a href={`/crm/jobs/new?client_id=${id}`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add job</a>
+              <a href={`/crm/service-packs/new?client_id=${id}`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add pack</a>
             </div>
             <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl bg-slate-50 p-3">
