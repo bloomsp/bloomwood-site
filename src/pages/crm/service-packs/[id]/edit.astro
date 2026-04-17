@@ -1,0 +1,127 @@
+---
+import CrmLayout from '@/layouts/CrmLayout.astro';
+
+export const prerender = false;
+
+const user = (Astro.locals as any).supabaseUser;
+if (!user) {
+  return Astro.redirect(`/crm/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+const { id } = Astro.params;
+const supabase = (Astro.locals as any).supabase;
+let formError: string | null = null;
+
+const { data: servicePack, error: servicePackError } = supabase
+  ? await supabase.from('service_packs').select('*').eq('id', id).single()
+  : { data: null, error: new Error('Supabase is not configured for this environment yet.') };
+const { data: clients } = supabase
+  ? await supabase.from('clients').select('id, display_name').order('display_name', { ascending: true })
+  : { data: [] as any[] };
+const { data: serviceTypes } = supabase
+  ? await supabase.from('service_types').select('id, name, item_code').eq('is_service_pack', true).order('sort_order', { ascending: true })
+  : { data: [] as any[] };
+
+if (servicePackError || !servicePack) {
+  formError = servicePackError instanceof Error ? servicePackError.message : 'Service pack not found.';
+}
+
+if (Astro.request.method === 'POST' && supabase && servicePack) {
+  const formData = await Astro.request.formData();
+  const payload = {
+    client_id: String(formData.get('client_id') ?? '').trim(),
+    service_type_id: String(formData.get('service_type_id') ?? '').trim(),
+    hours_purchased: Number(formData.get('hours_purchased') ?? 0) || 0,
+    minutes_purchased: Number(formData.get('minutes_purchased') ?? 0) || 0,
+    minutes_used: Number(formData.get('minutes_used') ?? 0) || 0,
+    purchase_price: Number(formData.get('purchase_price') ?? 0) || 0,
+    purchase_date: String(formData.get('purchase_date') ?? '').trim() || null,
+    expiry_date: String(formData.get('expiry_date') ?? '').trim() || null,
+    status: String(formData.get('status') ?? 'active'),
+    notes: String(formData.get('notes') ?? '').trim() || null,
+  };
+  if (!payload.client_id || !payload.service_type_id) {
+    formError = 'Client and service pack are required.';
+  } else {
+    const { error } = await supabase.from('service_packs').update(payload).eq('id', id);
+    if (error) {
+      console.error('Failed to update service pack', error);
+      formError = error.message;
+    } else {
+      return Astro.redirect(`/crm/clients/${payload.client_id}`);
+    }
+  }
+}
+---
+
+<CrmLayout title="Edit service pack" description="Edit Bloomwood CRM service pack">
+  <section class="mb-6 flex items-center justify-between gap-3">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Service packs</p>
+      <h2 class="text-2xl font-semibold tracking-tight text-slate-900">Edit service pack</h2>
+    </div>
+    {servicePack ? <a href={`/crm/clients/${servicePack.client_id}`} class="rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">Back</a> : null}
+  </section>
+
+  {formError ? <section class="mb-6 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950">{formError}</section> : null}
+
+  {servicePack ? (
+    <form method="post" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section class="grid gap-4 md:grid-cols-2">
+        <label class="block text-sm font-medium text-slate-700">
+          Client
+          <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+            {(clients ?? []).map((client: any) => <option value={client.id} selected={servicePack.client_id === client.id}>{client.display_name}</option>)}
+          </select>
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Service pack
+          <select name="service_type_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+            {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id} selected={servicePack.service_type_id === serviceType.id}>{serviceType.name} ({serviceType.item_code})</option>)}
+          </select>
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Hours purchased
+          <input type="number" min="0" step="0.01" name="hours_purchased" value={servicePack.hours_purchased ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Minutes purchased
+          <input type="number" min="0" name="minutes_purchased" value={servicePack.minutes_purchased ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Minutes used
+          <input type="number" min="0" name="minutes_used" value={servicePack.minutes_used ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Purchase price
+          <input type="number" min="0" step="0.01" name="purchase_price" value={servicePack.purchase_price ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Purchase date
+          <input type="date" name="purchase_date" value={servicePack.purchase_date ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Expiry date
+          <input type="date" name="expiry_date" value={servicePack.expiry_date ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </label>
+        <label class="block text-sm font-medium text-slate-700">
+          Status
+          <select name="status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+            <option value="active" selected={servicePack.status === 'active'}>Active</option>
+            <option value="used_up" selected={servicePack.status === 'used_up'}>Used up</option>
+            <option value="expired" selected={servicePack.status === 'expired'}>Expired</option>
+            <option value="cancelled" selected={servicePack.status === 'cancelled'}>Cancelled</option>
+          </select>
+        </label>
+        <label class="block text-sm font-medium text-slate-700 md:col-span-2">
+          Notes
+          <textarea name="notes" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">{servicePack.notes ?? ''}</textarea>
+        </label>
+      </section>
+      <div class="flex justify-end gap-3">
+        <a href={`/crm/clients/${servicePack.client_id}`} class="rounded-lg px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cancel</a>
+        <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Save service pack</button>
+      </div>
+    </form>
+  ) : null}
+</CrmLayout>

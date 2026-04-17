@@ -79,7 +79,11 @@ function formatHours(minutes: number) {
             {job.client?.display_name ? <div class="mt-3 text-sm text-slate-600">Client: <a class="font-medium text-sky-700 hover:underline" href={`/crm/clients/${job.client.id}`}>{job.client.display_name}</a></div> : null}
             {job.service_type?.name ? <div class="text-sm text-slate-600">Service: {job.service_type.name}{job.service_type.item_code ? ` (${job.service_type.item_code})` : ''}</div> : null}
           </div>
-          <div class="grid grid-cols-2 gap-3 md:w-[24rem]">
+          <div class="grid gap-3 md:w-[24rem]">
+            <div class="flex justify-end gap-2">
+              <a href={`/crm/jobs/${id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit job</a>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Status</div>
               <div class="mt-1 text-lg font-semibold text-slate-900">{job.status}</div>
@@ -95,6 +99,7 @@ function formatHours(minutes: number) {
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
               <div class="mt-1 text-sm font-semibold text-slate-900">{job.invoice_number ?? 'Not set'}</div>
+            </div>
             </div>
           </div>
         </div>

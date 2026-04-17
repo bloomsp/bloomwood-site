@@ -105,7 +105,13 @@ function formatHours(minutes: number) {
               {client.contact_name ? <p>Primary contact: {client.contact_name}{client.contact_role ? `, ${client.contact_role}` : ''}</p> : null}
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3 md:w-[24rem]">
+          <div class="grid gap-3 md:w-[24rem]">
+            <div class="flex flex-wrap justify-end gap-2">
+              <a href={`/crm/clients/${id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit client</a>
+              <a href="/crm/jobs/new" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add job</a>
+              <a href="/crm/service-packs/new" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Add pack</a>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Active jobs</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">{activeJobs}</div>
@@ -125,6 +131,7 @@ function formatHours(minutes: number) {
             <div class="rounded-xl bg-slate-50 p-3 col-span-2">
               <div class="text-xs uppercase tracking-wide text-slate-500">Service packs remaining</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalPackMinutesRemaining)} hrs</div>
+            </div>
             </div>
           </div>
         </div>
@@ -148,6 +155,7 @@ function formatHours(minutes: number) {
                       <div class="font-medium uppercase text-slate-700">{job.status}</div>
                       <div>${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</div>
                       <div>{job.invoice_number ?? 'Not invoiced'}</div>
+                      <div class="mt-2"><span class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">Edit</span></div>
                     </div>
                   </div>
                 </a>
@@ -206,6 +214,7 @@ function formatHours(minutes: number) {
                     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
                       <div>{pack.status}</div>
                       <div class="mt-1 normal-case tracking-normal">{pack.purchase_date}</div>
+                      <div class="mt-2 normal-case"><a href={`/crm/service-packs/${pack.id}/edit`} class="text-sm font-medium text-sky-700 hover:underline">Edit</a></div>
                     </div>
                   </div>
                 </div>

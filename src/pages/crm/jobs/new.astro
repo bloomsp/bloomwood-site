@@ -1,0 +1,195 @@
+---
+import CrmLayout from '@/layouts/CrmLayout.astro';
+
+export const prerender = false;
+
+const user = (Astro.locals as any).supabaseUser;
+if (!user) {
+  return Astro.redirect('/crm/login?next=%2Fcrm%2Fjobs%2Fnew');
+}
+
+const supabase = (Astro.locals as any).supabase;
+let formError: string | null = null;
+
+const { data: clients } = supabase
+  ? await supabase.from('clients').select('id, display_name').order('display_name', { ascending: true })
+  : { data: [] as any[] };
+const { data: serviceTypes } = supabase
+  ? await supabase.from('service_types').select('id, name, item_code, hourly_rate, billing_increment_minutes').eq('billing_mode', 'hourly').order('sort_order', { ascending: true })
+  : { data: [] as any[] };
+
+if (Astro.request.method === 'POST') {
+  if (!supabase) {
+    formError = 'Supabase is not configured for this environment yet.';
+  } else {
+    const formData = await Astro.request.formData();
+    const serviceTypeId = String(formData.get('service_type_id') ?? '').trim();
+    const serviceType = (serviceTypes ?? []).find((item: any) => item.id === serviceTypeId);
+    const payload = {
+      job_reference: String(formData.get('job_reference') ?? '').trim(),
+      client_id: String(formData.get('client_id') ?? '').trim(),
+      title: String(formData.get('title') ?? '').trim(),
+      category: String(formData.get('category') ?? 'support'),
+      status: String(formData.get('status') ?? 'new'),
+      priority: String(formData.get('priority') ?? 'normal'),
+      service_type_id: serviceTypeId || null,
+      device_type: String(formData.get('device_type') ?? '').trim() || null,
+      serial_number: String(formData.get('serial_number') ?? '').trim() || null,
+      intake_details: String(formData.get('intake_details') ?? '').trim() || null,
+      diagnosis: String(formData.get('diagnosis') ?? '').trim() || null,
+      resolution_summary: String(formData.get('resolution_summary') ?? '').trim() || null,
+      billable_minutes: Number(formData.get('billable_minutes') ?? 0) || 0,
+      hourly_rate_snapshot: serviceType?.hourly_rate ?? null,
+      billing_increment_minutes_snapshot: serviceType?.billing_increment_minutes ?? null,
+      calculated_billable_amount: Number(formData.get('calculated_billable_amount') ?? 0) || 0,
+      invoice_number: String(formData.get('invoice_number') ?? '').trim() || null,
+      invoice_status: String(formData.get('invoice_status') ?? 'not_invoiced'),
+      opened_at: String(formData.get('opened_at') ?? '').trim() || null,
+      closed_at: String(formData.get('closed_at') ?? '').trim() || null,
+    };
+
+    if (!payload.job_reference || !payload.client_id || !payload.title) {
+      formError = 'Job reference, client, and title are required.';
+    } else {
+      const { data, error } = await supabase.from('jobs').insert(payload).select('id').single();
+      if (error || !data) {
+        console.error('Failed to create job', error);
+        formError = error?.message ?? 'Could not save the job.';
+      } else {
+        return Astro.redirect(`/crm/jobs/${data.id}`);
+      }
+    }
+  }
+}
+---
+
+<CrmLayout title="New job" description="Create Bloomwood CRM job">
+  <section class="mb-6 flex items-center justify-between gap-3">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Jobs</p>
+      <h2 class="text-2xl font-semibold tracking-tight text-slate-900">Add job</h2>
+    </div>
+    <a href="/crm/jobs" class="rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">Back</a>
+  </section>
+
+  {formError ? <section class="mb-6 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950">{formError}</section> : null}
+
+  <form method="post" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section class="grid gap-4 md:grid-cols-2">
+      <label class="block text-sm font-medium text-slate-700">
+        Job reference
+        <input name="job_reference" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Title
+        <input name="title" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Client
+        <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="">Select client</option>
+          {(clients ?? []).map((client: any) => <option value={client.id}>{client.display_name}</option>)}
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Service type
+        <select name="service_type_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="">Select service</option>
+          {(serviceTypes ?? []).map((serviceType: any) => <option value={serviceType.id}>{serviceType.name} ({serviceType.item_code})</option>)}
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Category
+        <select name="category" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="support">Support</option>
+          <option value="recovery">Recovery</option>
+          <option value="repair">Repair</option>
+          <option value="flatpack">Flatpack</option>
+          <option value="web">Web</option>
+          <option value="writing">Writing</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Status
+        <select name="status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="new">New</option>
+          <option value="in_progress">In progress</option>
+          <option value="waiting_client">Waiting client</option>
+          <option value="waiting_parts">Waiting parts</option>
+          <option value="ready">Ready</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Priority
+        <select name="priority" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Device type
+        <input name="device_type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Serial number
+        <input name="serial_number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-2">
+      <label class="block text-sm font-medium text-slate-700 md:col-span-2">
+        Intake details
+        <textarea name="intake_details" rows="4" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></textarea>
+      </label>
+      <label class="block text-sm font-medium text-slate-700 md:col-span-2">
+        Diagnosis
+        <textarea name="diagnosis" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></textarea>
+      </label>
+      <label class="block text-sm font-medium text-slate-700 md:col-span-2">
+        Resolution summary
+        <textarea name="resolution_summary" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></textarea>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Billable minutes
+        <input type="number" min="0" name="billable_minutes" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Calculated billable amount
+        <input type="number" min="0" step="0.01" name="calculated_billable_amount" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Invoice number
+        <input name="invoice_number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Invoice status
+        <select name="invoice_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="not_invoiced">Not invoiced</option>
+          <option value="drafted">Drafted</option>
+          <option value="invoiced">Invoiced</option>
+          <option value="paid">Paid</option>
+          <option value="void">Void</option>
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Opened at
+        <input type="datetime-local" name="opened_at" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Closed at
+        <input type="datetime-local" name="closed_at" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+    </section>
+
+    <div class="flex justify-end gap-3">
+      <a href="/crm/jobs" class="rounded-lg px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cancel</a>
+      <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Create job</button>
+    </div>
+  </form>
+</CrmLayout>
+
