@@ -8,22 +8,84 @@ if (!user) {
   return Astro.redirect('/crm/login?next=%2Fcrm%2Fclients');
 }
 
-const sampleClients = [
-  {
-    id: '1',
-    name: 'Jane Citizen',
-    email: 'jane@example.com',
-    phone: '0400 000 000',
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'ACME Office Services',
-    email: 'ops@acme.example',
-    phone: '07 4000 0000',
-    status: 'lead',
-  },
-];
+const supabase = (Astro.locals as any).supabase;
+let clients: Array<{
+  id: string;
+  display_name: string;
+  client_type: string;
+  business_name: string | null;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  total_billable: number;
+  total_invoiced: number;
+  active_service_packs: number;
+}> = [];
+let loadError: string | null = null;
+
+if (!supabase) {
+  loadError = 'Supabase is not configured for this environment yet.';
+} else {
+  const { data: clientRows, error: clientsError } = await supabase
+    .from('clients')
+    .select('id, display_name, client_type, business_name, email, phone, status')
+    .order('display_name', { ascending: true });
+
+  if (clientsError) {
+    console.error('Failed to load CRM clients', clientsError);
+    loadError = 'Could not load clients yet. The CRM schema may not be applied in Supabase yet.';
+  } else {
+    const clientIds = (clientRows ?? []).map((client) => client.id);
+
+    const [jobsResult, servicePacksResult] = await Promise.all([
+      clientIds.length
+        ? supabase
+            .from('jobs')
+            .select('client_id, calculated_billable_amount, invoice_status')
+            .in('client_id', clientIds)
+        : Promise.resolve({ data: [], error: null }),
+      clientIds.length
+        ? supabase
+            .from('service_packs')
+            .select('client_id, status')
+            .in('client_id', clientIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (jobsResult.error || servicePacksResult.error) {
+      console.error('Failed to load CRM client summaries', jobsResult.error || servicePacksResult.error);
+      loadError = 'Could not load client billing summary yet. The latest CRM migration may still need to be applied.';
+    } else {
+      const jobsByClient = new Map<string, { totalBillable: number; totalInvoiced: number }>();
+      for (const job of jobsResult.data ?? []) {
+        const current = jobsByClient.get(job.client_id) ?? { totalBillable: 0, totalInvoiced: 0 };
+        const amount = Number(job.calculated_billable_amount ?? 0);
+        current.totalBillable += amount;
+        if (job.invoice_status && job.invoice_status !== 'not_invoiced' && job.invoice_status !== 'void') {
+          current.totalInvoiced += amount;
+        }
+        jobsByClient.set(job.client_id, current);
+      }
+
+      const packsByClient = new Map<string, number>();
+      for (const pack of servicePacksResult.data ?? []) {
+        if (pack.status === 'active') {
+          packsByClient.set(pack.client_id, (packsByClient.get(pack.client_id) ?? 0) + 1);
+        }
+      }
+
+      clients = (clientRows ?? []).map((client) => {
+        const billing = jobsByClient.get(client.id) ?? { totalBillable: 0, totalInvoiced: 0 };
+        return {
+          ...client,
+          total_billable: billing.totalBillable,
+          total_invoiced: billing.totalInvoiced,
+          active_service_packs: packsByClient.get(client.id) ?? 0,
+        };
+      });
+    }
+  }
+}
 ---
 
 <CrmLayout title="Clients" description="Bloomwood CRM clients">
@@ -37,16 +99,37 @@ const sampleClients = [
     </button>
   </section>
 
+  {loadError ? (
+    <section class="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+      {loadError}
+    </section>
+  ) : null}
+
+  {clients.length === 0 && !loadError ? (
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+      No clients yet. Once the CRM schema is live and records exist in Supabase, they’ll show here.
+    </section>
+  ) : null}
+
   <section class="space-y-4">
-    {sampleClients.map((client) => (
+    {clients.map((client) => (
       <a href={`/crm/clients/${client.id}`} class="block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:shadow">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">{client.name}</h3>
-            <p class="mt-1 text-sm text-slate-600">{client.email}</p>
-            <p class="text-sm text-slate-600">{client.phone}</p>
+            <div class="mb-2 flex flex-wrap gap-2">
+              <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium uppercase tracking-wide text-sky-700">{client.client_type}</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-700">{client.status}</span>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900">{client.display_name}</h3>
+            {client.business_name ? <p class="mt-1 text-sm text-slate-600">{client.business_name}</p> : null}
+            {client.email ? <p class="text-sm text-slate-600">{client.email}</p> : null}
+            {client.phone ? <p class="text-sm text-slate-600">{client.phone}</p> : null}
           </div>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-700">{client.status}</span>
+          <div class="min-w-[11rem] text-right text-sm text-slate-600">
+            <div>Total billable: <span class="font-semibold text-slate-900">${client.total_billable.toFixed(2)}</span></div>
+            <div>Total invoiced: <span class="font-semibold text-slate-900">${client.total_invoiced.toFixed(2)}</span></div>
+            <div>Active packs: <span class="font-semibold text-slate-900">{client.active_service_packs}</span></div>
+          </div>
         </div>
       </a>
     ))}
