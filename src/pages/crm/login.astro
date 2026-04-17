@@ -1,11 +1,12 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const error = Astro.url.searchParams.get('error');
 const next = Astro.url.searchParams.get('next') || '/crm';
-const configured = Boolean(import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY);
+const configured = Boolean(env.PUBLIC_SUPABASE_URL && env.PUBLIC_SUPABASE_ANON_KEY);
 const alreadyAuthenticated = Boolean((Astro.locals as any).supabaseUser);
 
 if (alreadyAuthenticated) {

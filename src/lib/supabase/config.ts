@@ -1,5 +1,7 @@
+import { env } from 'cloudflare:workers';
+
 export function getSupabaseUrl() {
-  const value = import.meta.env.PUBLIC_SUPABASE_URL;
+  const value = env.PUBLIC_SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URL;
   if (!value) {
     throw new Error('Missing PUBLIC_SUPABASE_URL');
   }
@@ -7,7 +9,7 @@ export function getSupabaseUrl() {
 }
 
 export function getSupabaseAnonKey() {
-  const value = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+  const value = env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
   if (!value) {
     throw new Error('Missing PUBLIC_SUPABASE_ANON_KEY');
   }
