@@ -38,6 +38,10 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
 
     if (error) {
       console.error('Supabase magic link request failed', error);
+      return new Response(JSON.stringify({ error: error.message || 'Magic link request failed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ ok: true }), {
@@ -46,7 +50,8 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
     });
   } catch (error) {
     console.error('CRM magic link request failed', error);
-    return new Response(JSON.stringify({ error: 'Request failed' }), {
+    const message = error instanceof Error ? error.message : 'Request failed';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
