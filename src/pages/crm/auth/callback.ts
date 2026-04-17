@@ -54,9 +54,9 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   <body style="font-family: system-ui, sans-serif; padding: 2rem; color: #0f172a;">
     <p>Signing you in...</p>
     <script type="module">
-      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+      import { createBrowserClient } from 'https://esm.sh/@supabase/ssr@0.5.2';
 
-      const supabase = createClient(${JSON.stringify(supabaseUrl)}, ${JSON.stringify(supabaseAnonKey)});
+      const supabase = createBrowserClient(${JSON.stringify(supabaseUrl)}, ${JSON.stringify(supabaseAnonKey)});
       const next = ${JSON.stringify(safeNext)};
       const loginUrl = '/crm/login';
 
