@@ -15,12 +15,6 @@
       "database_id": "REPLACE_WITH_CLIENT_DOWNLOADS_DB_ID",
     },
   ],
-  "r2_buckets": [
-    {
-      "binding": "CLIENT_DOWNLOADS_BUCKET",
-      "bucket_name": "bloomwood-client-downloads",
-    },
-  ],
   "vars": {
     "PUBLIC_SUPABASE_URL": "https://woqyuqikeijvnmrhzfux.supabase.co",
     "PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_zjSvVRfWP-T-7zms9aUqeg_fN4xv8Eh",
