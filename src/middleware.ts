@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 const cspDirectives = {
   'default-src': ["'self'"],
@@ -64,6 +65,7 @@ const cspDirectives = {
     'https://va.tawk.to',
     'https://cloudflareinsights.com',
     'https://static.cloudflareinsights.com',
+    'https://*.supabase.co',
     'wss://*.tawk.to',
   ],
   'frame-src': [
@@ -83,7 +85,33 @@ const contentSecurityPolicy = Object.entries(cspDirectives)
   .map(([directive, values]) => `${directive} ${values.join(' ')}`)
   .join('; ');
 
-export const onRequest = defineMiddleware(async (_, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
+  let supabaseUser = null;
+
+  if (import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY) {
+    try {
+      const supabase = createSupabaseServerClient(context);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      supabaseUser = user;
+      context.locals.supabase = supabase;
+      context.locals.supabaseUser = user;
+    } catch (error) {
+      console.error('Supabase middleware check failed', error);
+    }
+  }
+
+  const pathname = context.url.pathname;
+  const isCrmPath = pathname === '/crm' || pathname.startsWith('/crm/');
+  const isCrmLogin = pathname === '/crm/login';
+  const isCrmCallback = pathname === '/crm/auth/callback';
+
+  if (isCrmPath && !isCrmLogin && !isCrmCallback && !supabaseUser) {
+    const nextPath = pathname === '/crm' ? '/crm' : pathname;
+    return context.redirect(`/crm/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
   const response = await next();
   const contentType = response.headers.get('content-type') ?? '';
 

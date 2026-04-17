@@ -1,0 +1,87 @@
+---
+import CrmLayout from '@/layouts/CrmLayout.astro';
+
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+const next = Astro.url.searchParams.get('next') || '/crm';
+const configured = Boolean(import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY);
+const alreadyAuthenticated = Boolean((Astro.locals as any).supabaseUser);
+
+if (alreadyAuthenticated) {
+  return Astro.redirect(next.startsWith('/crm') ? next : '/crm');
+}
+---
+
+<CrmLayout title="CRM Login" description="Internal Bloomwood CRM login">
+  <section class="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Internal access</p>
+    <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Sign in to Bloomwood CRM</h2>
+    <p class="mt-3 text-sm leading-6 text-slate-600">
+      Use your approved email address and we’ll send you a magic login link.
+    </p>
+
+    {!configured ? (
+      <div class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+        Supabase env vars are not configured yet. Add <code>PUBLIC_SUPABASE_URL</code> and <code>PUBLIC_SUPABASE_ANON_KEY</code> before using CRM auth.
+      </div>
+    ) : null}
+
+    {error ? (
+      <div class="mt-6 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950">
+        Login failed: {error.replace(/_/g, ' ')}
+      </div>
+    ) : null}
+
+    <form id="crm-login-form" class="mt-6 space-y-4">
+      <input type="hidden" name="next" value={next} />
+      <label class="block text-sm font-medium text-slate-700">
+        Email address
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          placeholder="you@bloomwood.com.au"
+        />
+      </label>
+      <button
+        type="submit"
+        class="inline-flex w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        disabled={!configured}
+      >
+        Send magic link
+      </button>
+      <p id="crm-login-message" class="text-sm text-slate-600"></p>
+    </form>
+  </section>
+
+  <script is:inline>
+    const form = document.getElementById('crm-login-form');
+    const message = document.getElementById('crm-login-message');
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const email = String(formData.get('email') || '').trim();
+      const next = String(formData.get('next') || '/crm');
+
+      message.textContent = 'Sending magic link...';
+
+      const response = await fetch('/api/crm/request-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, next }),
+      });
+
+      if (!response.ok) {
+        message.textContent = 'Could not send link right now. Please try again.';
+        return;
+      }
+
+      message.textContent = 'Check your email for the Bloomwood CRM login link.';
+      form.reset();
+    });
+  </script>
+</CrmLayout>
