@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabasePublicClient } from '@/lib/supabase/admin';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, url, cookies }) => {
+export const POST: APIRoute = async ({ request, url }) => {
   try {
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
       });
     }
 
-    const supabase = createSupabaseServerClient({ cookies } as any);
+    const supabase = createSupabasePublicClient();
     const redirectTo = new URL('/crm/auth/callback', url.origin);
     redirectTo.searchParams.set('next', next.startsWith('/crm') ? next : '/crm');
 
