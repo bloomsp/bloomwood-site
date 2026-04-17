@@ -63,6 +63,25 @@ if (Astro.request.method === 'POST' && supabase) {
       }
     }
   }
+
+  if (action === 'complete-task') {
+    const taskId = String(formData.get('task_id') ?? '').trim();
+    if (!taskId) {
+      loadError = 'Task id is required.';
+    } else {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: 'done', completed_at: new Date().toISOString() })
+        .eq('id', taskId)
+        .eq('client_id', id);
+      if (error) {
+        console.error('Failed to complete client task', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/clients/${id}`);
+      }
+    }
+  }
 }
 
 if (!supabase) {
@@ -265,6 +284,13 @@ function formatHours(minutes: number) {
                     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
                       <div>{task.status}</div>
                       {task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
+                      {task.status === 'open' ? (
+                        <form method="post" class="mt-2">
+                          <input type="hidden" name="action" value="complete-task" />
+                          <input type="hidden" name="task_id" value={task.id} />
+                          <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+                        </form>
+                      ) : null}
                     </div>
                   </div>
                 </div>
