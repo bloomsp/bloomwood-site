@@ -8,13 +8,6 @@
       "id": "164603dba67945b3b3bf853beba8fed9",
     },
   ],
-  "d1_databases": [
-    {
-      "binding": "CLIENT_DOWNLOADS_DB",
-      "database_name": "CLIENT_DOWNLOADS_DB",
-      "database_id": "REPLACE_WITH_CLIENT_DOWNLOADS_DB_ID",
-    },
-  ],
   "vars": {
     "PUBLIC_SUPABASE_URL": "https://woqyuqikeijvnmrhzfux.supabase.co",
     "PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_zjSvVRfWP-T-7zms9aUqeg_fN4xv8Eh",
