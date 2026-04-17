@@ -24,7 +24,17 @@ values
   ('aaaaaaa7-7777-7777-7777-777777777777', 'service-pack-adventurer', 'Adventurer 10 hours', 'PACK-ADVENTURER-10', 'fixed_bundle', null, null, true, 10, 1080, 110),
   ('aaaaaaa8-8888-8888-8888-888888888888', 'service-pack-hero', 'Hero 20 hours', 'PACK-HERO-20', 'fixed_bundle', null, null, true, 20, 2040, 120),
   ('aaaaaaa9-9999-9999-9999-999999999999', 'service-pack-legend', 'Legend 40 hours', 'PACK-LEGEND-40', 'fixed_bundle', null, null, true, 40, 3840, 130)
-on conflict (id) do nothing;
+on conflict (slug) do update
+set
+  name = excluded.name,
+  item_code = excluded.item_code,
+  billing_mode = excluded.billing_mode,
+  hourly_rate = excluded.hourly_rate,
+  billing_increment_minutes = excluded.billing_increment_minutes,
+  is_service_pack = excluded.is_service_pack,
+  pack_hours = excluded.pack_hours,
+  pack_price = excluded.pack_price,
+  sort_order = excluded.sort_order; 
 
 insert into public.clients (
   id,
