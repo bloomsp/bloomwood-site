@@ -10,41 +10,21 @@ insert into public.service_types (
   hourly_rate,
   billing_increment_minutes,
   is_service_pack,
+  pack_hours,
+  pack_price,
   sort_order
 )
 values
-  ('aaaaaaa1-1111-1111-1111-111111111111', 'onsite-support', 'Onsite support', 'IT120', 'hourly', 120.00, 30, false, 10),
-  ('aaaaaaa2-2222-2222-2222-222222222222', 'remote-support', 'Remote support', 'ITRemote', 'hourly', 80.00, 15, false, 20),
-  ('aaaaaaa3-3333-3333-3333-333333333333', 'onsite-support-special-80', 'Onsite Support special 80', 'ITSpec80', 'hourly', 80.00, 15, false, 30),
-  ('aaaaaaa4-4444-4444-4444-444444444444', 'onsite-support-special-100', 'Onsite Support special 100', 'IT100', 'hourly', 100.00, 30, false, 40),
-  ('aaaaaaa5-5555-5555-5555-555555555555', 'flatpack-furniture-assembly', 'Flatpack furniture assembly', 'FA40', 'hourly', 40.00, 30, false, 50),
-  ('aaaaaaa6-6666-6666-6666-666666666666', 'service-pack-explorer', 'Explorer 5 hours', 'PACK-EXPLORER-5', 'fixed_bundle', null, null, true, 100),
-  ('aaaaaaa7-7777-7777-7777-777777777777', 'service-pack-adventurer', 'Adventurer 10 hours', 'PACK-ADVENTURER-10', 'fixed_bundle', null, null, true, 110),
-  ('aaaaaaa8-8888-8888-8888-888888888888', 'service-pack-hero', 'Hero 20 hours', 'PACK-HERO-20', 'fixed_bundle', null, null, true, 120),
-  ('aaaaaaa9-9999-9999-9999-999999999999', 'service-pack-legend', 'Legend 40 hours', 'PACK-LEGEND-40', 'fixed_bundle', null, null, true, 130)
+  ('aaaaaaa1-1111-1111-1111-111111111111', 'onsite-support', 'Onsite support', 'IT120', 'hourly', 120.00, 30, false, null, null, 10),
+  ('aaaaaaa2-2222-2222-2222-222222222222', 'remote-support', 'Remote support', 'ITRemote', 'hourly', 80.00, 15, false, null, null, 20),
+  ('aaaaaaa3-3333-3333-3333-333333333333', 'onsite-support-special-80', 'Onsite Support special 80', 'ITSpec80', 'hourly', 80.00, 15, false, null, null, 30),
+  ('aaaaaaa4-4444-4444-4444-444444444444', 'onsite-support-special-100', 'Onsite Support special 100', 'IT100', 'hourly', 100.00, 30, false, null, null, 40),
+  ('aaaaaaa5-5555-5555-5555-555555555555', 'flatpack-furniture-assembly', 'Flatpack furniture assembly', 'FA40', 'hourly', 40.00, 30, false, null, null, 50),
+  ('aaaaaaa6-6666-6666-6666-666666666666', 'service-pack-explorer', 'Explorer 5 hours', 'PACK-EXPLORER-5', 'fixed_bundle', null, null, true, 5, 570, 100),
+  ('aaaaaaa7-7777-7777-7777-777777777777', 'service-pack-adventurer', 'Adventurer 10 hours', 'PACK-ADVENTURER-10', 'fixed_bundle', null, null, true, 10, 1080, 110),
+  ('aaaaaaa8-8888-8888-8888-888888888888', 'service-pack-hero', 'Hero 20 hours', 'PACK-HERO-20', 'fixed_bundle', null, null, true, 20, 2040, 120),
+  ('aaaaaaa9-9999-9999-9999-999999999999', 'service-pack-legend', 'Legend 40 hours', 'PACK-LEGEND-40', 'fixed_bundle', null, null, true, 40, 3840, 130)
 on conflict (id) do nothing;
-
-update public.service_types
-set pack_hours = case id
-  when 'aaaaaaa6-6666-6666-6666-666666666666' then 5
-  when 'aaaaaaa7-7777-7777-7777-777777777777' then 10
-  when 'aaaaaaa8-8888-8888-8888-888888888888' then 20
-  when 'aaaaaaa9-9999-9999-9999-999999999999' then 40
-  else pack_hours
-end,
-pack_price = case id
-  when 'aaaaaaa6-6666-6666-6666-666666666666' then 570
-  when 'aaaaaaa7-7777-7777-7777-777777777777' then 1080
-  when 'aaaaaaa8-8888-8888-8888-888888888888' then 2040
-  when 'aaaaaaa9-9999-9999-9999-999999999999' then 3840
-  else pack_price
-end
-where id in (
-  'aaaaaaa6-6666-6666-6666-666666666666',
-  'aaaaaaa7-7777-7777-7777-777777777777',
-  'aaaaaaa8-8888-8888-8888-888888888888',
-  'aaaaaaa9-9999-9999-9999-999999999999'
-);
 
 insert into public.clients (
   id,

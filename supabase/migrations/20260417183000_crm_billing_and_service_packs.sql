@@ -205,17 +205,17 @@ on public.service_pack_usage for update
 using (auth.role() = 'authenticated')
 with check (auth.role() = 'authenticated');
 
-insert into public.service_types (slug, name, item_code, billing_mode, hourly_rate, billing_increment_minutes, is_service_pack, sort_order)
+insert into public.service_types (slug, name, item_code, billing_mode, hourly_rate, billing_increment_minutes, is_service_pack, pack_hours, pack_price, sort_order)
 values
-  ('onsite-support', 'Onsite support', 'IT120', 'hourly', 120.00, 30, false, 10),
-  ('remote-support', 'Remote support', 'ITRemote', 'hourly', 80.00, 15, false, 20),
-  ('onsite-support-special-80', 'Onsite Support special 80', 'ITSpec80', 'hourly', 80.00, 15, false, 30),
-  ('onsite-support-special-100', 'Onsite Support special 100', 'IT100', 'hourly', 100.00, 30, false, 40),
-  ('flatpack-furniture-assembly', 'Flatpack furniture assembly', 'FA40', 'hourly', 40.00, 30, false, 50),
-  ('service-pack-explorer', 'Explorer 5 hours', 'PACK-EXPLORER-5', 'fixed_bundle', null, null, true, 100),
-  ('service-pack-adventurer', 'Adventurer 10 hours', 'PACK-ADVENTURER-10', 'fixed_bundle', null, null, true, 110),
-  ('service-pack-hero', 'Hero 20 hours', 'PACK-HERO-20', 'fixed_bundle', null, null, true, 120),
-  ('service-pack-legend', 'Legend 40 hours', 'PACK-LEGEND-40', 'fixed_bundle', null, null, true, 130)
+  ('onsite-support', 'Onsite support', 'IT120', 'hourly', 120.00, 30, false, null, null, 10),
+  ('remote-support', 'Remote support', 'ITRemote', 'hourly', 80.00, 15, false, null, null, 20),
+  ('onsite-support-special-80', 'Onsite Support special 80', 'ITSpec80', 'hourly', 80.00, 15, false, null, null, 30),
+  ('onsite-support-special-100', 'Onsite Support special 100', 'IT100', 'hourly', 100.00, 30, false, null, null, 40),
+  ('flatpack-furniture-assembly', 'Flatpack furniture assembly', 'FA40', 'hourly', 40.00, 30, false, null, null, 50),
+  ('service-pack-explorer', 'Explorer 5 hours', 'PACK-EXPLORER-5', 'fixed_bundle', null, null, true, 5, 570, 100),
+  ('service-pack-adventurer', 'Adventurer 10 hours', 'PACK-ADVENTURER-10', 'fixed_bundle', null, null, true, 10, 1080, 110),
+  ('service-pack-hero', 'Hero 20 hours', 'PACK-HERO-20', 'fixed_bundle', null, null, true, 20, 2040, 120),
+  ('service-pack-legend', 'Legend 40 hours', 'PACK-LEGEND-40', 'fixed_bundle', null, null, true, 40, 3840, 130)
 on conflict (slug) do update
 set
   name = excluded.name,
@@ -224,26 +224,6 @@ set
   hourly_rate = excluded.hourly_rate,
   billing_increment_minutes = excluded.billing_increment_minutes,
   is_service_pack = excluded.is_service_pack,
+  pack_hours = excluded.pack_hours,
+  pack_price = excluded.pack_price,
   sort_order = excluded.sort_order;
-
-update public.service_types
-set pack_hours = case slug
-  when 'service-pack-explorer' then 5
-  when 'service-pack-adventurer' then 10
-  when 'service-pack-hero' then 20
-  when 'service-pack-legend' then 40
-  else pack_hours
-end,
-pack_price = case slug
-  when 'service-pack-explorer' then 570
-  when 'service-pack-adventurer' then 1080
-  when 'service-pack-hero' then 2040
-  when 'service-pack-legend' then 3840
-  else pack_price
-end
-where slug in (
-  'service-pack-explorer',
-  'service-pack-adventurer',
-  'service-pack-hero',
-  'service-pack-legend'
-);
