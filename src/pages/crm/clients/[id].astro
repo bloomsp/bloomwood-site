@@ -18,6 +18,53 @@ let tasks: any[] = [];
 let servicePacks: any[] = [];
 let loadError: string | null = null;
 
+if (Astro.request.method === 'POST' && supabase) {
+  const formData = await Astro.request.formData();
+  const action = String(formData.get('action') ?? '');
+
+  if (action === 'add-note') {
+    const payload = {
+      client_id: id,
+      note_type: String(formData.get('note_type') ?? 'internal'),
+      body: String(formData.get('body') ?? '').trim(),
+    };
+
+    if (!payload.body) {
+      loadError = 'Note body is required.';
+    } else {
+      const { error } = await supabase.from('job_notes').insert(payload);
+      if (error) {
+        console.error('Failed to create client note', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/clients/${id}`);
+      }
+    }
+  }
+
+  if (action === 'add-task') {
+    const payload = {
+      client_id: id,
+      title: String(formData.get('title') ?? '').trim(),
+      details: String(formData.get('details') ?? '').trim() || null,
+      status: String(formData.get('status') ?? 'open'),
+      due_at: String(formData.get('due_at') ?? '').trim() || null,
+    };
+
+    if (!payload.title) {
+      loadError = 'Task title is required.';
+    } else {
+      const { error } = await supabase.from('tasks').insert(payload);
+      if (error) {
+        console.error('Failed to create client task', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/clients/${id}`);
+      }
+    }
+  }
+}
+
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
@@ -165,6 +212,21 @@ function formatHours(minutes: number) {
 
           <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Recent notes</h3>
+            <form method="post" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <input type="hidden" name="action" value="add-note" />
+              <div class="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <select name="note_type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <option value="call">Call</option>
+                  <option value="email">Email</option>
+                  <option value="onsite">Onsite</option>
+                  <option value="internal" selected>Internal</option>
+                  <option value="recovery">Recovery</option>
+                  <option value="delivery">Delivery</option>
+                </select>
+                <input name="body" placeholder="Add a quick note" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Add note</button>
+              </div>
+            </form>
             <div class="mt-4 space-y-3">
               {notes.length === 0 ? <p class="text-sm text-slate-600">No notes yet.</p> : null}
               {notes.map((note) => (
@@ -180,6 +242,17 @@ function formatHours(minutes: number) {
         <div class="space-y-6">
           <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Open tasks</h3>
+            <form method="post" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <input type="hidden" name="action" value="add-task" />
+              <div class="grid gap-3 md:grid-cols-2">
+                <input name="title" placeholder="Task title" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input type="datetime-local" name="due_at" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input name="details" placeholder="Task details" class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2" />
+              </div>
+              <div class="mt-3 flex justify-end">
+                <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Add task</button>
+              </div>
+            </form>
             <div class="mt-4 space-y-3">
               {tasks.length === 0 ? <p class="text-sm text-slate-600">No tasks yet.</p> : null}
               {tasks.map((task) => (
