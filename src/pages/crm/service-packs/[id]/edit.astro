@@ -12,6 +12,14 @@ const { id } = Astro.params;
 const supabase = (Astro.locals as any).supabase;
 let formError: string | null = null;
 
+function addTwelveMonths(dateString: string | null) {
+  if (!dateString) return null;
+  const date = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setMonth(date.getMonth() + 12);
+  return date.toISOString().slice(0, 10);
+}
+
 const { data: servicePack, error: servicePackError } = supabase
   ? await supabase.from('service_packs').select('*').eq('id', id).single()
   : { data: null, error: new Error('Supabase is not configured for this environment yet.') };
@@ -40,6 +48,7 @@ if (Astro.request.method === 'POST' && supabase && servicePack) {
     status: String(formData.get('status') ?? 'active'),
     notes: String(formData.get('notes') ?? '').trim() || null,
   };
+  payload.expiry_date = payload.expiry_date || addTwelveMonths(payload.purchase_date);
   if (!payload.client_id || !payload.service_type_id) {
     formError = 'Client and service pack are required.';
   } else {
@@ -98,11 +107,11 @@ if (Astro.request.method === 'POST' && supabase && servicePack) {
         </label>
         <label class="block text-sm font-medium text-slate-700">
           Purchase date
-          <input type="date" name="purchase_date" value={servicePack.purchase_date ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+          <input id="service-pack-purchase-date" type="date" name="purchase_date" value={servicePack.purchase_date ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
         </label>
         <label class="block text-sm font-medium text-slate-700">
           Expiry date
-          <input type="date" name="expiry_date" value={servicePack.expiry_date ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+          <input id="service-pack-expiry-date" type="date" name="expiry_date" value={servicePack.expiry_date ?? addTwelveMonths(servicePack.purchase_date) ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
         </label>
         <label class="block text-sm font-medium text-slate-700">
           Status
@@ -124,4 +133,23 @@ if (Astro.request.method === 'POST' && supabase && servicePack) {
       </div>
     </form>
   ) : null}
+
+  <script is:inline>
+    const purchaseDateInput = document.getElementById('service-pack-purchase-date');
+    const expiryDateInput = document.getElementById('service-pack-expiry-date');
+
+    function addTwelveMonths(dateString) {
+      if (!dateString) return '';
+      const date = new Date(`${dateString}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return '';
+      date.setMonth(date.getMonth() + 12);
+      return date.toISOString().slice(0, 10);
+    }
+
+    purchaseDateInput?.addEventListener('change', () => {
+      if (expiryDateInput && purchaseDateInput?.value) {
+        expiryDateInput.value = addTwelveMonths(purchaseDateInput.value);
+      }
+    });
+  </script>
 </CrmLayout>

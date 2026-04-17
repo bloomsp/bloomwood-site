@@ -16,7 +16,12 @@ let jobs: any[] = [];
 let notes: any[] = [];
 let tasks: any[] = [];
 let servicePacks: any[] = [];
+let availableServicePacks: any[] = [];
 let loadError: string | null = null;
+
+function getPackMinutesPurchased(pack: any) {
+  return Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60);
+}
 
 if (Astro.request.method === 'POST' && supabase) {
   const formData = await Astro.request.formData();
@@ -43,12 +48,16 @@ if (Astro.request.method === 'POST' && supabase) {
   }
 
   if (action === 'add-task') {
+    const timeHours = Number(formData.get('time_hours') ?? 0) || 0;
+    const timeMinutes = Number(formData.get('time_minutes') ?? 0) || 0;
     const payload = {
       client_id: id,
+      service_pack_id: String(formData.get('service_pack_id') ?? '').trim() || null,
       title: String(formData.get('title') ?? '').trim(),
       details: String(formData.get('details') ?? '').trim() || null,
       status: String(formData.get('status') ?? 'open'),
       due_at: String(formData.get('due_at') ?? '').trim() || null,
+      time_taken_minutes: (timeHours * 60) + timeMinutes,
     };
 
     if (!payload.title) {
@@ -66,18 +75,46 @@ if (Astro.request.method === 'POST' && supabase) {
 
   if (action === 'complete-task') {
     const taskId = String(formData.get('task_id') ?? '').trim();
+    const timeHours = Number(formData.get('time_hours') ?? 0) || 0;
+    const timeMinutes = Number(formData.get('time_minutes') ?? 0) || 0;
+    const servicePackId = String(formData.get('service_pack_id') ?? '').trim() || null;
+    const totalMinutes = (timeHours * 60) + timeMinutes;
     if (!taskId) {
       loadError = 'Task id is required.';
     } else {
       const { error } = await supabase
         .from('tasks')
-        .update({ status: 'done', completed_at: new Date().toISOString() })
+        .update({
+          status: 'done',
+          completed_at: new Date().toISOString(),
+          time_taken_minutes: totalMinutes,
+          service_pack_id: servicePackId,
+        })
         .eq('id', taskId)
         .eq('client_id', id);
       if (error) {
         console.error('Failed to complete client task', error);
         loadError = error.message;
       } else {
+        if (servicePackId && totalMinutes > 0) {
+          const { data: servicePack } = await supabase
+            .from('service_packs')
+            .select('minutes_used, minutes_purchased')
+            .eq('id', servicePackId)
+            .single();
+
+          if (servicePack) {
+            const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + totalMinutes;
+            const totalPurchased = Number(servicePack.minutes_purchased ?? 0);
+            await supabase
+              .from('service_packs')
+              .update({
+                minutes_used: newMinutesUsed,
+                status: newMinutesUsed >= totalPurchased ? 'used_up' : 'active',
+              })
+              .eq('id', servicePackId);
+          }
+        }
         return Astro.redirect(`/crm/clients/${id}`);
       }
     }
@@ -122,8 +159,9 @@ if (!supabase) {
     tasks = tasksResult.data ?? [];
     servicePacks = (packsResult.data ?? []).map((pack) => ({
       ...pack,
-      minutes_remaining: Math.max(0, Number(pack.minutes_purchased ?? 0) - Number(pack.minutes_used ?? 0)),
+      minutes_remaining: Math.max(0, getPackMinutesPurchased(pack) - Number(pack.minutes_used ?? 0)),
     }));
+    availableServicePacks = servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
   }
 }
 
@@ -265,8 +303,32 @@ function formatHours(minutes: number) {
               <input type="hidden" name="action" value="add-task" />
               <div class="grid gap-3 md:grid-cols-2">
                 <input name="title" placeholder="Task title" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                <input type="datetime-local" name="due_at" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <label class="text-sm text-slate-700">
+                  <span class="mb-1 block">Due date</span>
+                  <input type="datetime-local" name="due_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                </label>
                 <input name="details" placeholder="Task details" class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2" />
+                <label class="text-sm text-slate-700">
+                  <span class="mb-1 block">Hours</span>
+                  <select name="time_hours" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}</option>)}
+                  </select>
+                </label>
+                <label class="text-sm text-slate-700">
+                  <span class="mb-1 block">Minutes</span>
+                  <select name="time_minutes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
+                  </select>
+                </label>
+                <label class="text-sm text-slate-700 md:col-span-2">
+                  <span class="mb-1 block">Service pack</span>
+                  <select name="service_pack_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="">No service pack</option>
+                    {availableServicePacks.map((pack) => (
+                      <option value={pack.id}>{pack.service_type?.name ?? 'Service pack'} ({formatHours(pack.minutes_remaining)} hrs remaining)</option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <div class="mt-3 flex justify-end">
                 <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Add task</button>
@@ -288,7 +350,21 @@ function formatHours(minutes: number) {
                         <form method="post" class="mt-2">
                           <input type="hidden" name="action" value="complete-task" />
                           <input type="hidden" name="task_id" value={task.id} />
-                          <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+                          <div class="mt-2 grid gap-2">
+                            <select name="time_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                              {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}h</option>)}
+                            </select>
+                            <select name="time_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                              {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}m</option>)}
+                            </select>
+                            <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                              <option value="">No pack</option>
+                              {availableServicePacks.map((pack) => (
+                                <option value={pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
+                              ))}
+                            </select>
+                            <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+                          </div>
                         </form>
                       ) : null}
                     </div>
@@ -309,6 +385,7 @@ function formatHours(minutes: number) {
                       <div class="text-sm font-semibold text-slate-900">{pack.service_type?.name ?? 'Service pack'}</div>
                       <div class="text-sm text-slate-600">Purchased: {pack.hours_purchased} hrs for ${Number(pack.purchase_price ?? 0).toFixed(2)}</div>
                       <div class="text-sm text-slate-600">Used: {formatHours(Number(pack.minutes_used ?? 0))} hrs, remaining: {formatHours(pack.minutes_remaining)} hrs</div>
+                      <div class="text-sm text-slate-600">Expires: {pack.expiry_date ?? '12 months from purchase'}</div>
                     </div>
                     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
                       <div>{pack.status}</div>

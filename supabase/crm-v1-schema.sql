@@ -126,19 +126,23 @@ create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   client_id uuid references public.clients(id) on delete cascade,
   job_id uuid references public.jobs(id) on delete cascade,
+  service_pack_id uuid references public.service_packs(id) on delete set null,
   title text not null,
   details text,
   status text not null default 'open' check (status in ('open', 'done', 'cancelled')),
   due_at timestamptz,
+  time_taken_minutes integer not null default 0,
   completed_at timestamptz,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint tasks_client_or_job_required check (client_id is not null or job_id is not null)
+  constraint tasks_client_or_job_required check (client_id is not null or job_id is not null),
+  constraint tasks_time_taken_minutes_check check (time_taken_minutes >= 0)
 );
 
 create index if not exists idx_tasks_client_id on public.tasks(client_id);
 create index if not exists idx_tasks_job_id on public.tasks(job_id);
+create index if not exists idx_tasks_service_pack_id on public.tasks(service_pack_id);
 create index if not exists idx_tasks_status on public.tasks(status);
 create index if not exists idx_tasks_due_at on public.tasks(due_at);
 

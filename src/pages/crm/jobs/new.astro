@@ -20,6 +20,18 @@ const { data: serviceTypes } = supabase
 
 const selectedClientId = String(Astro.url.searchParams.get('client_id') ?? '');
 
+function makeDefaultJobReference() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `JOB-${y}${m}${d}-${hh}${mm}`;
+}
+
+const defaultJobReference = makeDefaultJobReference();
+
 if (Astro.request.method === 'POST') {
   if (!supabase) {
     formError = 'Supabase is not configured for this environment yet.';
@@ -28,7 +40,7 @@ if (Astro.request.method === 'POST') {
     const serviceTypeId = String(formData.get('service_type_id') ?? '').trim();
     const serviceType = (serviceTypes ?? []).find((item: any) => item.id === serviceTypeId);
     const payload = {
-      job_reference: String(formData.get('job_reference') ?? '').trim(),
+      job_reference: String(formData.get('job_reference') ?? '').trim() || makeDefaultJobReference(),
       client_id: String(formData.get('client_id') ?? '').trim(),
       title: String(formData.get('title') ?? '').trim(),
       category: String(formData.get('category') ?? 'support'),
@@ -50,8 +62,8 @@ if (Astro.request.method === 'POST') {
       closed_at: String(formData.get('closed_at') ?? '').trim() || null,
     };
 
-    if (!payload.job_reference || !payload.client_id || !payload.title) {
-      formError = 'Job reference, client, and title are required.';
+    if (!payload.client_id || !payload.title) {
+      formError = 'Client and title are required.';
     } else {
       const { data, error } = await supabase.from('jobs').insert(payload).select('id').single();
       if (error || !data) {
@@ -80,7 +92,8 @@ if (Astro.request.method === 'POST') {
     <section class="grid gap-4 md:grid-cols-2">
       <label class="block text-sm font-medium text-slate-700">
         Job reference
-        <input name="job_reference" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input name="job_reference" value={defaultJobReference} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <span class="mt-1 block text-xs font-normal text-slate-500">Auto-generated, but still editable.</span>
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Title
