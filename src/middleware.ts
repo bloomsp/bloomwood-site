@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { env } from 'cloudflare:workers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 const cspDirectives = {
@@ -91,7 +92,7 @@ const contentSecurityPolicy = Object.entries(cspDirectives)
 export const onRequest = defineMiddleware(async (context, next) => {
   let supabaseUser = null;
 
-  if (import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY) {
+  if (env.PUBLIC_SUPABASE_URL && env.PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = createSupabaseServerClient(context);
       const {
