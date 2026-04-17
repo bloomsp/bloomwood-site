@@ -16,6 +16,7 @@ const cspDirectives = {
     'https://embed.tawk.to',
     'https://static.cloudflareinsights.com',
     'https://cdn.jsdelivr.net',
+    'https://esm.sh',
   ],
   'script-src-elem': [
     "'self'",
@@ -26,6 +27,7 @@ const cspDirectives = {
     'https://embed.tawk.to',
     'https://static.cloudflareinsights.com',
     'https://cdn.jsdelivr.net',
+    'https://esm.sh',
   ],
   'style-src': [
     "'self'",
@@ -66,6 +68,7 @@ const cspDirectives = {
     'https://cloudflareinsights.com',
     'https://static.cloudflareinsights.com',
     'https://*.supabase.co',
+    'https://esm.sh',
     'wss://*.tawk.to',
   ],
   'frame-src': [
