@@ -17,6 +17,7 @@ let tasks: any[] = [];
 let fileDeliveries: any[] = [];
 let packUsage: any[] = [];
 let loadError: string | null = null;
+let clientPackTasks: any[] = [];
 
 function roundBillableMinutes(minutes: number, increment: number | null) {
   if (!increment || increment <= 0) return minutes;
@@ -281,6 +282,15 @@ if (supabase && job?.client?.id) {
     ...pack,
     minutes_remaining: Math.max(0, (Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60)) - Number(pack.minutes_used ?? 0)),
   })).filter((pack) => pack.minutes_remaining > 0);
+
+  const { data: packTasksData } = await supabase
+    .from('tasks')
+    .select('id, service_pack_id, billable_minutes, completed_at')
+    .eq('client_id', job.client.id)
+    .not('service_pack_id', 'is', null)
+    .order('completed_at', { ascending: true, nullsFirst: false });
+
+  clientPackTasks = packTasksData ?? [];
 }
 
 function formatHours(minutes: number) {
@@ -298,6 +308,28 @@ const estimatedBillableAmount = getCalculatedAmount(
 );
 const actualBillableAmount = getCalculatedAmount(
   actualBillableMinutes,
+  Number(job?.hourly_rate_snapshot ?? 0),
+  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
+);
+const packPurchasedMinutesMap = new Map<string, number>([...servicePacks.map((pack) => [pack.id, Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60)])]);
+const remainingPackMinutesMap = new Map<string, number>([...packPurchasedMinutesMap.entries()]);
+const taskBillingBreakdown = new Map<string, { packCoveredMinutes: number; overflowBillableMinutes: number }>();
+
+for (const task of clientPackTasks) {
+  const billableMinutes = Number(task.billable_minutes ?? 0);
+  const packId = task.service_pack_id;
+  if (!packId || billableMinutes <= 0) continue;
+  const packRemaining = Number(remainingPackMinutesMap.get(packId) ?? 0);
+  const packCoveredMinutes = Math.min(billableMinutes, Math.max(0, packRemaining));
+  const overflowBillableMinutes = Math.max(0, billableMinutes - packCoveredMinutes);
+  remainingPackMinutesMap.set(packId, Math.max(0, packRemaining - packCoveredMinutes));
+  taskBillingBreakdown.set(task.id, { packCoveredMinutes, overflowBillableMinutes });
+}
+
+const totalPackCoveredMinutes = tasks.reduce((sum, task) => sum + Number(taskBillingBreakdown.get(task.id)?.packCoveredMinutes ?? 0), 0);
+const totalStillBillableMinutes = tasks.reduce((sum, task) => sum + Number(taskBillingBreakdown.get(task.id)?.overflowBillableMinutes ?? task.billable_minutes ?? 0), 0);
+const totalStillBillableAmount = getCalculatedAmount(
+  totalStillBillableMinutes,
   Number(job?.hourly_rate_snapshot ?? 0),
   Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
 );
@@ -353,6 +385,15 @@ const actualBillableAmount = getCalculatedAmount(
                 <div class="text-xs uppercase tracking-wide text-slate-500">Billable actual</div>
                 <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(actualBillableMinutes)} hrs</div>
                 <div class="mt-1 text-xs normal-case tracking-normal text-slate-500">${actualBillableAmount.toFixed(2)}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">From service packs</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(totalPackCoveredMinutes)} hrs</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Still billable</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(totalStillBillableMinutes)} hrs</div>
+                <div class="mt-1 text-xs normal-case tracking-normal text-slate-500">${totalStillBillableAmount.toFixed(2)}</div>
               </div>
               <div class="rounded-xl bg-slate-50 p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-500">Non-billable</div>
@@ -456,6 +497,10 @@ const actualBillableAmount = getCalculatedAmount(
               {tasks.map((task) => {
                 const billableParts = splitMinutes(Number(task.billable_minutes ?? 0));
                 const nonBillableParts = splitMinutes(Number(task.non_billable_minutes ?? 0));
+                const billingBreakdown = taskBillingBreakdown.get(task.id) ?? {
+                  packCoveredMinutes: 0,
+                  overflowBillableMinutes: Number(task.billable_minutes ?? 0),
+                };
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
                     <div class="text-sm font-semibold text-slate-900">{task.title}</div>
@@ -466,6 +511,8 @@ const actualBillableAmount = getCalculatedAmount(
                         {task.due_at ? ` • ${task.due_at}` : ''}
                         {task.billable_minutes ? ` • billable ${formatHours(Number(task.billable_minutes))}h` : ''}
                         {task.non_billable_minutes ? ` • non-billable ${formatHours(Number(task.non_billable_minutes))}h` : ''}
+                        {task.billable_minutes ? ` • pack ${formatHours(billingBreakdown.packCoveredMinutes)}h` : ''}
+                        {billingBreakdown.overflowBillableMinutes ? ` • outside pack ${formatHours(billingBreakdown.overflowBillableMinutes)}h` : ''}
                       </div>
                       {task.status === 'open' ? (
                         <form method="post">

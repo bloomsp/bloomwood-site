@@ -35,6 +35,17 @@ function splitMinutes(totalMinutes: number) {
   };
 }
 
+function roundBillableMinutes(minutes: number, increment: number | null) {
+  if (!increment || increment <= 0) return minutes;
+  return Math.ceil(minutes / increment) * increment;
+}
+
+function getCalculatedAmount(minutes: number, hourlyRate: number | null, increment: number | null) {
+  if (!hourlyRate || minutes <= 0) return 0;
+  const roundedMinutes = roundBillableMinutes(minutes, increment);
+  return (roundedMinutes / 60) * hourlyRate;
+}
+
 if (Astro.request.method === 'POST' && supabase) {
   const formData = await Astro.request.formData();
   const action = String(formData.get('action') ?? '');
@@ -180,9 +191,9 @@ if (!supabase) {
       .limit(8),
     supabase
       .from('tasks')
-      .select('id, title, details, status, due_at, job_id, billable_minutes, non_billable_minutes, service_pack_id')
+      .select('id, title, details, status, due_at, completed_at, job_id, billable_minutes, non_billable_minutes, service_pack_id, job:jobs(id, job_reference, title, hourly_rate_snapshot, billing_increment_minutes_snapshot)')
       .eq('client_id', id)
-      .order('due_at', { ascending: true }),
+      .order('completed_at', { ascending: true, nullsFirst: false }),
     supabase
       .from('service_packs')
       .select('id, hours_purchased, minutes_purchased, minutes_used, purchase_price, purchase_date, status, service_type:service_types(name, item_code)')
@@ -215,7 +226,6 @@ if (!supabase) {
 }
 
 const totalBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.billable_minutes ?? 0), 0);
-const totalBillableDollars = jobs.reduce((sum, job) => sum + Number(job.calculated_billable_amount ?? 0), 0);
 const totalInvoiced = jobs.reduce((sum, job) => {
   return sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) : 0);
 }, 0);
@@ -223,6 +233,38 @@ const activeJobs = jobs.filter((job) => !['completed', 'cancelled'].includes(job
 const openTasks = tasks.filter((task) => task.status === 'open').length;
 const activePacks = servicePacks.filter((pack) => pack.status === 'active');
 const totalPackMinutesRemaining = activePacks.reduce((sum, pack) => sum + pack.minutes_remaining, 0);
+
+const packPurchasedMinutesMap = new Map<string, number>(servicePacks.map((pack) => [pack.id, getPackMinutesPurchased(pack)]));
+const remainingPackMinutesMap = new Map<string, number>(servicePacks.map((pack) => [pack.id, getPackMinutesPurchased(pack)]));
+const taskBillingBreakdown = new Map<string, { packCoveredMinutes: number; overflowBillableMinutes: number }>();
+
+for (const task of tasks) {
+  const billableMinutes = Number(task.billable_minutes ?? 0);
+  if (!task.service_pack_id || billableMinutes <= 0) {
+    taskBillingBreakdown.set(task.id, {
+      packCoveredMinutes: 0,
+      overflowBillableMinutes: billableMinutes,
+    });
+    continue;
+  }
+
+  const packRemaining = Number(remainingPackMinutesMap.get(task.service_pack_id) ?? 0);
+  const packCoveredMinutes = Math.min(billableMinutes, Math.max(0, packRemaining));
+  const overflowBillableMinutes = Math.max(0, billableMinutes - packCoveredMinutes);
+  remainingPackMinutesMap.set(task.service_pack_id, Math.max(0, packRemaining - packCoveredMinutes));
+  taskBillingBreakdown.set(task.id, { packCoveredMinutes, overflowBillableMinutes });
+}
+
+const totalPackCoveredMinutes = Array.from(taskBillingBreakdown.values()).reduce((sum, item) => sum + item.packCoveredMinutes, 0);
+const totalStillBillableMinutes = Array.from(taskBillingBreakdown.values()).reduce((sum, item) => sum + item.overflowBillableMinutes, 0);
+const totalBillableDollars = tasks.reduce((sum, task) => {
+  const breakdown = taskBillingBreakdown.get(task.id);
+  return sum + getCalculatedAmount(
+    breakdown?.overflowBillableMinutes ?? Number(task.billable_minutes ?? 0),
+    Number(task.job?.hourly_rate_snapshot ?? 0),
+    Number(task.job?.billing_increment_minutes_snapshot ?? 0) || null,
+  );
+}, 0);
 
 function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
@@ -279,7 +321,15 @@ function formatHours(minutes: number) {
               <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalBillableMinutes)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Total billable dollars</div>
+              <div class="text-xs uppercase tracking-wide text-slate-500">From service packs</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalPackCoveredMinutes)} hrs</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Still billable</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalStillBillableMinutes)} hrs</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Still billable dollars</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">${totalBillableDollars.toFixed(2)}</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
@@ -359,6 +409,10 @@ function formatHours(minutes: number) {
               {tasks.map((task) => {
                 const billableParts = splitMinutes(Number(task.billable_minutes ?? 0));
                 const nonBillableParts = splitMinutes(Number(task.non_billable_minutes ?? 0));
+                const billingBreakdown = taskBillingBreakdown.get(task.id) ?? {
+                  packCoveredMinutes: 0,
+                  overflowBillableMinutes: Number(task.billable_minutes ?? 0),
+                };
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
                     <div class="flex items-start justify-between gap-3">
@@ -369,6 +423,8 @@ function formatHours(minutes: number) {
                       <div class="text-right text-xs uppercase tracking-wide text-slate-500">
                         <div>{task.status}</div>
                         {task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
+                        {task.billable_minutes ? <div class="mt-1 normal-case tracking-normal">Pack covered: {formatHours(billingBreakdown.packCoveredMinutes)}h</div> : null}
+                        {billingBreakdown.overflowBillableMinutes ? <div class="normal-case tracking-normal">Still billable: {formatHours(billingBreakdown.overflowBillableMinutes)}h</div> : null}
                         {task.status === 'open' ? (
                           <form method="post" class="mt-2">
                             <input type="hidden" name="action" value="complete-task" />
