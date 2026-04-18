@@ -42,6 +42,52 @@ function splitMinutes(totalMinutes: number) {
   };
 }
 
+function getPackMinutesPurchased(pack: any) {
+  return Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60);
+}
+
+async function syncClientServicePacks(clientId: string) {
+  if (!supabase || !clientId) return;
+
+  const [{ data: packs }, { data: packTasks }] = await Promise.all([
+    supabase
+      .from('service_packs')
+      .select('id, minutes_purchased, hours_purchased, status')
+      .eq('client_id', clientId),
+    supabase
+      .from('tasks')
+      .select('service_pack_id, billable_minutes, completed_at, due_at')
+      .eq('client_id', clientId)
+      .not('service_pack_id', 'is', null)
+      .gt('billable_minutes', 0)
+      .order('completed_at', { ascending: true, nullsFirst: false })
+      .order('due_at', { ascending: true, nullsFirst: false }),
+  ]);
+
+  const purchasedMinutesByPack = new Map<string, number>((packs ?? []).map((pack) => [pack.id, getPackMinutesPurchased(pack)]));
+  const remainingMinutesByPack = new Map<string, number>(purchasedMinutesByPack);
+  const usedMinutesByPack = new Map<string, number>();
+
+  for (const task of packTasks ?? []) {
+    const packId = task.service_pack_id as string | null;
+    if (!packId) continue;
+    const remaining = Number(remainingMinutesByPack.get(packId) ?? 0);
+    const applied = Math.min(Number(task.billable_minutes ?? 0), Math.max(0, remaining));
+    usedMinutesByPack.set(packId, (usedMinutesByPack.get(packId) ?? 0) + applied);
+    remainingMinutesByPack.set(packId, Math.max(0, remaining - applied));
+  }
+
+  for (const pack of packs ?? []) {
+    const totalPurchased = Number(purchasedMinutesByPack.get(pack.id) ?? 0);
+    const actualUsed = Number(usedMinutesByPack.get(pack.id) ?? 0);
+    const nextStatus = actualUsed >= totalPurchased ? 'used_up' : pack.status === 'cancelled' || pack.status === 'expired' ? pack.status : 'active';
+    await supabase
+      .from('service_packs')
+      .update({ minutes_used: actualUsed, status: nextStatus })
+      .eq('id', pack.id);
+  }
+}
+
 if (Astro.request.method === 'POST' && supabase) {
   const formData = await Astro.request.formData();
   const action = String(formData.get('action') ?? '');
@@ -95,27 +141,7 @@ if (Astro.request.method === 'POST' && supabase) {
           console.error('Failed to create job task', error);
           loadError = error.message;
         } else {
-          if (payload.service_pack_id && payload.status === 'done' && payload.billable_minutes > 0) {
-            const { data: servicePack } = await supabase
-              .from('service_packs')
-              .select('minutes_used, minutes_purchased, hours_purchased')
-              .eq('id', payload.service_pack_id)
-              .single();
-
-            if (servicePack) {
-              const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
-              const minutesRemaining = Math.max(0, totalPurchased - Number(servicePack.minutes_used ?? 0));
-              const minutesToDeduct = Math.min(payload.billable_minutes, minutesRemaining);
-              const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesToDeduct;
-              await supabase
-                .from('service_packs')
-                .update({
-                  minutes_used: newMinutesUsed,
-                  status: newMinutesUsed >= totalPurchased ? 'used_up' : 'active',
-                })
-                .eq('id', payload.service_pack_id);
-            }
-          }
+          if (payload.client_id) await syncClientServicePacks(payload.client_id);
           return Astro.redirect(`/crm/jobs/${id}`);
         }
       }
@@ -147,27 +173,7 @@ if (Astro.request.method === 'POST' && supabase) {
         console.error('Failed to complete job task', error);
         loadError = error.message;
       } else {
-        if (servicePackId && billableMinutes > 0) {
-          const { data: servicePack } = await supabase
-            .from('service_packs')
-            .select('minutes_used, minutes_purchased, hours_purchased')
-            .eq('id', servicePackId)
-            .single();
-
-          if (servicePack) {
-            const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
-            const minutesRemaining = Math.max(0, totalPurchased - Number(servicePack.minutes_used ?? 0));
-            const minutesToDeduct = Math.min(billableMinutes, minutesRemaining);
-            const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesToDeduct;
-            await supabase
-              .from('service_packs')
-              .update({
-                minutes_used: newMinutesUsed,
-                status: newMinutesUsed >= totalPurchased ? 'used_up' : 'active',
-              })
-              .eq('id', servicePackId);
-          }
-        }
+        if (job?.client?.id) await syncClientServicePacks(job.client.id);
         return Astro.redirect(`/crm/jobs/${id}`);
       }
     }
@@ -210,22 +216,7 @@ if (Astro.request.method === 'POST' && supabase) {
         console.error('Failed to create service pack usage', error);
         loadError = error.message;
       } else {
-        const { data: servicePack } = await supabase
-          .from('service_packs')
-          .select('minutes_used, minutes_purchased, hours_purchased')
-          .eq('id', servicePackId)
-          .single();
-
-        if (servicePack) {
-          const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
-          const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesApplied;
-          const nextStatus = newMinutesUsed >= totalPurchased ? 'used_up' : 'active';
-
-          await supabase
-            .from('service_packs')
-            .update({ minutes_used: newMinutesUsed, status: nextStatus })
-            .eq('id', servicePackId);
-        }
+        if (job?.client?.id) await syncClientServicePacks(job.client.id);
 
         return Astro.redirect(`/crm/jobs/${id}`);
       }
@@ -270,6 +261,7 @@ if (!supabase) {
 }
 
 let availableServicePacks: any[] = [];
+let servicePacks: any[] = [];
 if (supabase && job?.client?.id) {
   const { data } = await supabase
     .from('service_packs')
@@ -278,10 +270,10 @@ if (supabase && job?.client?.id) {
     .eq('status', 'active')
     .order('purchase_date', { ascending: false });
 
-  availableServicePacks = (data ?? []).map((pack) => ({
+  servicePacks = (data ?? []).map((pack) => ({
     ...pack,
-    minutes_remaining: Math.max(0, (Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60)) - Number(pack.minutes_used ?? 0)),
-  })).filter((pack) => pack.minutes_remaining > 0);
+    minutes_remaining: Math.max(0, getPackMinutesPurchased(pack)),
+  }));
 
   const { data: packTasksData } = await supabase
     .from('tasks')
@@ -311,7 +303,7 @@ const actualBillableAmount = getCalculatedAmount(
   Number(job?.hourly_rate_snapshot ?? 0),
   Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
 );
-const packPurchasedMinutesMap = new Map<string, number>([...servicePacks.map((pack) => [pack.id, Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60)])]);
+const packPurchasedMinutesMap = new Map<string, number>([...servicePacks.map((pack) => [pack.id, getPackMinutesPurchased(pack)])]);
 const remainingPackMinutesMap = new Map<string, number>([...packPurchasedMinutesMap.entries()]);
 const taskBillingBreakdown = new Map<string, { packCoveredMinutes: number; overflowBillableMinutes: number }>();
 
@@ -333,6 +325,28 @@ const totalStillBillableAmount = getCalculatedAmount(
   Number(job?.hourly_rate_snapshot ?? 0),
   Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
 );
+
+servicePacks = servicePacks.map((pack) => {
+  const actualUsedMinutes = Number(packPurchasedMinutesMap.get(pack.id) ?? 0) - Number(remainingPackMinutesMap.get(pack.id) ?? 0);
+  const minutesPurchased = getPackMinutesPurchased(pack);
+  return {
+    ...pack,
+    minutes_used: actualUsedMinutes,
+    minutes_remaining: Math.max(0, minutesPurchased - actualUsedMinutes),
+    status: actualUsedMinutes >= minutesPurchased ? 'used_up' : pack.status === 'cancelled' || pack.status === 'expired' ? pack.status : 'active',
+  };
+});
+
+availableServicePacks = servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
+
+packUsage = packUsage.map((usage) => {
+  const derivedPack = servicePacks.find((pack) => pack.id === usage.service_pack?.id);
+  return {
+    ...usage,
+    minutes_remaining: derivedPack?.minutes_remaining ?? usage.minutes_remaining,
+    service_pack: derivedPack ? { ...usage.service_pack, ...derivedPack } : usage.service_pack,
+  };
+});
 ---
 
 <CrmLayout title="Job detail" description="Bloomwood CRM job detail">

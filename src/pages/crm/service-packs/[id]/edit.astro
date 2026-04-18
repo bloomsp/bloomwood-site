@@ -41,7 +41,7 @@ if (Astro.request.method === 'POST' && supabase && servicePack) {
     service_type_id: String(formData.get('service_type_id') ?? '').trim(),
     hours_purchased: Number(formData.get('hours_purchased') ?? 0) || 0,
     minutes_purchased: Number(formData.get('minutes_purchased') ?? 0) || 0,
-    minutes_used: Number(formData.get('minutes_used') ?? 0) || 0,
+    minutes_used: Number(servicePack.minutes_used ?? 0) || 0,
     purchase_price: Number(formData.get('purchase_price') ?? 0) || 0,
     purchase_date: String(formData.get('purchase_date') ?? '').trim() || null,
     expiry_date: String(formData.get('expiry_date') ?? '').trim() || null,
@@ -97,10 +97,11 @@ if (Astro.request.method === 'POST' && supabase && servicePack) {
           Minutes purchased
           <input type="number" min="0" name="minutes_purchased" value={servicePack.minutes_purchased ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
         </label>
-        <label class="block text-sm font-medium text-slate-700">
+        <div class="block text-sm font-medium text-slate-700">
           Minutes used
-          <input type="number" min="0" name="minutes_used" value={servicePack.minutes_used ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
-        </label>
+          <input type="number" min="0" value={servicePack.minutes_used ?? 0} disabled class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-500" />
+          <span class="mt-1 block text-xs font-normal text-slate-500">Calculated from completed pack-linked tasks.</span>
+        </div>
         <label class="block text-sm font-medium text-slate-700">
           Purchase price
           <input type="number" min="0" step="0.01" name="purchase_price" value={servicePack.purchase_price ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
