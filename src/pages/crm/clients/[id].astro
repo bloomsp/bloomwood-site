@@ -169,7 +169,7 @@ if (!supabase) {
     supabase.from('clients').select('*').eq('id', id).single(),
     supabase
       .from('jobs')
-      .select('id, job_reference, title, status, priority, calculated_billable_amount, invoice_number, updated_at, service_type:service_types(name, item_code)')
+      .select('id, job_reference, title, status, priority, billable_minutes, calculated_billable_amount, invoice_number, updated_at, service_type:service_types(name, item_code)')
       .eq('client_id', id)
       .order('updated_at', { ascending: false }),
     supabase
@@ -215,6 +215,7 @@ if (!supabase) {
 }
 
 const totalBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.billable_minutes ?? 0), 0);
+const totalBillableDollars = jobs.reduce((sum, job) => sum + Number(job.calculated_billable_amount ?? 0), 0);
 const totalInvoiced = jobs.reduce((sum, job) => {
   return sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) : 0);
 }, 0);
@@ -278,6 +279,10 @@ function formatHours(minutes: number) {
               <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalBillableMinutes)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Total billable dollars</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">${totalBillableDollars.toFixed(2)}</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Total invoiced</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">${totalInvoiced.toFixed(2)}</div>
             </div>
@@ -306,8 +311,9 @@ function formatHours(minutes: number) {
                     </div>
                     <div class="text-right text-sm text-slate-600">
                       <div class="font-medium uppercase text-slate-700">{job.status}</div>
-                      <div>${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</div>
-                      <div>{job.invoice_number ?? 'Not invoiced'}</div>
+                      <div>Billable hours: {(Number(job.billable_minutes ?? 0) / 60).toFixed(2)}</div>
+                      <div>Billable value: ${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</div>
+                      <div>Invoice number: {job.invoice_number ?? 'Not set'}</div>
                       <div class="mt-2"><span class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">Edit</span></div>
                     </div>
                   </div>

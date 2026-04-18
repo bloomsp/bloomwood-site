@@ -85,7 +85,7 @@ create table if not exists public.jobs (
   billing_increment_minutes_snapshot integer,
   calculated_billable_amount numeric(10,2) not null default 0,
   invoice_number text,
-  invoice_status text not null default 'not_invoiced' check (invoice_status in ('not_invoiced', 'drafted', 'invoiced', 'paid', 'void')),
+  invoice_status text not null default 'not_invoiced' check (invoice_status in ('not_invoiced', 'ready_to_invoice', 'invoiced', 'paid', 'void')),
   invoiced_at timestamptz,
   opened_at timestamptz,
   closed_at timestamptz,

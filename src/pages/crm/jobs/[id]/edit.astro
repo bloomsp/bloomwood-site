@@ -28,6 +28,10 @@ function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
 }
 
+function currentIsoDateTime() {
+  return new Date().toISOString();
+}
+
 const { data: job, error: jobError } = supabase
   ? await supabase.from('jobs').select('*').eq('id', id).single()
   : { data: null, error: new Error('Supabase is not configured for this environment yet.') };
@@ -70,9 +74,9 @@ if (Astro.request.method === 'POST' && supabase && job) {
     billing_increment_minutes_snapshot: serviceType?.billing_increment_minutes ?? null,
     calculated_billable_amount: Number(formData.get('calculated_billable_amount') ?? 0) || 0,
     invoice_number: String(formData.get('invoice_number') ?? '').trim() || null,
-    invoice_status: String(formData.get('invoice_status') ?? 'not_invoiced'),
+    invoice_status: status === 'completed' ? 'ready_to_invoice' : String(formData.get('invoice_status') ?? 'not_invoiced'),
     opened_at: String(formData.get('opened_at') ?? '').trim() || null,
-    closed_at: ['completed', 'cancelled'].includes(status) ? submittedClosedAt : null,
+    closed_at: ['completed', 'cancelled'].includes(status) ? (submittedClosedAt || currentIsoDateTime()) : null,
   };
 
   if (!payload.job_reference || !payload.client_id || !payload.title) {
@@ -221,7 +225,7 @@ const estimateParts = splitMinutes(Number(job?.billable_minutes ?? 0));
           Invoice status
           <select name="invoice_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
             <option value="not_invoiced" selected={job.invoice_status === 'not_invoiced'}>Not invoiced</option>
-            <option value="drafted" selected={job.invoice_status === 'drafted'}>Drafted</option>
+            <option value="ready_to_invoice" selected={job.invoice_status === 'ready_to_invoice'}>Ready to invoice</option>
             <option value="invoiced" selected={job.invoice_status === 'invoiced'}>Invoiced</option>
             <option value="paid" selected={job.invoice_status === 'paid'}>Paid</option>
             <option value="void" selected={job.invoice_status === 'void'}>Void</option>
@@ -252,6 +256,13 @@ const estimateParts = splitMinutes(Number(job?.billable_minutes ?? 0));
     const billableMinutesInput = document.getElementById('job-billable-minutes');
     const calculatedBillableInput = document.getElementById('job-calculated-billable');
 
+    function currentLocalDateTimeValue() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
     function recalculateBillableAmount() {
       const selectedOption = serviceTypeSelect?.selectedOptions?.[0];
       if (!selectedOption || !billableHoursInput || !billableMinutesInput || !calculatedBillableInput) return;
@@ -269,7 +280,9 @@ const estimateParts = splitMinutes(Number(job?.billable_minutes ?? 0));
 
     function syncClosedAtState() {
       if (!statusInput || !closedAtInput) return;
-      if (!['completed', 'cancelled'].includes(statusInput.value)) {
+      if (statusInput.value === 'completed') {
+        if (!closedAtInput.value) closedAtInput.value = currentLocalDateTimeValue();
+      } else if (!['cancelled'].includes(statusInput.value)) {
         closedAtInput.value = '';
       }
     }
