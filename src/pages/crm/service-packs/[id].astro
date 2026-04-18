@@ -65,6 +65,9 @@ const tasksWithPackCoverage = (() => {
     };
   });
 })();
+
+const actualMinutesUsed = tasksWithPackCoverage.reduce((sum, task) => sum + Number(task.pack_covered_minutes ?? 0), 0);
+const actualMinutesRemaining = Math.max(0, minutesPurchased - actualMinutesUsed);
 ---
 
 <CrmLayout title="Service pack detail" description="Bloomwood CRM service pack detail">
@@ -91,11 +94,11 @@ const tasksWithPackCoverage = (() => {
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Used</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(minutesUsed)} hrs</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(actualMinutesUsed)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Remaining</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(minutesRemaining)} hrs</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(actualMinutesRemaining)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Tasks used</div>
