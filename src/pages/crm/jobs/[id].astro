@@ -94,7 +94,7 @@ if (Astro.request.method === 'POST' && supabase) {
           console.error('Failed to create job task', error);
           loadError = error.message;
         } else {
-          if (payload.service_pack_id && payload.status === 'done' && payload.time_taken_minutes > 0) {
+          if (payload.service_pack_id && payload.status === 'done' && payload.billable_minutes > 0) {
             const { data: servicePack } = await supabase
               .from('service_packs')
               .select('minutes_used, minutes_purchased, hours_purchased')
@@ -103,7 +103,9 @@ if (Astro.request.method === 'POST' && supabase) {
 
             if (servicePack) {
               const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
-              const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + payload.time_taken_minutes;
+              const minutesRemaining = Math.max(0, totalPurchased - Number(servicePack.minutes_used ?? 0));
+              const minutesToDeduct = Math.min(payload.billable_minutes, minutesRemaining);
+              const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesToDeduct;
               await supabase
                 .from('service_packs')
                 .update({
@@ -144,7 +146,7 @@ if (Astro.request.method === 'POST' && supabase) {
         console.error('Failed to complete job task', error);
         loadError = error.message;
       } else {
-        if (servicePackId && totalMinutes > 0) {
+        if (servicePackId && billableMinutes > 0) {
           const { data: servicePack } = await supabase
             .from('service_packs')
             .select('minutes_used, minutes_purchased, hours_purchased')
@@ -153,7 +155,9 @@ if (Astro.request.method === 'POST' && supabase) {
 
           if (servicePack) {
             const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
-            const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + totalMinutes;
+            const minutesRemaining = Math.max(0, totalPurchased - Number(servicePack.minutes_used ?? 0));
+            const minutesToDeduct = Math.min(billableMinutes, minutesRemaining);
+            const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesToDeduct;
             await supabase
               .from('service_packs')
               .update({
