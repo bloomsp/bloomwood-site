@@ -1,0 +1,122 @@
+---
+import CrmLayout from '@/layouts/CrmLayout.astro';
+
+export const prerender = false;
+
+const user = (Astro.locals as any).supabaseUser;
+if (!user) {
+  return Astro.redirect(`/crm/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+const { id } = Astro.params;
+const supabase = (Astro.locals as any).supabase;
+let loadError: string | null = null;
+let servicePack: any = null;
+let tasks: any[] = [];
+
+function getPackMinutesPurchased(pack: any) {
+  return Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60);
+}
+
+function formatHours(minutes: number) {
+  return (minutes / 60).toFixed(2);
+}
+
+if (!supabase) {
+  loadError = 'Supabase is not configured for this environment yet.';
+} else {
+  const [packResult, tasksResult] = await Promise.all([
+    supabase
+      .from('service_packs')
+      .select('*, client:clients(id, display_name), service_type:service_types(name, item_code)')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('tasks')
+      .select('id, title, status, due_at, billable_minutes, non_billable_minutes, completed_at, job:jobs(id, job_reference, title)')
+      .eq('service_pack_id', id)
+      .gt('billable_minutes', 0)
+      .order('completed_at', { ascending: false }),
+  ]);
+
+  if (packResult.error || tasksResult.error) {
+    console.error('Failed to load service pack detail', packResult.error || tasksResult.error);
+    loadError = 'Could not load this service pack yet. The latest CRM migration may still need to be applied.';
+  } else {
+    servicePack = packResult.data;
+    tasks = tasksResult.data ?? [];
+  }
+}
+
+const minutesPurchased = servicePack ? getPackMinutesPurchased(servicePack) : 0;
+const minutesUsed = Number(servicePack?.minutes_used ?? 0);
+const minutesRemaining = Math.max(0, minutesPurchased - minutesUsed);
+---
+
+<CrmLayout title="Service pack detail" description="Bloomwood CRM service pack detail">
+  {loadError ? (
+    <section class="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{loadError}</section>
+  ) : !servicePack ? (
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm text-slate-600">Service pack not found.</p>
+    </section>
+  ) : (
+    <>
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Service pack</p>
+            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{servicePack.service_type?.name ?? 'Service pack'}</h2>
+            <div class="mt-2 text-sm text-slate-600">Client: <a class="font-medium text-sky-700 hover:underline" href={`/crm/clients/${servicePack.client?.id}`}>{servicePack.client?.display_name ?? 'Unknown client'}</a></div>
+            {servicePack.service_type?.item_code ? <div class="text-sm text-slate-600">Item code: {servicePack.service_type.item_code}</div> : null}
+          </div>
+          <div class="grid grid-cols-2 gap-3 md:w-[24rem]">
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Purchased</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(minutesPurchased)} hrs</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Used</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(minutesUsed)} hrs</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Remaining</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(minutesRemaining)} hrs</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Tasks used</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">{tasks.length}</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <a href={`/crm/clients/${servicePack.client_id}`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Back to client</a>
+          <a href={`/crm/service-packs/${servicePack.id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit pack</a>
+        </div>
+      </section>
+
+      <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Tasks that consumed this pack</h3>
+        <div class="mt-4 space-y-3">
+          {tasks.length === 0 ? <p class="text-sm text-slate-600">No tasks have consumed this pack yet.</p> : null}
+          {tasks.map((task) => (
+            <div class="rounded-xl border border-slate-200 p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-sm font-semibold text-slate-900">{task.title}</div>
+                  {task.job ? <div class="text-sm text-slate-600">Job: <a class="font-medium text-sky-700 hover:underline" href={`/crm/jobs/${task.job.id}`}>{task.job.job_reference} · {task.job.title}</a></div> : null}
+                  <div class="text-sm text-slate-600">Billable used from pack: {formatHours(Number(task.billable_minutes ?? 0))} hrs</div>
+                  {task.non_billable_minutes ? <div class="text-sm text-slate-600">Non-billable: {formatHours(Number(task.non_billable_minutes ?? 0))} hrs</div> : null}
+                </div>
+                <div class="text-right text-xs uppercase tracking-wide text-slate-500">
+                  <div>{task.status}</div>
+                  {task.completed_at ? <div class="mt-1 normal-case tracking-normal">{task.completed_at}</div> : task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  )}
+</CrmLayout>
