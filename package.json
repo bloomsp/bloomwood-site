@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test:crm": "node --test tests/*.test.mjs",
     "cf:check": "npm run build && wrangler deploy --dry-run --config dist/server/wrangler.json",
     "cf:dev": "npm run build && wrangler dev --config dist/server/wrangler.json",
     "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",
