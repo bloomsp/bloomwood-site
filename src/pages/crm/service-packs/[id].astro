@@ -1,5 +1,6 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
+import { summarizeServicePackDetail } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -13,10 +14,6 @@ const supabase = (Astro.locals as any).supabase;
 let loadError: string | null = null;
 let servicePack: any = null;
 let tasks: any[] = [];
-
-function getPackMinutesPurchased(pack: any) {
-  return Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60);
-}
 
 function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
@@ -48,26 +45,8 @@ if (!supabase) {
   }
 }
 
-const minutesPurchased = servicePack ? getPackMinutesPurchased(servicePack) : 0;
-const minutesUsed = Number(servicePack?.minutes_used ?? 0);
-const minutesRemaining = Math.max(0, minutesPurchased - minutesUsed);
-
-const tasksWithPackCoverage = (() => {
-  let remainingPackMinutes = minutesPurchased;
-  return tasks.map((task) => {
-    const billableMinutes = Number(task.billable_minutes ?? 0);
-    const packCoveredMinutes = Math.min(billableMinutes, Math.max(0, remainingPackMinutes));
-    remainingPackMinutes = Math.max(0, remainingPackMinutes - packCoveredMinutes);
-    return {
-      ...task,
-      pack_covered_minutes: packCoveredMinutes,
-      overflow_billable_minutes: Math.max(0, billableMinutes - packCoveredMinutes),
-    };
-  });
-})();
-
-const actualMinutesUsed = tasksWithPackCoverage.reduce((sum, task) => sum + Number(task.pack_covered_minutes ?? 0), 0);
-const actualMinutesRemaining = Math.max(0, minutesPurchased - actualMinutesUsed);
+const packSummary = summarizeServicePackDetail({ servicePack, tasks });
+const { minutesPurchased, actualMinutesUsed, actualMinutesRemaining, tasksWithPackCoverage } = packSummary;
 ---
 
 <CrmLayout title="Service pack detail" description="Bloomwood CRM service pack detail">

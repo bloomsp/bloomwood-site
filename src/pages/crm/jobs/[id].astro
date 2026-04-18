@@ -1,5 +1,7 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
+import { getTaskServicePackOptions, getCalculatedAmount, getPackMinutesPurchased } from '@/lib/crm-metrics.mjs';
+import { summarizeJobDetail } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -19,17 +21,6 @@ let packUsage: any[] = [];
 let loadError: string | null = null;
 let clientPackTasks: any[] = [];
 
-function roundBillableMinutes(minutes: number, increment: number | null) {
-  if (!increment || increment <= 0) return minutes;
-  return Math.ceil(minutes / increment) * increment;
-}
-
-function getCalculatedAmount(minutes: number, hourlyRate: number | null, increment: number | null) {
-  if (!hourlyRate || minutes <= 0) return 0;
-  const roundedMinutes = roundBillableMinutes(minutes, increment);
-  return (roundedMinutes / 60) * hourlyRate;
-}
-
 function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
   return ((Number(hours ?? 0) || 0) * 60) + (Number(minutes ?? 0) || 0);
 }
@@ -40,10 +31,6 @@ function splitMinutes(totalMinutes: number) {
     hours: Math.floor(safeMinutes / 60),
     minutes: safeMinutes % 60,
   };
-}
-
-function getPackMinutesPurchased(pack: any) {
-  return Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60);
 }
 
 async function syncClientServicePacks(clientId: string) {
@@ -289,65 +276,23 @@ function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
 }
 
-const estimatedBillableMinutes = Number(job?.billable_minutes ?? 0);
-const actualBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.billable_minutes ?? 0), 0);
-const actualNonBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.non_billable_minutes ?? 0), 0);
-const openTaskCount = tasks.filter((task) => task.status === 'open').length;
-const estimatedBillableAmount = getCalculatedAmount(
+const jobSummary = summarizeJobDetail({ job, tasks, servicePacks, clientPackTasks });
+const {
   estimatedBillableMinutes,
-  Number(job?.hourly_rate_snapshot ?? 0),
-  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
-);
-const actualBillableAmount = getCalculatedAmount(
   actualBillableMinutes,
-  Number(job?.hourly_rate_snapshot ?? 0),
-  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
-);
-const packPurchasedMinutesMap = new Map<string, number>([...servicePacks.map((pack) => [pack.id, getPackMinutesPurchased(pack)])]);
-const remainingPackMinutesMap = new Map<string, number>([...packPurchasedMinutesMap.entries()]);
-const taskBillingBreakdown = new Map<string, { packCoveredMinutes: number; overflowBillableMinutes: number }>();
-
-for (const task of clientPackTasks) {
-  const billableMinutes = Number(task.billable_minutes ?? 0);
-  const packId = task.service_pack_id;
-  if (!packId || billableMinutes <= 0) continue;
-  const packRemaining = Number(remainingPackMinutesMap.get(packId) ?? 0);
-  const packCoveredMinutes = Math.min(billableMinutes, Math.max(0, packRemaining));
-  const overflowBillableMinutes = Math.max(0, billableMinutes - packCoveredMinutes);
-  remainingPackMinutesMap.set(packId, Math.max(0, packRemaining - packCoveredMinutes));
-  taskBillingBreakdown.set(task.id, { packCoveredMinutes, overflowBillableMinutes });
-}
-
-const totalPackCoveredMinutes = tasks.reduce((sum, task) => sum + Number(taskBillingBreakdown.get(task.id)?.packCoveredMinutes ?? 0), 0);
-const totalStillBillableMinutes = tasks.reduce((sum, task) => sum + Number(taskBillingBreakdown.get(task.id)?.overflowBillableMinutes ?? task.billable_minutes ?? 0), 0);
-const totalStillBillableAmount = getCalculatedAmount(
+  actualNonBillableMinutes,
+  openTaskCount,
+  estimatedBillableAmount,
+  actualBillableAmount,
+  totalPackCoveredMinutes,
   totalStillBillableMinutes,
-  Number(job?.hourly_rate_snapshot ?? 0),
-  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
-);
+  totalStillBillableAmount,
+  taskBillingBreakdown,
+} = jobSummary;
 
-servicePacks = servicePacks.map((pack) => {
-  const actualUsedMinutes = Number(packPurchasedMinutesMap.get(pack.id) ?? 0) - Number(remainingPackMinutesMap.get(pack.id) ?? 0);
-  const minutesPurchased = getPackMinutesPurchased(pack);
-  return {
-    ...pack,
-    minutes_used: actualUsedMinutes,
-    minutes_remaining: Math.max(0, minutesPurchased - actualUsedMinutes),
-    status: actualUsedMinutes >= minutesPurchased ? 'used_up' : pack.status === 'cancelled' || pack.status === 'expired' ? pack.status : 'active',
-  };
-});
+servicePacks = jobSummary.servicePacks;
 
 availableServicePacks = servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
-const availableServicePacksById = new Map<string, any>(availableServicePacks.map((pack) => [pack.id, pack]));
-
-function getTaskServicePackOptions(task: any) {
-  const options = [...availableServicePacks];
-  if (task.service_pack_id && !availableServicePacksById.has(task.service_pack_id)) {
-    const selectedPack = servicePacks.find((pack) => pack.id === task.service_pack_id);
-    if (selectedPack) options.unshift(selectedPack);
-  }
-  return options;
-}
 
 packUsage = packUsage.map((usage) => {
   const derivedPack = servicePacks.find((pack) => pack.id === usage.service_pack?.id);
@@ -525,7 +470,7 @@ packUsage = packUsage.map((usage) => {
                   packCoveredMinutes: 0,
                   overflowBillableMinutes: Number(task.billable_minutes ?? 0),
                 };
-                const taskServicePackOptions = getTaskServicePackOptions(task);
+                const taskServicePackOptions = getTaskServicePackOptions({ availableServicePacks, servicePacks, task });
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
                     <div class="text-sm font-semibold text-slate-900">{task.title}</div>
