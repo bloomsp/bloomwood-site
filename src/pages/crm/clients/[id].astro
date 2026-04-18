@@ -290,6 +290,19 @@ servicePacks = servicePacks.map((pack) => {
 
 availableServicePacks = servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
 
+const availableServicePacksById = new Map<string, any>(availableServicePacks.map((pack) => [pack.id, pack]));
+
+function getTaskServicePackOptions(task: any) {
+  const options = [...availableServicePacks];
+  if (task.service_pack_id && !availableServicePacksById.has(task.service_pack_id)) {
+    const selectedPack = servicePacks.find((pack) => pack.id === task.service_pack_id);
+    if (selectedPack) {
+      options.unshift(selectedPack);
+    }
+  }
+  return options;
+}
+
 function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
 }
@@ -437,6 +450,7 @@ function formatHours(minutes: number) {
                   packCoveredMinutes: 0,
                   overflowBillableMinutes: Number(task.billable_minutes ?? 0),
                 };
+                const taskServicePackOptions = getTaskServicePackOptions(task);
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
                     <div class="flex items-start justify-between gap-3">
@@ -478,7 +492,7 @@ function formatHours(minutes: number) {
                               </label>
                               <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
                                 <option value="">No pack</option>
-                                {availableServicePacks.map((pack) => (
+                                {taskServicePackOptions.map((pack) => (
                                   <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
                                 ))}
                               </select>

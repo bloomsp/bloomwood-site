@@ -56,7 +56,7 @@ if (!supabase) {
       clientIds.length
         ? supabase
             .from('service_packs')
-            .select('client_id, status')
+            .select('id, client_id, status, minutes_purchased, hours_purchased')
             .in('client_id', clientIds)
         : Promise.resolve({ data: [], error: null }),
     ]);
@@ -147,8 +147,9 @@ if (!supabase) {
       }
 
       const packsByClient = new Map<string, number>();
-      for (const pack of servicePacksResult.data ?? []) {
-        if (pack.status === 'active') {
+      for (const pack of servicePackRows) {
+        const remaining = Number(remainingPackMinutes.get((pack as any).id) ?? 0);
+        if (pack.status === 'active' && remaining > 0) {
           packsByClient.set(pack.client_id, (packsByClient.get(pack.client_id) ?? 0) + 1);
         }
       }

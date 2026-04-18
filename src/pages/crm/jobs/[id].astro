@@ -338,6 +338,16 @@ servicePacks = servicePacks.map((pack) => {
 });
 
 availableServicePacks = servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
+const availableServicePacksById = new Map<string, any>(availableServicePacks.map((pack) => [pack.id, pack]));
+
+function getTaskServicePackOptions(task: any) {
+  const options = [...availableServicePacks];
+  if (task.service_pack_id && !availableServicePacksById.has(task.service_pack_id)) {
+    const selectedPack = servicePacks.find((pack) => pack.id === task.service_pack_id);
+    if (selectedPack) options.unshift(selectedPack);
+  }
+  return options;
+}
 
 packUsage = packUsage.map((usage) => {
   const derivedPack = servicePacks.find((pack) => pack.id === usage.service_pack?.id);
@@ -515,6 +525,7 @@ packUsage = packUsage.map((usage) => {
                   packCoveredMinutes: 0,
                   overflowBillableMinutes: Number(task.billable_minutes ?? 0),
                 };
+                const taskServicePackOptions = getTaskServicePackOptions(task);
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
                     <div class="text-sm font-semibold text-slate-900">{task.title}</div>
@@ -557,7 +568,7 @@ packUsage = packUsage.map((usage) => {
                             </label>
                             <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
                               <option value="">No pack</option>
-                              {availableServicePacks.map((pack) => (
+                              {taskServicePackOptions.map((pack) => (
                                 <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
                               ))}
                             </select>

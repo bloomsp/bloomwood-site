@@ -25,12 +25,23 @@ let jobs: Array<{
 }> = [];
 let loadError: string | null = null;
 
+function roundBillableMinutes(minutes: number, increment: number | null) {
+  if (!increment || increment <= 0) return minutes;
+  return Math.ceil(minutes / increment) * increment;
+}
+
+function getCalculatedAmount(minutes: number, hourlyRate: number | null, increment: number | null) {
+  if (!hourlyRate || minutes <= 0) return 0;
+  const roundedMinutes = roundBillableMinutes(minutes, increment);
+  return (roundedMinutes / 60) * hourlyRate;
+}
+
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
   const { data, error } = await supabase
     .from('jobs')
-    .select('id, job_reference, title, status, priority, invoice_number, billable_minutes, calculated_billable_amount, client:clients(display_name), service_type:service_types(name, item_code)')
+    .select('id, client_id, job_reference, title, status, priority, invoice_number, billable_minutes, calculated_billable_amount, hourly_rate_snapshot, billing_increment_minutes_snapshot, client:clients(display_name), service_type:service_types(name, item_code)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -38,40 +49,65 @@ if (!supabase) {
     loadError = 'Could not load jobs yet. The CRM schema may not be applied in Supabase yet.';
   } else {
     const jobIds = (data ?? []).map((job) => job.id);
-    const usageResult = jobIds.length
-      ? await supabase.from('service_pack_usage').select('job_id').in('job_id', jobIds)
-      : { data: [], error: null };
+    const clientIds = [...new Set((data ?? []).map((job) => job.client_id).filter(Boolean))];
+    const [tasksResult, servicePacksResult] = await Promise.all([
+      jobIds.length
+        ? supabase.from('tasks').select('id, job_id, status, billable_minutes, service_pack_id, completed_at').in('job_id', jobIds)
+        : Promise.resolve({ data: [], error: null }),
+      clientIds.length
+        ? supabase.from('service_packs').select('id, client_id, minutes_purchased, hours_purchased').in('client_id', clientIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-    if (usageResult.error) {
-      console.error('Failed to load service pack usage', usageResult.error);
-      loadError = 'Could not load service-pack usage yet. The latest CRM migration may still need to be applied.';
+    if (tasksResult.error || servicePacksResult.error) {
+      console.error('Failed to load CRM job summaries', tasksResult.error || servicePacksResult.error);
+      loadError = 'Could not load job summaries yet. The latest CRM migration may still need to be applied.';
     } else {
-      const taskResult = jobIds.length
-        ? await supabase.from('tasks').select('job_id, status').in('job_id', jobIds).eq('status', 'open')
-        : { data: [], error: null };
+      const purchasedMinutesByPack = new Map<string, number>((servicePacksResult.data ?? []).map((pack: any) => [pack.id, Number(pack.minutes_purchased ?? 0) || Math.round(Number(pack.hours_purchased ?? 0) * 60)]));
+      const remainingMinutesByPack = new Map<string, number>(purchasedMinutesByPack);
+      const orderedTasks = [...(tasksResult.data ?? [])].sort((a: any, b: any) => {
+        const aTime = new Date(a.completed_at ?? 0).getTime();
+        const bTime = new Date(b.completed_at ?? 0).getTime();
+        return aTime - bTime;
+      });
 
-      if (taskResult.error) {
-        console.error('Failed to load open task counts', taskResult.error);
-        loadError = 'Could not load task counts yet. The latest CRM migration may still need to be applied.';
-      } else {
-        const usageCounts = new Map<string, number>();
-        for (const usage of usageResult.data ?? []) {
-          usageCounts.set(usage.job_id, (usageCounts.get(usage.job_id) ?? 0) + 1);
+      const usageCounts = new Map<string, number>();
+      const openTaskCounts = new Map<string, number>();
+      const stillBillableMinutesByJob = new Map<string, number>();
+
+      for (const task of orderedTasks) {
+        const billableMinutes = Number((task as any).billable_minutes ?? 0);
+        const packId = (task as any).service_pack_id;
+        let packCoveredMinutes = 0;
+
+        if (packId && billableMinutes > 0) {
+          const remaining = Number(remainingMinutesByPack.get(packId) ?? 0);
+          packCoveredMinutes = Math.min(billableMinutes, Math.max(0, remaining));
+          remainingMinutesByPack.set(packId, Math.max(0, remaining - packCoveredMinutes));
         }
 
-        const taskCounts = new Map<string, number>();
-        for (const task of taskResult.data ?? []) {
-          taskCounts.set(task.job_id, (taskCounts.get(task.job_id) ?? 0) + 1);
+        if (packCoveredMinutes > 0) {
+          usageCounts.set((task as any).job_id, (usageCounts.get((task as any).job_id) ?? 0) + 1);
         }
 
-        jobs = (data ?? []).map((job) => ({
-          ...job,
-          calculated_billable_amount: Number(job.calculated_billable_amount ?? 0),
-          billable_minutes: Number(job.billable_minutes ?? 0),
-          service_pack_usage_count: usageCounts.get(job.id) ?? 0,
-          open_task_count: taskCounts.get(job.id) ?? 0,
-        }));
+        stillBillableMinutesByJob.set((task as any).job_id, (stillBillableMinutesByJob.get((task as any).job_id) ?? 0) + Math.max(0, billableMinutes - packCoveredMinutes));
+
+        if ((task as any).status !== 'done' && (task as any).status !== 'cancelled') {
+          openTaskCounts.set((task as any).job_id, (openTaskCounts.get((task as any).job_id) ?? 0) + 1);
+        }
       }
+
+      jobs = (data ?? []).map((job: any) => ({
+        ...job,
+        calculated_billable_amount: getCalculatedAmount(
+          Number(stillBillableMinutesByJob.get(job.id) ?? 0),
+          Number(job.hourly_rate_snapshot ?? 0),
+          Number(job.billing_increment_minutes_snapshot ?? 0) || null,
+        ),
+        billable_minutes: Number(job.billable_minutes ?? 0),
+        service_pack_usage_count: usageCounts.get(job.id) ?? 0,
+        open_task_count: openTaskCounts.get(job.id) ?? 0,
+      }));
     }
   }
 }
@@ -118,11 +154,11 @@ if (!supabase) {
           </div>
           <div class="text-right">
             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-700">{job.status}</span>
-            <div class="mt-3 text-sm text-slate-600">Billable hours: <span class="font-semibold text-slate-900">{(job.billable_minutes / 60).toFixed(2)}</span></div>
-            <div class="text-sm text-slate-600">Billable value: <span class="font-semibold text-slate-900">${job.calculated_billable_amount.toFixed(2)}</span></div>
+            <div class="mt-3 text-sm text-slate-600">Billable estimate: <span class="font-semibold text-slate-900">{(job.billable_minutes / 60).toFixed(2)}</span></div>
+            <div class="text-sm text-slate-600">Still billable value: <span class="font-semibold text-slate-900">${job.calculated_billable_amount.toFixed(2)}</span></div>
             <div class="text-sm text-slate-600">Invoice number: <span class="font-semibold text-slate-900">{job.invoice_number ?? 'Not set'}</span></div>
             <div class="text-sm text-slate-600">Open tasks: <span class="font-semibold text-slate-900">{job.open_task_count}</span></div>
-            <div class="text-sm text-slate-600">Pack usage: <span class="font-semibold text-slate-900">{job.service_pack_usage_count}</span></div>
+            <div class="text-sm text-slate-600">Tasks using packs: <span class="font-semibold text-slate-900">{job.service_pack_usage_count}</span></div>
           </div>
         </div>
       </a>
