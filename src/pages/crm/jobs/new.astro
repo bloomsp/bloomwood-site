@@ -30,6 +30,10 @@ function makeDefaultJobReference() {
   return `JOB-${y}${m}${d}-${hh}${mm}`;
 }
 
+function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
+  return ((Number(hours ?? 0) || 0) * 60) + (Number(minutes ?? 0) || 0);
+}
+
 const defaultJobReference = makeDefaultJobReference();
 
 if (Astro.request.method === 'POST') {
@@ -39,6 +43,7 @@ if (Astro.request.method === 'POST') {
     const formData = await Astro.request.formData();
     const serviceTypeId = String(formData.get('service_type_id') ?? '').trim();
     const serviceType = (serviceTypes ?? []).find((item: any) => item.id === serviceTypeId);
+    const estimatedBillableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
     const payload = {
       job_reference: String(formData.get('job_reference') ?? '').trim() || makeDefaultJobReference(),
       client_id: String(formData.get('client_id') ?? '').trim(),
@@ -52,7 +57,7 @@ if (Astro.request.method === 'POST') {
       intake_details: String(formData.get('intake_details') ?? '').trim() || null,
       diagnosis: String(formData.get('diagnosis') ?? '').trim() || null,
       resolution_summary: String(formData.get('resolution_summary') ?? '').trim() || null,
-      billable_minutes: Number(formData.get('billable_minutes') ?? 0) || 0,
+      billable_minutes: estimatedBillableMinutes,
       hourly_rate_snapshot: serviceType?.hourly_rate ?? null,
       billing_increment_minutes_snapshot: serviceType?.billing_increment_minutes ?? null,
       calculated_billable_amount: Number(formData.get('calculated_billable_amount') ?? 0) || 0,
@@ -170,8 +175,24 @@ if (Astro.request.method === 'POST') {
         <textarea name="resolution_summary" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></textarea>
       </label>
       <label class="block text-sm font-medium text-slate-700">
-        Billable minutes
-        <input id="job-billable-minutes" type="number" min="0" name="billable_minutes" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        Billable time estimate, hours
+        <select id="job-billable-hours" name="billable_hours" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          {Array.from({ length: 17 }, (_, i) => <option value={i}>{i}</option>)}
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Billable time estimate, minutes
+        <select id="job-billable-minutes" name="billable_minutes" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
+        </select>
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Actual billable
+        <input value="0.00 hrs" readonly class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-600" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Non-billable time
+        <input value="0.00 hrs" readonly class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-600" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Calculated billable amount
@@ -209,16 +230,17 @@ if (Astro.request.method === 'POST') {
 
   <script is:inline>
     const serviceTypeSelect = document.getElementById('job-service-type');
+    const billableHoursInput = document.getElementById('job-billable-hours');
     const billableMinutesInput = document.getElementById('job-billable-minutes');
     const calculatedBillableInput = document.getElementById('job-calculated-billable');
 
     function recalculateBillableAmount() {
       const selectedOption = serviceTypeSelect?.selectedOptions?.[0];
-      if (!selectedOption || !billableMinutesInput || !calculatedBillableInput) return;
+      if (!selectedOption || !billableHoursInput || !billableMinutesInput || !calculatedBillableInput) return;
 
       const hourlyRate = Number(selectedOption.getAttribute('data-hourly-rate') || 0);
       const increment = Number(selectedOption.getAttribute('data-billing-increment') || 0);
-      const minutes = Math.max(0, Number(billableMinutesInput.value || 0));
+      const minutes = Math.max(0, (Number(billableHoursInput.value || 0) * 60) + Number(billableMinutesInput.value || 0));
 
       if (!hourlyRate) return;
 
@@ -228,6 +250,7 @@ if (Astro.request.method === 'POST') {
     }
 
     serviceTypeSelect?.addEventListener('change', recalculateBillableAmount);
-    billableMinutesInput?.addEventListener('input', recalculateBillableAmount);
+    billableHoursInput?.addEventListener('change', recalculateBillableAmount);
+    billableMinutesInput?.addEventListener('change', recalculateBillableAmount);
   </script>
 </CrmLayout>

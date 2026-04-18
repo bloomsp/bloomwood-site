@@ -131,13 +131,17 @@ create table if not exists public.tasks (
   details text,
   status text not null default 'open' check (status in ('open', 'done', 'cancelled')),
   due_at timestamptz,
+  billable_minutes integer not null default 0,
+  non_billable_minutes integer not null default 0,
   time_taken_minutes integer not null default 0,
   completed_at timestamptz,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_client_or_job_required check (client_id is not null or job_id is not null),
-  constraint tasks_time_taken_minutes_check check (time_taken_minutes >= 0)
+  constraint tasks_billable_minutes_check check (billable_minutes >= 0),
+  constraint tasks_non_billable_minutes_check check (non_billable_minutes >= 0),
+  constraint tasks_time_taken_minutes_check check (time_taken_minutes >= 0 and time_taken_minutes = billable_minutes + non_billable_minutes)
 );
 
 create index if not exists idx_tasks_client_id on public.tasks(client_id);

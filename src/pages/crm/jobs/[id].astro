@@ -29,6 +29,18 @@ function getCalculatedAmount(minutes: number, hourlyRate: number | null, increme
   return (roundedMinutes / 60) * hourlyRate;
 }
 
+function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
+  return ((Number(hours ?? 0) || 0) * 60) + (Number(minutes ?? 0) || 0);
+}
+
+function splitMinutes(totalMinutes: number) {
+  const safeMinutes = Math.max(0, Number(totalMinutes ?? 0) || 0);
+  return {
+    hours: Math.floor(safeMinutes / 60),
+    minutes: safeMinutes % 60,
+  };
+}
+
 if (Astro.request.method === 'POST' && supabase) {
   const formData = await Astro.request.formData();
   const action = String(formData.get('action') ?? '');
@@ -57,39 +69,62 @@ if (Astro.request.method === 'POST' && supabase) {
     if (job?.status === 'completed') {
       loadError = 'No more tasks can be added to a completed job.';
     } else {
-    const timeHours = Number(formData.get('time_hours') ?? 0) || 0;
-    const timeMinutes = Number(formData.get('time_minutes') ?? 0) || 0;
-    const payload = {
-      job_id: id,
-      client_id: String(formData.get('client_id') ?? '').trim() || null,
-      service_pack_id: String(formData.get('service_pack_id') ?? '').trim() || null,
-      title: String(formData.get('title') ?? '').trim(),
-      details: String(formData.get('details') ?? '').trim() || null,
-      status: String(formData.get('status') ?? 'open'),
-      due_at: String(formData.get('due_at') ?? '').trim() || null,
-      time_taken_minutes: (timeHours * 60) + timeMinutes,
-    };
+      const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
+      const nonBillableMinutes = minutesFromParts(formData.get('non_billable_hours'), formData.get('non_billable_minutes'));
+      const initialStatus = String(formData.get('status') ?? 'open');
+      const payload = {
+        job_id: id,
+        client_id: String(formData.get('client_id') ?? '').trim() || null,
+        service_pack_id: String(formData.get('service_pack_id') ?? '').trim() || null,
+        title: String(formData.get('title') ?? '').trim(),
+        details: String(formData.get('details') ?? '').trim() || null,
+        status: initialStatus,
+        due_at: String(formData.get('due_at') ?? '').trim() || null,
+        billable_minutes: billableMinutes,
+        non_billable_minutes: nonBillableMinutes,
+        time_taken_minutes: billableMinutes + nonBillableMinutes,
+        completed_at: initialStatus === 'done' ? new Date().toISOString() : null,
+      };
 
-    if (!payload.title) {
-      loadError = 'Task title is required.';
-    } else {
-      const { error } = await supabase.from('tasks').insert(payload);
-      if (error) {
-        console.error('Failed to create job task', error);
-        loadError = error.message;
+      if (!payload.title) {
+        loadError = 'Task title is required.';
       } else {
-        return Astro.redirect(`/crm/jobs/${id}`);
+        const { error } = await supabase.from('tasks').insert(payload);
+        if (error) {
+          console.error('Failed to create job task', error);
+          loadError = error.message;
+        } else {
+          if (payload.service_pack_id && payload.status === 'done' && payload.time_taken_minutes > 0) {
+            const { data: servicePack } = await supabase
+              .from('service_packs')
+              .select('minutes_used, minutes_purchased, hours_purchased')
+              .eq('id', payload.service_pack_id)
+              .single();
+
+            if (servicePack) {
+              const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
+              const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + payload.time_taken_minutes;
+              await supabase
+                .from('service_packs')
+                .update({
+                  minutes_used: newMinutesUsed,
+                  status: newMinutesUsed >= totalPurchased ? 'used_up' : 'active',
+                })
+                .eq('id', payload.service_pack_id);
+            }
+          }
+          return Astro.redirect(`/crm/jobs/${id}`);
+        }
       }
-    }
     }
   }
 
   if (action === 'complete-task') {
     const taskId = String(formData.get('task_id') ?? '').trim();
-    const timeHours = Number(formData.get('time_hours') ?? 0) || 0;
-    const timeMinutes = Number(formData.get('time_minutes') ?? 0) || 0;
+    const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
+    const nonBillableMinutes = minutesFromParts(formData.get('non_billable_hours'), formData.get('non_billable_minutes'));
     const servicePackId = String(formData.get('service_pack_id') ?? '').trim() || null;
-    const totalMinutes = (timeHours * 60) + timeMinutes;
+    const totalMinutes = billableMinutes + nonBillableMinutes;
     if (!taskId) {
       loadError = 'Task id is required.';
     } else {
@@ -98,6 +133,8 @@ if (Astro.request.method === 'POST' && supabase) {
         .update({
           status: 'done',
           completed_at: new Date().toISOString(),
+          billable_minutes: billableMinutes,
+          non_billable_minutes: nonBillableMinutes,
           time_taken_minutes: totalMinutes,
           service_pack_id: servicePackId,
         })
@@ -107,21 +144,25 @@ if (Astro.request.method === 'POST' && supabase) {
         console.error('Failed to complete job task', error);
         loadError = error.message;
       } else {
-        const nextBillableMinutes = Number(job?.billable_minutes ?? 0) + totalMinutes;
-        const nextBillableAmount = Number(job?.calculated_billable_amount ?? 0) + getCalculatedAmount(
-          totalMinutes,
-          Number(job?.hourly_rate_snapshot ?? 0),
-          Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
-        );
+        if (servicePackId && totalMinutes > 0) {
+          const { data: servicePack } = await supabase
+            .from('service_packs')
+            .select('minutes_used, minutes_purchased, hours_purchased')
+            .eq('id', servicePackId)
+            .single();
 
-        await supabase
-          .from('jobs')
-          .update({
-            billable_minutes: nextBillableMinutes,
-            calculated_billable_amount: nextBillableAmount,
-          })
-          .eq('id', id);
-
+          if (servicePack) {
+            const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
+            const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + totalMinutes;
+            await supabase
+              .from('service_packs')
+              .update({
+                minutes_used: newMinutesUsed,
+                status: newMinutesUsed >= totalPurchased ? 'used_up' : 'active',
+              })
+              .eq('id', servicePackId);
+          }
+        }
         return Astro.redirect(`/crm/jobs/${id}`);
       }
     }
@@ -166,25 +207,14 @@ if (Astro.request.method === 'POST' && supabase) {
       } else {
         const { data: servicePack } = await supabase
           .from('service_packs')
-          .select('minutes_used')
+          .select('minutes_used, minutes_purchased, hours_purchased')
           .eq('id', servicePackId)
           .single();
 
         if (servicePack) {
-          const purchasedMinutes = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number((servicePack as any).hours_purchased ?? 0) * 60);
+          const totalPurchased = Number(servicePack.minutes_purchased ?? 0) || Math.round(Number(servicePack.hours_purchased ?? 0) * 60);
           const newMinutesUsed = Number(servicePack.minutes_used ?? 0) + minutesApplied;
-          const { data: fullServicePack } = await supabase
-            .from('service_packs')
-            .select('minutes_purchased, hours_purchased')
-            .eq('id', servicePackId)
-            .single();
-
-          const totalPurchased = fullServicePack
-            ? (Number(fullServicePack.minutes_purchased ?? 0) || Math.round(Number(fullServicePack.hours_purchased ?? 0) * 60))
-            : purchasedMinutes;
-          const nextStatus = newMinutesUsed >= totalPurchased
-            ? 'used_up'
-            : 'active';
+          const nextStatus = newMinutesUsed >= totalPurchased ? 'used_up' : 'active';
 
           await supabase
             .from('service_packs')
@@ -208,7 +238,7 @@ if (!supabase) {
       .eq('id', id)
       .single(),
     supabase.from('job_notes').select('id, note_type, body, created_at').eq('job_id', id).order('created_at', { ascending: false }),
-    supabase.from('tasks').select('id, title, details, status, due_at, completed_at, time_taken_minutes, service_pack_id').eq('job_id', id).order('due_at', { ascending: true }),
+    supabase.from('tasks').select('id, title, details, status, due_at, completed_at, time_taken_minutes, billable_minutes, non_billable_minutes, service_pack_id').eq('job_id', id).order('due_at', { ascending: true }),
     supabase.from('file_deliveries').select('id, delivery_type, status, download_job_id, notes, updated_at').eq('job_id', id).order('updated_at', { ascending: false }),
     supabase
       .from('service_pack_usage')
@@ -252,6 +282,21 @@ if (supabase && job?.client?.id) {
 function formatHours(minutes: number) {
   return (minutes / 60).toFixed(2);
 }
+
+const estimatedBillableMinutes = Number(job?.billable_minutes ?? 0);
+const actualBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.billable_minutes ?? 0), 0);
+const actualNonBillableMinutes = tasks.reduce((sum, task) => sum + Number(task.non_billable_minutes ?? 0), 0);
+const openTaskCount = tasks.filter((task) => task.status === 'open').length;
+const estimatedBillableAmount = getCalculatedAmount(
+  estimatedBillableMinutes,
+  Number(job?.hourly_rate_snapshot ?? 0),
+  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
+);
+const actualBillableAmount = getCalculatedAmount(
+  actualBillableMinutes,
+  Number(job?.hourly_rate_snapshot ?? 0),
+  Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
+);
 ---
 
 <CrmLayout title="Job detail" description="Bloomwood CRM job detail">
@@ -274,28 +319,45 @@ function formatHours(minutes: number) {
             {job.client?.display_name ? <div class="mt-3 text-sm text-slate-600">Client: <a class="font-medium text-sky-700 hover:underline" href={`/crm/clients/${job.client.id}`}>{job.client.display_name}</a></div> : null}
             {job.service_type?.name ? <div class="text-sm text-slate-600">Service: {job.service_type.name}{job.service_type.item_code ? ` (${job.service_type.item_code})` : ''}</div> : null}
           </div>
-          <div class="grid gap-3 md:w-[24rem]">
+          <div class="grid gap-3 md:w-[26rem]">
             <div class="flex justify-end gap-2">
               <a href={`/crm/jobs/${id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit job</a>
             </div>
             <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Status</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">{job.status}</div>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Priority</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">{job.priority}</div>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Billable</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</div>
-              <div class="mt-1 text-xs normal-case tracking-normal text-slate-500">From job billable minutes and completed task time.</div>
-            </div>
-            <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
-              <div class="mt-1 text-sm font-semibold text-slate-900">{job.invoice_number ?? 'Not set'}</div>
-            </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Job ID</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{job.job_reference}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Status</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{job.status}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Open tasks</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{openTaskCount}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Priority</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{job.priority}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Billable estimate</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(estimatedBillableMinutes)} hrs</div>
+                <div class="mt-1 text-xs normal-case tracking-normal text-slate-500">${estimatedBillableAmount.toFixed(2)}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Billable actual</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(actualBillableMinutes)} hrs</div>
+                <div class="mt-1 text-xs normal-case tracking-normal text-slate-500">${actualBillableAmount.toFixed(2)}</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Non-billable</div>
+                <div class="mt-1 text-lg font-semibold text-slate-900">{formatHours(actualNonBillableMinutes)} hrs</div>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
+                <div class="mt-1 text-sm font-semibold text-slate-900">{job.invoice_number ?? 'Not set'}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -319,8 +381,16 @@ function formatHours(minutes: number) {
                 <dd class="mt-1 text-sm text-slate-900">{job.serial_number ?? '—'}</dd>
               </div>
               <div>
-                <dt class="text-xs uppercase tracking-wide text-slate-500">Billable minutes</dt>
-                <dd class="mt-1 text-sm text-slate-900">{job.billable_minutes ?? 0}</dd>
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Billable estimate</dt>
+                <dd class="mt-1 text-sm text-slate-900">{formatHours(estimatedBillableMinutes)} hrs</dd>
+              </div>
+              <div>
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Billable actual</dt>
+                <dd class="mt-1 text-sm text-slate-900">{formatHours(actualBillableMinutes)} hrs</dd>
+              </div>
+              <div>
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Non-billable total</dt>
+                <dd class="mt-1 text-sm text-slate-900">{formatHours(actualNonBillableMinutes)} hrs</dd>
               </div>
               <div>
                 <dt class="text-xs uppercase tracking-wide text-slate-500">Hourly rate snapshot</dt>
@@ -377,79 +447,123 @@ function formatHours(minutes: number) {
         <div class="space-y-6">
           <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Tasks</h3>
-            {job.status !== 'completed' ? (
-            <form method="post" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <input type="hidden" name="action" value="add-task" />
-              <input type="hidden" name="client_id" value={job.client?.id ?? ''} />
-              <div class="grid gap-3 md:grid-cols-2">
-                <input name="title" placeholder="Task title" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                <label class="text-sm text-slate-700">
-                  <span class="mb-1 block">Due date</span>
-                  <input type="datetime-local" name="due_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                </label>
-                <input name="details" placeholder="Task details" class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2" />
-                <label class="text-sm text-slate-700">
-                  <span class="mb-1 block">Hours</span>
-                  <select name="time_hours" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}</option>)}
-                  </select>
-                </label>
-                <label class="text-sm text-slate-700">
-                  <span class="mb-1 block">Minutes</span>
-                  <select name="time_minutes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
-                  </select>
-                </label>
-                <label class="text-sm text-slate-700 md:col-span-2">
-                  <span class="mb-1 block">Service pack</span>
-                  <select name="service_pack_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="">No service pack</option>
-                    {availableServicePacks.map((pack) => (
-                      <option value={pack.id}>{pack.service_type?.name ?? 'Service pack'} ({formatHours(pack.minutes_remaining)} hrs remaining)</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div class="mt-3 flex justify-end">
-                <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Add task</button>
-              </div>
-            </form>
-            ) : (
-              <p class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">This job is completed, so no more tasks can be added.</p>
-            )}
             <div class="mt-4 space-y-3">
               {tasks.length === 0 ? <p class="text-sm text-slate-600">No tasks yet.</p> : null}
-              {tasks.map((task) => (
-                <div class="rounded-xl border border-slate-200 p-4">
-                  <div class="text-sm font-semibold text-slate-900">{task.title}</div>
-                  {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
-                  <div class="mt-2 flex items-center justify-between gap-3 text-xs uppercase tracking-wide text-slate-500">
-                    <div>{task.status}{task.due_at ? ` • ${task.due_at}` : ''}{task.time_taken_minutes ? ` • ${formatHours(Number(task.time_taken_minutes))}h` : ''}</div>
-                    {task.status === 'open' ? (
-                      <form method="post">
-                        <input type="hidden" name="action" value="complete-task" />
-                        <input type="hidden" name="task_id" value={task.id} />
-                        <div class="mt-2 grid gap-2">
-                          <select name="time_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                            {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}h</option>)}
-                          </select>
-                          <select name="time_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                            {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}m</option>)}
-                          </select>
-                          <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                            <option value="">No pack</option>
-                            {availableServicePacks.map((pack) => (
-                              <option value={pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
-                            ))}
-                          </select>
-                          <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
-                        </div>
-                      </form>
-                    ) : null}
+              {tasks.map((task) => {
+                const billableParts = splitMinutes(Number(task.billable_minutes ?? 0));
+                const nonBillableParts = splitMinutes(Number(task.non_billable_minutes ?? 0));
+                return (
+                  <div class="rounded-xl border border-slate-200 p-4">
+                    <div class="text-sm font-semibold text-slate-900">{task.title}</div>
+                    {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
+                    <div class="mt-2 flex items-center justify-between gap-3 text-xs uppercase tracking-wide text-slate-500">
+                      <div>
+                        {task.status}
+                        {task.due_at ? ` • ${task.due_at}` : ''}
+                        {task.billable_minutes ? ` • billable ${formatHours(Number(task.billable_minutes))}h` : ''}
+                        {task.non_billable_minutes ? ` • non-billable ${formatHours(Number(task.non_billable_minutes))}h` : ''}
+                      </div>
+                      {task.status === 'open' ? (
+                        <form method="post">
+                          <input type="hidden" name="action" value="complete-task" />
+                          <input type="hidden" name="task_id" value={task.id} />
+                          <div class="mt-2 grid gap-2">
+                            <label class="text-[11px] font-medium text-slate-500">
+                              Billable time
+                              <div class="mt-1 grid grid-cols-2 gap-2">
+                                <select name="billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={billableParts.hours === i}>{i}h</option>)}
+                                </select>
+                                <select name="billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={billableParts.minutes === minute}>{minute}m</option>)}
+                                </select>
+                              </div>
+                            </label>
+                            <label class="text-[11px] font-medium text-slate-500">
+                              Non-billable time
+                              <div class="mt-1 grid grid-cols-2 gap-2">
+                                <select name="non_billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={nonBillableParts.hours === i}>{i}h</option>)}
+                                </select>
+                                <select name="non_billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={nonBillableParts.minutes === minute}>{minute}m</option>)}
+                                </select>
+                              </div>
+                            </label>
+                            <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                              <option value="">No pack</option>
+                              {availableServicePacks.map((pack) => (
+                                <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
+                              ))}
+                            </select>
+                            <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+                          </div>
+                        </form>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+            {job.status !== 'completed' ? (
+              <form method="post" class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <input type="hidden" name="action" value="add-task" />
+                <input type="hidden" name="client_id" value={job.client?.id ?? ''} />
+                <div class="grid gap-3 md:grid-cols-2">
+                  <input name="title" placeholder="Task title" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <label class="text-sm text-slate-700">
+                    <span class="mb-1 block">Due date</span>
+                    <input type="datetime-local" name="due_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  </label>
+                  <input name="details" placeholder="Task details" class="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2" />
+                  <label class="text-sm text-slate-700">
+                    <span class="mb-1 block">Billable hours</span>
+                    <select name="billable_hours" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}</option>)}
+                    </select>
+                  </label>
+                  <label class="text-sm text-slate-700">
+                    <span class="mb-1 block">Billable minutes</span>
+                    <select name="billable_minutes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
+                    </select>
+                  </label>
+                  <label class="text-sm text-slate-700">
+                    <span class="mb-1 block">Non-billable hours</span>
+                    <select name="non_billable_hours" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      {Array.from({ length: 9 }, (_, i) => <option value={i}>{i}</option>)}
+                    </select>
+                  </label>
+                  <label class="text-sm text-slate-700">
+                    <span class="mb-1 block">Non-billable minutes</span>
+                    <select name="non_billable_minutes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
+                    </select>
+                  </label>
+                  <label class="text-sm text-slate-700 md:col-span-2">
+                    <span class="mb-1 block">Service pack</span>
+                    <select name="service_pack_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      <option value="">No service pack</option>
+                      {availableServicePacks.map((pack) => (
+                        <option value={pack.id}>{pack.service_type?.name ?? 'Service pack'} ({formatHours(pack.minutes_remaining)} hrs remaining)</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label class="text-sm text-slate-700 md:col-span-2">
+                    <span class="mb-1 block">Task status</span>
+                    <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                      <option value="open" selected>Open</option>
+                      <option value="done">Done</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="mt-3 flex justify-end">
+                  <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Add task</button>
+                </div>
+              </form>
+            ) : (
+              <p class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">This job is completed, so no more tasks can be added.</p>
+            )}
           </section>
 
           <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
