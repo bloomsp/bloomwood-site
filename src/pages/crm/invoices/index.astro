@@ -14,6 +14,8 @@ let invoices: any[] = [];
 
 const statusFilter = String(Astro.url.searchParams.get('status') ?? '').trim().toLowerCase();
 const query = String(Astro.url.searchParams.get('q') ?? '').trim().toLowerCase();
+const fromDate = String(Astro.url.searchParams.get('from') ?? '').trim();
+const toDate = String(Astro.url.searchParams.get('to') ?? '').trim();
 
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
@@ -38,7 +40,10 @@ const filteredInvoices = invoices.filter((invoice) => {
     .join(' ')
     .toLowerCase();
   const matchesQuery = !query || haystack.includes(query);
-  return matchesStatus && matchesQuery;
+  const invoiceDate = String(invoice.created_at ?? '').slice(0, 10);
+  const matchesFrom = !fromDate || (invoiceDate && invoiceDate >= fromDate);
+  const matchesTo = !toDate || (invoiceDate && invoiceDate <= toDate);
+  return matchesStatus && matchesQuery && matchesFrom && matchesTo;
 });
 
 const statusCounts = {
@@ -61,7 +66,7 @@ const statusCounts = {
   {loadError ? <section class="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{loadError}</section> : null}
 
   <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-    <form method="get" class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
+    <form method="get" class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_180px_180px_auto] md:items-end">
       <label class="text-sm text-slate-700">
         <span class="mb-1 block">Search</span>
         <input name="q" value={Astro.url.searchParams.get('q') ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Invoice number, client, status" />
@@ -76,6 +81,14 @@ const statusCounts = {
           <option value="void" selected={statusFilter === 'void'}>Void</option>
         </select>
       </label>
+      <label class="text-sm text-slate-700">
+        <span class="mb-1 block">From</span>
+        <input type="date" name="from" value={fromDate} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="text-sm text-slate-700">
+        <span class="mb-1 block">To</span>
+        <input type="date" name="to" value={toDate} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
       <div class="flex gap-2">
         <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Filter</button>
         <a href="/crm/invoices/" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear</a>
@@ -83,11 +96,11 @@ const statusCounts = {
     </form>
 
     <div class="mt-4 flex flex-wrap gap-2 text-sm">
-      <a href="/crm/invoices/" class={`rounded-full px-3 py-1 ${!statusFilter ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>All ({statusCounts.all})</a>
-      <a href="/crm/invoices/?status=draft" class={`rounded-full px-3 py-1 ${statusFilter === 'draft' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Draft ({statusCounts.draft})</a>
-      <a href="/crm/invoices/?status=issued" class={`rounded-full px-3 py-1 ${statusFilter === 'issued' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Issued ({statusCounts.issued})</a>
-      <a href="/crm/invoices/?status=paid" class={`rounded-full px-3 py-1 ${statusFilter === 'paid' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Paid ({statusCounts.paid})</a>
-      <a href="/crm/invoices/?status=void" class={`rounded-full px-3 py-1 ${statusFilter === 'void' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Void ({statusCounts.void})</a>
+      <a href={`/crm/invoices/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(fromDate ? { from: fromDate } : {}), ...(toDate ? { to: toDate } : {}) }).toString()}`} class={`rounded-full px-3 py-1 ${!statusFilter ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>All ({statusCounts.all})</a>
+      <a href={`/crm/invoices/?${new URLSearchParams({ status: 'draft', ...(query ? { q: query } : {}), ...(fromDate ? { from: fromDate } : {}), ...(toDate ? { to: toDate } : {}) }).toString()}`} class={`rounded-full px-3 py-1 ${statusFilter === 'draft' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Draft ({statusCounts.draft})</a>
+      <a href={`/crm/invoices/?${new URLSearchParams({ status: 'issued', ...(query ? { q: query } : {}), ...(fromDate ? { from: fromDate } : {}), ...(toDate ? { to: toDate } : {}) }).toString()}`} class={`rounded-full px-3 py-1 ${statusFilter === 'issued' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Issued ({statusCounts.issued})</a>
+      <a href={`/crm/invoices/?${new URLSearchParams({ status: 'paid', ...(query ? { q: query } : {}), ...(fromDate ? { from: fromDate } : {}), ...(toDate ? { to: toDate } : {}) }).toString()}`} class={`rounded-full px-3 py-1 ${statusFilter === 'paid' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Paid ({statusCounts.paid})</a>
+      <a href={`/crm/invoices/?${new URLSearchParams({ status: 'void', ...(query ? { q: query } : {}), ...(fromDate ? { from: fromDate } : {}), ...(toDate ? { to: toDate } : {}) }).toString()}`} class={`rounded-full px-3 py-1 ${statusFilter === 'void' ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>Void ({statusCounts.void})</a>
     </div>
   </section>
 
