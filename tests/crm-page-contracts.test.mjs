@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   buildClientInvoiceLineItems,
-  formatCrmTimestamp,
+  formatCrmDate,
+  formatCrmDateTime,
   summarizeClientDetail,
   summarizeJobDetail,
   summarizeServicePackDetail,
@@ -224,9 +225,15 @@ test('client invoice selection validation requires at least one selected item', 
   assert.equal(validateClientInvoiceSelection({ selectedJobIds: [], selectedTaskIds: ['task-4'] }), null);
 });
 
-test('crm timestamp formatter normalizes iso and date-only strings to yyyy-mm-dd hh:mm:ss', () => {
-  assert.equal(formatCrmTimestamp('2026-04-19T06:07:08.999Z').startsWith('2026-04-19 '), true);
-  assert.equal(formatCrmTimestamp('2026-04-19T06:07:08.999Z').endsWith('06:07:08') || formatCrmTimestamp('2026-04-19T06:07:08.999Z').endsWith('16:07:08'), true);
-  assert.equal(formatCrmTimestamp('2026-04-19 12:34:56'), '2026-04-19 12:34:56');
-  assert.equal(formatCrmTimestamp('2026-04-19'), '2026-04-19 00:00:00');
+test('crm date-time formatter normalizes iso and date-only strings to yyyy-mm-dd hh:mm:ss', () => {
+  assert.equal(formatCrmDateTime('2026-04-19T06:07:08.999Z').startsWith('2026-04-19 '), true);
+  assert.equal(formatCrmDateTime('2026-04-19T06:07:08.999Z').endsWith('06:07:08') || formatCrmDateTime('2026-04-19T06:07:08.999Z').endsWith('16:07:08'), true);
+  assert.equal(formatCrmDateTime('2026-04-19 12:34:56'), '2026-04-19 12:34:56');
+  assert.equal(formatCrmDateTime('2026-04-19'), '2026-04-19 00:00:00');
+});
+
+test('crm date formatter normalizes iso and date-only strings to yyyy-mm-dd', () => {
+  assert.equal(formatCrmDate('2026-04-19T06:07:08.999Z'), '2026-04-19');
+  assert.equal(formatCrmDate('2026-04-19 12:34:56'), '2026-04-19');
+  assert.equal(formatCrmDate('2026-04-19'), '2026-04-19');
 });

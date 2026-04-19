@@ -1,5 +1,5 @@
 ---
-import { formatCrmTimestamp } from '@/lib/crm-page-contracts.mjs';
+import { formatCrmDateTime } from '@/lib/crm-page-contracts.mjs';
 
 const {
   task,
@@ -47,7 +47,7 @@ const timeToBeInvoicedMinutes = Number(billingBreakdown?.overflowBillableMinutes
     </div>
     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
       <div>{task.status}</div>
-      {task.due_at ? <div class="mt-1 normal-case tracking-normal">{formatCrmTimestamp(task.due_at)}</div> : null}
+      {task.due_at ? <div class="mt-1 normal-case tracking-normal">{formatCrmDateTime(task.due_at)}</div> : null}
       <div class="mt-2 space-y-1 normal-case tracking-normal">
         <div>Billable time: {formatHours(billableMinutes)}h</div>
         <div>Non-billable time: {formatHours(nonBillableMinutes)}h</div>

@@ -184,7 +184,21 @@ export function summarizeJobDetail({ job, tasks = [], servicePacks = [], clientP
   };
 }
 
-export function formatCrmTimestamp(value) {
+function parseCrmDateParts(text) {
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return {
+    year: parsed.getFullYear(),
+    month: String(parsed.getMonth() + 1).padStart(2, '0'),
+    day: String(parsed.getDate()).padStart(2, '0'),
+    hours: String(parsed.getHours()).padStart(2, '0'),
+    minutes: String(parsed.getMinutes()).padStart(2, '0'),
+    seconds: String(parsed.getSeconds()).padStart(2, '0'),
+  };
+}
+
+export function formatCrmDateTime(value) {
   if (!value) return '';
   const text = String(value).trim();
   if (!text) return '';
@@ -195,16 +209,22 @@ export function formatCrmTimestamp(value) {
   const dateOnly = text.match(/^(\d{4}-\d{2}-\d{2})$/);
   if (dateOnly) return `${dateOnly[1]} 00:00:00`;
 
-  const parsed = new Date(text);
-  if (Number.isNaN(parsed.getTime())) return text;
+  const parts = parseCrmDateParts(text);
+  if (!parts) return text;
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hours}:${parts.minutes}:${parts.seconds}`;
+}
 
-  const year = parsed.getFullYear();
-  const month = String(parsed.getMonth() + 1).padStart(2, '0');
-  const day = String(parsed.getDate()).padStart(2, '0');
-  const hours = String(parsed.getHours()).padStart(2, '0');
-  const minutes = String(parsed.getMinutes()).padStart(2, '0');
-  const seconds = String(parsed.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+export function formatCrmDate(value) {
+  if (!value) return '';
+  const text = String(value).trim();
+  if (!text) return '';
+
+  const direct = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (direct) return direct[1];
+
+  const parts = parseCrmDateParts(text);
+  if (!parts) return text;
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 export function summarizeServicePackDetail({ servicePack, tasks = [] }) {

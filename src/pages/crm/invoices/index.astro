@@ -1,6 +1,6 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
-import { formatCrmTimestamp } from '@/lib/crm-page-contracts.mjs';
+import { formatCrmDateTime } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -119,7 +119,7 @@ const statusCounts = {
           </div>
           <div class="text-right text-sm text-slate-600">
             <div class="font-semibold text-slate-900">${Number(invoice.total_amount ?? 0).toFixed(2)}</div>
-            <div>{formatCrmTimestamp(invoice.created_at)}</div>
+            <div>{formatCrmDateTime(invoice.created_at)}</div>
           </div>
         </div>
       </a>

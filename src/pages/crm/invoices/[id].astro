@@ -1,6 +1,6 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
-import { formatCrmTimestamp } from '@/lib/crm-page-contracts.mjs';
+import { formatCrmDateTime } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -208,8 +208,8 @@ function toLocalInput(value: string | null) {
             <div class="text-sm text-slate-600">Status: {invoice.status}</div>
             {invoice.external_provider ? <div class="text-sm text-slate-600">Provider: {invoice.external_provider}</div> : null}
             {invoice.external_invoice_id ? <div class="text-sm text-slate-600">External ID: {invoice.external_invoice_id}</div> : null}
-            {invoice.issued_at ? <div class="text-sm text-slate-600">Issued: {formatCrmTimestamp(invoice.issued_at)}</div> : null}
-            {invoice.paid_at ? <div class="text-sm text-slate-600">Paid: {formatCrmTimestamp(invoice.paid_at)}</div> : null}
+            {invoice.issued_at ? <div class="text-sm text-slate-600">Issued: {formatCrmDateTime(invoice.issued_at)}</div> : null}
+            {invoice.paid_at ? <div class="text-sm text-slate-600">Paid: {formatCrmDateTime(invoice.paid_at)}</div> : null}
           </div>
           <div class="text-right">
             <div class="text-xs uppercase tracking-wide text-slate-500">Total</div>
