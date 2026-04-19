@@ -82,7 +82,8 @@ if (!supabase) {
       }
     }
 
-    if (action === 'add-manual-line-item') {
+    if (action === 'add-manual-line-item' || action === 'update-manual-line-item') {
+      const lineItemId = String(formData.get('line_item_id') ?? '').trim() || null;
       const description = String(formData.get('description') ?? '').trim();
       const quantityValue = String(formData.get('quantity') ?? '').trim();
       const unitAmountValue = String(formData.get('unit_amount') ?? '').trim();
@@ -93,9 +94,11 @@ if (!supabase) {
 
       if (!description) {
         loadError = 'Manual line item description is required.';
-      } else if (Number.isNaN(amount)) {
-        loadError = 'Manual line item amount must be a valid number.';
-      } else {
+      } else if ((quantityValue && Number.isNaN(quantity)) || (unitAmountValue && Number.isNaN(unitAmount)) || Number.isNaN(amount)) {
+        loadError = 'Manual line item values must be valid numbers.';
+      } else if (action === 'update-manual-line-item' && !lineItemId) {
+        loadError = 'Manual line item id is required.';
+      } else if (action === 'add-manual-line-item') {
         const { data: lastLineItem } = await supabase
           .from('invoice_line_items')
           .select('sort_order')
@@ -116,6 +119,39 @@ if (!supabase) {
         });
         if (error) {
           console.error('Failed to add manual invoice line item', error);
+          loadError = error.message;
+        } else {
+          return Astro.redirect(`/crm/invoices/${id}`);
+        }
+      } else {
+        const { error } = await supabase
+          .from('invoice_line_items')
+          .update({ description, quantity, unit_amount: unitAmount, amount })
+          .eq('id', lineItemId)
+          .eq('invoice_id', id)
+          .eq('source_type', 'manual');
+        if (error) {
+          console.error('Failed to update manual invoice line item', error);
+          loadError = error.message;
+        } else {
+          return Astro.redirect(`/crm/invoices/${id}`);
+        }
+      }
+    }
+
+    if (action === 'delete-manual-line-item') {
+      const lineItemId = String(formData.get('line_item_id') ?? '').trim();
+      if (!lineItemId) {
+        loadError = 'Manual line item id is required.';
+      } else {
+        const { error } = await supabase
+          .from('invoice_line_items')
+          .delete()
+          .eq('id', lineItemId)
+          .eq('invoice_id', id)
+          .eq('source_type', 'manual');
+        if (error) {
+          console.error('Failed to delete manual invoice line item', error);
           loadError = error.message;
         } else {
           return Astro.redirect(`/crm/invoices/${id}`);
@@ -242,19 +278,57 @@ function toLocalInput(value: string | null) {
           {lineItems.length === 0 ? <p class="text-sm text-slate-600">No line items yet.</p> : null}
           {lineItems.map((item) => (
             <div class="rounded-xl border border-slate-200 p-4">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <div class="text-sm font-semibold text-slate-900">{item.description}</div>
-                  <div class="text-sm text-slate-600">Type: {item.source_type}</div>
-                  {item.job?.id ? <div class="text-sm text-slate-600">Job: <a class="font-medium text-sky-700 hover:underline" href={`/crm/jobs/${item.job.id}`}>{item.job.job_reference}</a></div> : null}
-                  {item.task?.id ? <div class="text-sm text-slate-600">Task: {item.task.title}</div> : null}
+              {item.source_type === 'manual' ? (
+                <form method="post" class="space-y-4">
+                  <input type="hidden" name="action" value="update-manual-line-item" />
+                  <input type="hidden" name="line_item_id" value={item.id} />
+                  <div class="grid gap-4 md:grid-cols-4">
+                    <label class="text-sm text-slate-700 md:col-span-2">
+                      <span class="mb-1 block">Description</span>
+                      <input name="description" value={item.description ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                    </label>
+                    <label class="text-sm text-slate-700">
+                      <span class="mb-1 block">Qty</span>
+                      <input type="number" min="0" step="0.01" name="quantity" value={item.quantity ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                    </label>
+                    <label class="text-sm text-slate-700">
+                      <span class="mb-1 block">Unit amount</span>
+                      <input type="number" min="0" step="0.01" name="unit_amount" value={item.unit_amount ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                    </label>
+                    <label class="text-sm text-slate-700 md:col-span-1">
+                      <span class="mb-1 block">Amount</span>
+                      <input type="number" min="0" step="0.01" name="amount" value={item.amount ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+                    </label>
+                    <div class="md:col-span-3 flex items-end justify-end gap-3">
+                      <div class="text-right text-sm text-slate-600">
+                        <div class="font-semibold text-slate-900">${Number(item.amount ?? 0).toFixed(2)}</div>
+                      </div>
+                      <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Save</button>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="text-sm font-semibold text-slate-900">{item.description}</div>
+                    <div class="text-sm text-slate-600">Type: {item.source_type}</div>
+                    {item.job?.id ? <div class="text-sm text-slate-600">Job: <a class="font-medium text-sky-700 hover:underline" href={`/crm/jobs/${item.job.id}`}>{item.job.job_reference}</a></div> : null}
+                    {item.task?.id ? <div class="text-sm text-slate-600">Task: {item.task.title}</div> : null}
+                  </div>
+                  <div class="text-right text-sm text-slate-600">
+                    {item.quantity ? <div>Qty: {Number(item.quantity).toFixed(2)}</div> : null}
+                    {item.unit_amount ? <div>Unit: ${Number(item.unit_amount).toFixed(2)}</div> : null}
+                    <div class="font-semibold text-slate-900">${Number(item.amount ?? 0).toFixed(2)}</div>
+                  </div>
                 </div>
-                <div class="text-right text-sm text-slate-600">
-                  {item.quantity ? <div>Qty: {Number(item.quantity).toFixed(2)}</div> : null}
-                  {item.unit_amount ? <div>Unit: ${Number(item.unit_amount).toFixed(2)}</div> : null}
-                  <div class="font-semibold text-slate-900">${Number(item.amount ?? 0).toFixed(2)}</div>
-                </div>
-              </div>
+              )}
+              {item.source_type === 'manual' ? (
+                <form method="post" class="mt-3 flex justify-end">
+                  <input type="hidden" name="action" value="delete-manual-line-item" />
+                  <input type="hidden" name="line_item_id" value={item.id} />
+                  <button class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Delete</button>
+                </form>
+              ) : null}
             </div>
           ))}
         </div>
