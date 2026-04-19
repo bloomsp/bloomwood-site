@@ -719,7 +719,7 @@ function formatHours(minutes: number) {
                     </div>
                     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
                       <div>{pack.status}</div>
-                      {pack.purchase_date ? <div class="mt-1 normal-case tracking-normal">{pack.purchase_date}</div> : null}
+                      {pack.purchase_date ? <div class="mt-1 normal-case tracking-normal">{formatCrmTimestamp(pack.purchase_date)}</div> : null}
                     </div>
                   </div>
                 </a>

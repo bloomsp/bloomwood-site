@@ -192,6 +192,9 @@ export function formatCrmTimestamp(value) {
   const direct = text.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}:\d{2})/);
   if (direct) return `${direct[1]} ${direct[2]}`;
 
+  const dateOnly = text.match(/^(\d{4}-\d{2}-\d{2})$/);
+  if (dateOnly) return `${dateOnly[1]} 00:00:00`;
+
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return text;
 
