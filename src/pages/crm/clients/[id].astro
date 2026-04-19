@@ -250,7 +250,7 @@ if (!supabase) {
     supabase.from('clients').select('*').eq('id', id).single(),
     supabase
       .from('jobs')
-      .select('id, job_reference, title, status, priority, billable_minutes, calculated_billable_amount, invoice_number, updated_at, service_type:service_types(name, item_code)')
+      .select('id, job_reference, title, status, priority, billable_minutes, calculated_billable_amount, hourly_rate_snapshot, billing_increment_minutes_snapshot, invoice_number, updated_at, service_type:service_types(name, item_code)')
       .eq('client_id', id)
       .order('updated_at', { ascending: false }),
     supabase
