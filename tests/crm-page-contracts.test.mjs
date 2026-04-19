@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   buildClientInvoiceLineItems,
+  formatCrmTimestamp,
   summarizeClientDetail,
   summarizeJobDetail,
   summarizeServicePackDetail,
+  validateClientInvoiceSelection,
 } from '../src/lib/crm-page-contracts.mjs';
 
 function makeFixture() {
@@ -214,4 +216,16 @@ test('client invoice line item builder derives selected job and standalone task 
     amount: 120,
     sort_order: 1,
   });
+});
+
+test('client invoice selection validation requires at least one selected item', () => {
+  assert.equal(validateClientInvoiceSelection({ selectedJobIds: [], selectedTaskIds: [] }), 'Select at least one job or standalone task to include in the invoice.');
+  assert.equal(validateClientInvoiceSelection({ selectedJobIds: ['job-1'], selectedTaskIds: [] }), null);
+  assert.equal(validateClientInvoiceSelection({ selectedJobIds: [], selectedTaskIds: ['task-4'] }), null);
+});
+
+test('crm timestamp formatter normalizes iso strings to yyyy-mm-dd hh:mm:ss', () => {
+  assert.equal(formatCrmTimestamp('2026-04-19T06:07:08.999Z').startsWith('2026-04-19 '), true);
+  assert.equal(formatCrmTimestamp('2026-04-19T06:07:08.999Z').endsWith('06:07:08') || formatCrmTimestamp('2026-04-19T06:07:08.999Z').endsWith('16:07:08'), true);
+  assert.equal(formatCrmTimestamp('2026-04-19 12:34:56'), '2026-04-19 12:34:56');
 });

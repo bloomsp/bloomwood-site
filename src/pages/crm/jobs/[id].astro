@@ -2,7 +2,7 @@
 import CrmLayout from '@/layouts/CrmLayout.astro';
 import TaskCard from '@/components/crm/TaskCard.astro';
 import { getTaskServicePackOptions, getPackMinutesPurchased } from '@/lib/crm-metrics.mjs';
-import { summarizeJobDetail } from '@/lib/crm-page-contracts.mjs';
+import { formatCrmTimestamp, summarizeJobDetail } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -432,7 +432,7 @@ packUsage = packUsage.map((usage) => {
               {notes.length === 0 ? <p class="text-sm text-slate-600">No notes yet.</p> : null}
               {notes.map((note) => (
                 <div class="rounded-xl border border-slate-200 p-4">
-                  <div class="text-xs uppercase tracking-wide text-slate-500">{note.note_type} • {note.created_at}</div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500">{note.note_type} • {formatCrmTimestamp(note.created_at)}</div>
                   <p class="mt-2 text-sm leading-6 text-slate-700">{note.body}</p>
                 </div>
               ))}

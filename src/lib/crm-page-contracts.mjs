@@ -12,6 +12,12 @@ function getTaskRateContext(task) {
   };
 }
 
+export function validateClientInvoiceSelection({ selectedJobIds = [], selectedTaskIds = [] }) {
+  return selectedJobIds.length === 0 && selectedTaskIds.length === 0
+    ? 'Select at least one job or standalone task to include in the invoice.'
+    : null;
+}
+
 export function buildClientInvoiceLineItems({ invoiceId, selectedJobs = [], selectedTasks = [], summary }) {
   const jobBillingBreakdown = summary?.jobBillingBreakdown ?? new Map();
 
@@ -176,6 +182,26 @@ export function summarizeJobDetail({ job, tasks = [], servicePacks = [], clientP
     taskBillingBreakdown: allocation.taskBillingBreakdown,
     servicePacks: derivedServicePacks,
   };
+}
+
+export function formatCrmTimestamp(value) {
+  if (!value) return '';
+  const text = String(value).trim();
+  if (!text) return '';
+
+  const direct = text.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}:\d{2})/);
+  if (direct) return `${direct[1]} ${direct[2]}`;
+
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const hours = String(parsed.getHours()).padStart(2, '0');
+  const minutes = String(parsed.getMinutes()).padStart(2, '0');
+  const seconds = String(parsed.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 export function summarizeServicePackDetail({ servicePack, tasks = [] }) {
