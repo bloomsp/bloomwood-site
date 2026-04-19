@@ -136,6 +136,9 @@ test('client detail contract stays aligned across summary cards and pack list', 
   assert.equal(pack1.minutes_used, 300);
   assert.equal(pack1.minutes_remaining, 0);
   assert.equal(pack2.minutes_remaining, 120);
+  assert.equal(summary.jobBillingBreakdown.get('job-1')?.stillBillableMinutes, 60);
+  assert.equal(summary.jobBillingBreakdown.get('job-1')?.stillBillableAmount, 120);
+  assert.equal(summary.jobBillingBreakdown.get('job-2')?.stillBillableAmount, 240);
 });
 
 test('job detail contract splits estimate, actual, pack-covered, and still-billable consistently', () => {

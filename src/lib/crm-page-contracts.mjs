@@ -47,6 +47,23 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [], invoi
     );
   }, 0);
 
+  const jobBillingBreakdown = new Map(jobs.map((job) => {
+    const jobTasks = tasks.filter((task) => task.job_id === job.id);
+    const stillBillableMinutes = jobTasks.reduce((sum, task) => {
+      return sum + (Number(allocation.taskBillingBreakdown.get(task.id)?.overflowBillableMinutes ?? task.billable_minutes ?? 0) || 0);
+    }, 0);
+    const stillBillableAmount = getCalculatedAmount(
+      stillBillableMinutes,
+      Number(job?.hourly_rate_snapshot ?? 0),
+      Number(job?.billing_increment_minutes_snapshot ?? 0) || null,
+    );
+
+    return [job.id, {
+      stillBillableMinutes,
+      stillBillableAmount,
+    }];
+  }));
+
   const totalServicePackPurchased = packs.reduce((sum, pack) => sum + (Number(pack.purchase_price ?? 0) || 0), 0);
   const totalRevenue = totalInvoiced + totalServicePackPurchased;
 
@@ -84,6 +101,7 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [], invoi
     totalPackMinutesRemaining,
     servicePacks,
     taskBillingBreakdown: allocation.taskBillingBreakdown,
+    jobBillingBreakdown,
     invoicedJobIds,
     invoicedTaskIds,
   };

@@ -210,7 +210,7 @@ if (Astro.request.method === 'POST' && supabase) {
               source_type: 'job',
               job_id: job.id,
               description: `${job.job_reference} · ${job.title}`,
-              amount: Number(job.calculated_billable_amount ?? 0) || 0,
+              amount: Number(jobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0) || 0,
               sort_order: index,
             })),
             ...selectedTasks.map((task, index) => {
@@ -324,6 +324,7 @@ const {
   totalServicePackPurchased,
   totalRevenue,
   taskBillingBreakdown,
+  jobBillingBreakdown,
   invoicedJobIds,
   invoicedTaskIds,
 } = clientSummary;
@@ -484,7 +485,7 @@ function formatHours(minutes: number) {
                     {eligibleInvoiceJobs.length === 0 ? <p class="text-sm text-slate-500">No uninvoiced jobs available.</p> : eligibleInvoiceJobs.map((job) => (
                       <label class="flex items-center justify-between gap-3 text-sm text-slate-700">
                         <span><input type="checkbox" name="invoice_job_ids" value={job.id} class="mr-2" />{job.job_reference} · {job.title}</span>
-                        <span class="font-medium text-slate-900">${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</span>
+                        <span class="font-medium text-slate-900">${Number(jobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0).toFixed(2)}</span>
                       </label>
                     ))}
                   </div>

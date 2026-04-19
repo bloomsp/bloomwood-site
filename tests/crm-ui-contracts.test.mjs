@@ -164,12 +164,14 @@ test('client summary excludes invoiced job work from to-be-invoiced totals and i
     await page.setContent(`
       <div id="hours-to-be-invoiced">${(summary.totalToBeInvoicedMinutes / 60).toFixed(2)} hrs</div>
       <div id="total-to-be-invoiced">$${summary.totalToBeInvoicedDollars.toFixed(2)}</div>
+      <div id="job-1-still-billable">$${summary.jobBillingBreakdown.get('job-1').stillBillableAmount.toFixed(2)}</div>
       <div id="total-invoiced">$${summary.totalInvoiced.toFixed(2)}</div>
       <div id="total-revenue">$${summary.totalRevenue.toFixed(2)}</div>
     `);
 
     assert.equal(await page.textContent('#hours-to-be-invoiced'), '2.50 hrs');
     assert.equal(await page.textContent('#total-to-be-invoiced'), '$240.00');
+    assert.equal(await page.textContent('#job-1-still-billable'), '$120.00');
     assert.equal(await page.textContent('#total-invoiced'), '$240.00');
     assert.equal(await page.textContent('#total-revenue'), '$1320.00');
   });
