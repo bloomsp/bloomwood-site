@@ -1,6 +1,6 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
-import { formatCrmDateTime } from '@/lib/crm-page-contracts.mjs';
+import { buildInvoiceStatusFields, formatCrmDateTime } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -28,7 +28,7 @@ if (!supabase) {
   if (Astro.request.method === 'POST') {
     const { data: existingInvoice, error: existingInvoiceError } = await supabase
       .from('invoices')
-      .select('id, status')
+      .select('id, status, issued_at, paid_at')
       .eq('id', id)
       .single();
 
@@ -60,21 +60,13 @@ if (!supabase) {
         const submittedIssuedAt = normalizeDateTimeInput(formData.get('issued_at'));
         const submittedPaidAt = normalizeDateTimeInput(formData.get('paid_at'));
 
-        if (status === 'issued') {
-          payload.issued_at = submittedIssuedAt || new Date().toISOString();
-          payload.paid_at = null;
-        }
-        if (status === 'paid') {
-          payload.issued_at = submittedIssuedAt || new Date().toISOString();
-          payload.paid_at = submittedPaidAt || new Date().toISOString();
-        }
-        if (status === 'draft') {
-          payload.issued_at = null;
-          payload.paid_at = null;
-        }
-        if (status === 'void') {
-          payload.paid_at = null;
-        }
+        Object.assign(payload, buildInvoiceStatusFields({
+          status,
+          existingIssuedAt: existingInvoice.issued_at ?? null,
+          existingPaidAt: existingInvoice.paid_at ?? null,
+          submittedIssuedAt,
+          submittedPaidAt,
+        }));
 
         const { error } = await supabase.from('invoices').update(payload).eq('id', id);
         if (error) {
@@ -87,7 +79,15 @@ if (!supabase) {
         const now = new Date().toISOString();
         const { error } = await supabase
           .from('invoices')
-          .update({ status: 'paid', issued_at: now, paid_at: now })
+          .update({
+            status: 'paid',
+            ...buildInvoiceStatusFields({
+              status: 'paid',
+              existingIssuedAt: existingInvoice.issued_at ?? null,
+              existingPaidAt: existingInvoice.paid_at ?? null,
+              nowIso: now,
+            }),
+          })
           .eq('id', id);
         if (error) {
           console.error('Failed to mark invoice paid', error);
@@ -98,7 +98,14 @@ if (!supabase) {
       } else if (action === 'void-invoice') {
         const { error } = await supabase
           .from('invoices')
-          .update({ status: 'void', paid_at: null })
+          .update({
+            status: 'void',
+            ...buildInvoiceStatusFields({
+              status: 'void',
+              existingIssuedAt: existingInvoice.issued_at ?? null,
+              existingPaidAt: existingInvoice.paid_at ?? null,
+            }),
+          })
           .eq('id', id);
         if (error) {
           console.error('Failed to void invoice', error);

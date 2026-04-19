@@ -232,6 +232,48 @@ export function formatCrmDate(value) {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+export function buildInvoiceStatusFields({
+  status,
+  existingIssuedAt = null,
+  existingPaidAt = null,
+  submittedIssuedAt = null,
+  submittedPaidAt = null,
+  nowIso = new Date().toISOString(),
+}) {
+  if (status === 'issued') {
+    return {
+      issued_at: submittedIssuedAt || existingIssuedAt || nowIso,
+      paid_at: null,
+    };
+  }
+
+  if (status === 'paid') {
+    return {
+      issued_at: submittedIssuedAt || existingIssuedAt || nowIso,
+      paid_at: submittedPaidAt || existingPaidAt || nowIso,
+    };
+  }
+
+  if (status === 'draft') {
+    return {
+      issued_at: null,
+      paid_at: null,
+    };
+  }
+
+  if (status === 'void') {
+    return {
+      issued_at: existingIssuedAt,
+      paid_at: null,
+    };
+  }
+
+  return {
+    issued_at: existingIssuedAt,
+    paid_at: existingPaidAt,
+  };
+}
+
 export function summarizeServicePackDetail({ servicePack, tasks = [] }) {
   const minutesPurchased = getPackMinutesPurchased(servicePack);
   const allocation = allocatePackMinutes({ packs: [servicePack], tasks });

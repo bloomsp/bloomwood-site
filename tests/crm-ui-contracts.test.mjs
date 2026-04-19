@@ -288,6 +288,42 @@ test('client invoice preview updates selected hours and amount across jobs and s
   });
 });
 
+test('invoice edit form preserves manual issued date input when saving issued status', async () => {
+  await withPage(async (page) => {
+    await page.setContent(`
+      <form>
+        <select id="status" name="status">
+          <option value="draft">Draft</option>
+          <option value="issued" selected>Issued</option>
+          <option value="paid">Paid</option>
+          <option value="void">Void</option>
+        </select>
+        <input id="issued_at" type="datetime-local" name="issued_at" value="2026-04-20T07:15" />
+        <input id="paid_at" type="datetime-local" name="paid_at" value="" />
+      </form>
+      <script>
+        window.collectPayload = () => {
+          const status = document.getElementById('status').value;
+          const issued = document.getElementById('issued_at').value;
+          const paid = document.getElementById('paid_at').value;
+          const normalize = (value) => value ? (value.length === 16 ? value + ':00' : value) : null;
+          if (status === 'issued') {
+            return { status, issued_at: normalize(issued), paid_at: null };
+          }
+          return { status, issued_at: normalize(issued), paid_at: normalize(paid) };
+        };
+      </script>
+    `);
+
+    const payload = await page.evaluate(() => window.collectPayload());
+    assert.deepEqual(payload, {
+      status: 'issued',
+      issued_at: '2026-04-20T07:15:00',
+      paid_at: null,
+    });
+  });
+});
+
 test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
   const { servicePacks, jobs, tasks } = makeFixture();
   const summary = summarizeJobDetail({

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildClientInvoiceLineItems,
+  buildInvoiceStatusFields,
   formatCrmDate,
   formatCrmDateTime,
   summarizeClientDetail,
@@ -239,19 +240,51 @@ test('crm date formatter normalizes iso and date-only strings to yyyy-mm-dd', ()
 });
 
 test('invoice issued status should preserve a manually entered issued_at value', () => {
-  const normalizeDateTimeInput = (value) => {
-    const text = String(value ?? '').trim();
-    if (!text) return null;
-    return text.length === 16 ? `${text}:00` : text;
-  };
-
-  const formIssuedAt = '2026-04-20T07:15';
-  const payload = {
+  const payload = buildInvoiceStatusFields({
     status: 'issued',
-    issued_at: normalizeDateTimeInput(formIssuedAt) || new Date().toISOString(),
-    paid_at: null,
-  };
+    submittedIssuedAt: '2026-04-20T07:15:00',
+    nowIso: '2026-04-20T08:00:00.000Z',
+  });
 
   assert.equal(payload.issued_at, '2026-04-20T07:15:00');
   assert.equal(payload.paid_at, null);
+});
+
+test('invoice status transitions keep issued_at and paid_at consistent', () => {
+  assert.deepEqual(
+    buildInvoiceStatusFields({
+      status: 'draft',
+      existingIssuedAt: '2026-04-20T07:00:00.000Z',
+      existingPaidAt: '2026-04-20T08:00:00.000Z',
+    }),
+    { issued_at: null, paid_at: null },
+  );
+
+  assert.deepEqual(
+    buildInvoiceStatusFields({
+      status: 'issued',
+      existingIssuedAt: '2026-04-20T07:00:00.000Z',
+      existingPaidAt: '2026-04-20T08:00:00.000Z',
+    }),
+    { issued_at: '2026-04-20T07:00:00.000Z', paid_at: null },
+  );
+
+  assert.deepEqual(
+    buildInvoiceStatusFields({
+      status: 'paid',
+      existingIssuedAt: '2026-04-20T07:00:00.000Z',
+      existingPaidAt: null,
+      nowIso: '2026-04-20T09:00:00.000Z',
+    }),
+    { issued_at: '2026-04-20T07:00:00.000Z', paid_at: '2026-04-20T09:00:00.000Z' },
+  );
+
+  assert.deepEqual(
+    buildInvoiceStatusFields({
+      status: 'void',
+      existingIssuedAt: '2026-04-20T07:00:00.000Z',
+      existingPaidAt: '2026-04-20T09:00:00.000Z',
+    }),
+    { issued_at: '2026-04-20T07:00:00.000Z', paid_at: null },
+  );
 });
