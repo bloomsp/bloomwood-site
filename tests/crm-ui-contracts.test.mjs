@@ -177,6 +177,27 @@ test('client summary excludes invoiced job work from to-be-invoiced totals and i
   });
 });
 
+test('client invoice panel job rows show uncovered invoiceable amounts after pack coverage', async () => {
+  const { servicePacks, jobs, tasks, invoices, invoiceLineItems } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
+  const eligibleInvoiceJobs = jobs.filter((job) => !summary.invoicedJobIds.has(job.id));
+
+  await withPage(async (page) => {
+    await page.setContent(`
+      <section>
+        ${eligibleInvoiceJobs.map((job) => `
+          <label data-job-id="${job.id}">
+            <span class="job-ref">${job.id}</span>
+            <span class="job-amount">$${Number(summary.jobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0).toFixed(2)}</span>
+          </label>
+        `).join('')}
+      </section>
+    `);
+
+    assert.equal(await page.locator('[data-job-id="job-1"] .job-amount').textContent(), '$120.00');
+  });
+});
+
 test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
   const { servicePacks, jobs, tasks } = makeFixture();
   const summary = summarizeJobDetail({
