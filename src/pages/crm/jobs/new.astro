@@ -67,8 +67,7 @@ if (Astro.request.method === 'POST') {
       hourly_rate_snapshot: serviceType?.hourly_rate ?? null,
       billing_increment_minutes_snapshot: serviceType?.billing_increment_minutes ?? null,
       calculated_billable_amount: Number(formData.get('calculated_billable_amount') ?? 0) || 0,
-      invoice_number: String(formData.get('invoice_number') ?? '').trim() || null,
-      invoice_status: status === 'completed' ? 'ready_to_invoice' : String(formData.get('invoice_status') ?? 'not_invoiced'),
+      invoice_status: status === 'completed' ? 'ready_to_invoice' : 'not_invoiced',
       opened_at: String(formData.get('opened_at') ?? '').trim() || null,
       closed_at: ['completed', 'cancelled'].includes(status) ? (submittedClosedAt || new Date().toISOString()) : null,
     };
@@ -205,20 +204,6 @@ if (Astro.request.method === 'POST') {
         <input id="job-calculated-billable" type="number" min="0" step="0.01" name="calculated_billable_amount" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
-        Invoice number
-        <input name="invoice_number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
-      </label>
-      <label class="block text-sm font-medium text-slate-700">
-        Invoice status
-        <select name="invoice_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-          <option value="not_invoiced">Not invoiced</option>
-          <option value="ready_to_invoice">Ready to invoice</option>
-          <option value="invoiced">Invoiced</option>
-          <option value="paid">Paid</option>
-          <option value="void">Void</option>
-        </select>
-      </label>
-      <label class="block text-sm font-medium text-slate-700">
         Opened at
         <input type="datetime-local" name="opened_at" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
@@ -240,7 +225,7 @@ if (Astro.request.method === 'POST') {
     const billableMinutesInput = document.getElementById('job-billable-minutes');
     const calculatedBillableInput = document.getElementById('job-calculated-billable');
     const statusInput = document.querySelector('select[name="status"]');
-    const invoiceStatusInput = document.querySelector('select[name="invoice_status"]');
+    const invoiceStatusInput = null;
     const closedAtInput = document.getElementById('job-closed-at');
 
     function currentLocalDateTimeValue() {
@@ -269,9 +254,8 @@ if (Astro.request.method === 'POST') {
     billableHoursInput?.addEventListener('change', recalculateBillableAmount);
     billableMinutesInput?.addEventListener('change', recalculateBillableAmount);
     statusInput?.addEventListener('change', () => {
-      if (!statusInput || !invoiceStatusInput || !closedAtInput) return;
+      if (!statusInput || !closedAtInput) return;
       if (statusInput.value === 'completed') {
-        invoiceStatusInput.value = 'ready_to_invoice';
         if (!closedAtInput.value) closedAtInput.value = currentLocalDateTimeValue();
       } else if (!['cancelled'].includes(statusInput.value)) {
         closedAtInput.value = '';

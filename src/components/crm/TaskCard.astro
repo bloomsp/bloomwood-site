@@ -36,6 +36,11 @@ const packCoveredMinutes = Number(billingBreakdown?.packCoveredMinutes ?? 0) || 
           Job: <a class="font-medium text-sky-700 hover:underline" href={`/crm/jobs/${task.job.id}`}>{task.job.job_reference}</a>
         </div>
       ) : null}
+      {task.invoice?.id ? (
+        <div class="mt-2 text-xs text-slate-500">
+          Invoice: <a class="font-medium text-sky-700 hover:underline" href={`/crm/invoices/${task.invoice.id}`}>{task.invoice.invoice_number ?? 'Draft invoice'}</a>
+        </div>
+      ) : null}
     </div>
     <div class="text-right text-xs uppercase tracking-wide text-slate-500">
       <div>{task.status}</div>

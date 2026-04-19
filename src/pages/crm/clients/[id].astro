@@ -1,7 +1,7 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
 import TaskCard from '@/components/crm/TaskCard.astro';
-import { getTaskServicePackOptions } from '@/lib/crm-metrics.mjs';
+import { getCalculatedAmount, getTaskServicePackOptions } from '@/lib/crm-metrics.mjs';
 import { summarizeClientDetail } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
@@ -21,6 +21,8 @@ let tasks: any[] = [];
 let servicePacks: any[] = [];
 let availableServicePacks: any[] = [];
 let serviceTypes: any[] = [];
+let invoices: any[] = [];
+let invoiceLineItems: any[] = [];
 let loadError: string | null = null;
 
 function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
@@ -155,12 +157,96 @@ if (Astro.request.method === 'POST' && supabase) {
       }
     }
   }
+
+  if (action === 'create-invoice') {
+    const invoiceNumber = String(formData.get('invoice_number') ?? '').trim() || null;
+    const invoiceStatus = String(formData.get('invoice_status') ?? 'draft').trim() || 'draft';
+    const notes = String(formData.get('invoice_notes') ?? '').trim() || null;
+    const selectedJobIds = formData.getAll('invoice_job_ids').map((value) => String(value)).filter(Boolean);
+    const selectedTaskIds = formData.getAll('invoice_task_ids').map((value) => String(value)).filter(Boolean);
+
+    if (selectedJobIds.length === 0 && selectedTaskIds.length === 0) {
+      loadError = 'Select at least one job or standalone task to include in the invoice.';
+    } else {
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          client_id: id,
+          invoice_number: invoiceNumber,
+          status: invoiceStatus,
+          issued_at: invoiceStatus === 'issued' || invoiceStatus === 'paid' ? new Date().toISOString() : null,
+          paid_at: invoiceStatus === 'paid' ? new Date().toISOString() : null,
+          notes,
+        })
+        .select('id')
+        .single();
+
+      if (invoiceError || !invoice) {
+        console.error('Failed to create invoice', invoiceError);
+        loadError = invoiceError?.message ?? 'Could not create invoice.';
+      } else {
+        const { data: selectedJobs = [], error: selectedJobsError } = selectedJobIds.length > 0
+          ? await supabase
+              .from('jobs')
+              .select('id, job_reference, title, calculated_billable_amount')
+              .eq('client_id', id)
+              .in('id', selectedJobIds)
+          : { data: [], error: null };
+        const { data: selectedTasks = [], error: selectedTasksError } = selectedTaskIds.length > 0
+          ? await supabase
+              .from('tasks')
+              .select('id, title, billable_minutes, service_type:service_types(name, hourly_rate, billing_increment_minutes)')
+              .eq('client_id', id)
+              .is('job_id', null)
+              .in('id', selectedTaskIds)
+          : { data: [], error: null };
+
+        if (selectedJobsError || selectedTasksError) {
+          loadError = selectedJobsError?.message || selectedTasksError?.message || 'Could not load selected invoice items.';
+        } else {
+          const lineItems = [
+            ...selectedJobs.map((job, index) => ({
+              invoice_id: invoice.id,
+              source_type: 'job',
+              job_id: job.id,
+              description: `${job.job_reference} · ${job.title}`,
+              amount: Number(job.calculated_billable_amount ?? 0) || 0,
+              sort_order: index,
+            })),
+            ...selectedTasks.map((task, index) => {
+              const hourlyRate = Number(task?.service_type?.hourly_rate ?? 0);
+              const increment = Number(task?.service_type?.billing_increment_minutes ?? 0) || null;
+              const billableMinutes = Number(task.billable_minutes ?? 0) || 0;
+              return {
+                invoice_id: invoice.id,
+                source_type: 'task',
+                task_id: task.id,
+                description: `${task.title}${task.service_type?.name ? ` · ${task.service_type.name}` : ''}`,
+                quantity: billableMinutes / 60,
+                unit_amount: hourlyRate || null,
+                amount: getCalculatedAmount(billableMinutes, hourlyRate, increment),
+                sort_order: selectedJobs.length + index,
+              };
+            }),
+          ];
+
+          const { error: itemsError } = await supabase.from('invoice_line_items').insert(lineItems);
+          if (itemsError) {
+            console.error('Failed to create invoice line items', itemsError);
+            loadError = itemsError.message;
+          } else {
+            return Astro.redirect(`/crm/invoices/${invoice.id}`);
+          }
+        }
+      }
+    }
+  }
 }
 
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
-  const [clientResult, jobsResult, notesResult, tasksResult, packsResult, serviceTypesResult] = await Promise.all([
+  const [clientResult, jobsResult, notesResult, tasksResult, packsResult, serviceTypesResult, invoicesResult, invoiceLineItemsResult] = await Promise.all([
     supabase.from('clients').select('*').eq('id', id).single(),
     supabase
       .from('jobs')
@@ -189,10 +275,19 @@ if (!supabase) {
       .eq('active', true)
       .eq('is_service_pack', false)
       .order('sort_order', { ascending: true }),
+    supabase
+      .from('invoices')
+      .select('id, invoice_number, status, total_amount, created_at')
+      .eq('client_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('invoice_line_items')
+      .select('id, invoice_id, source_type, job_id, task_id, amount, invoice:invoices(id, client_id, invoice_number, status)')
+      .order('created_at', { ascending: false }),
   ]);
 
-  if (clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error) {
-    console.error('Failed to load client detail', clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error);
+  if (clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error || invoicesResult.error || invoiceLineItemsResult.error) {
+    console.error('Failed to load client detail', clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error || invoicesResult.error || invoiceLineItemsResult.error);
     loadError = 'Could not load this client yet. The latest CRM migration may still need to be applied.';
   } else {
     client = clientResult.data;
@@ -211,10 +306,12 @@ if (!supabase) {
       task_count: servicePackTaskCounts.get(pack.id) ?? 0,
     }));
     serviceTypes = serviceTypesResult.data ?? [];
+    invoices = invoicesResult.data ?? [];
+    invoiceLineItems = (invoiceLineItemsResult.data ?? []).filter((item) => item.invoice?.client_id === id);
   }
 }
 
-const clientSummary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
+const clientSummary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
 const {
   totalBillableMinutes,
   totalInvoiced,
@@ -227,7 +324,17 @@ const {
   totalServicePackPurchased,
   totalRevenue,
   taskBillingBreakdown,
+  invoicedJobIds,
+  invoicedTaskIds,
 } = clientSummary;
+
+const invoiceByJobId = new Map(invoiceLineItems.filter((item) => item.source_type === 'job' && item.job_id).map((item) => [item.job_id, item.invoice]));
+const invoiceByTaskId = new Map(invoiceLineItems.filter((item) => item.source_type === 'task' && item.task_id).map((item) => [item.task_id, item.invoice]));
+const eligibleInvoiceJobs = jobs.filter((job) => !invoicedJobIds.has(job.id));
+const eligibleInvoiceTasks = tasks.filter((task) => !task.job_id && !invoicedTaskIds.has(task.id));
+
+jobs = jobs.map((job) => ({ ...job, invoice: invoiceByJobId.get(job.id) ?? null }));
+tasks = tasks.map((task) => ({ ...task, invoice: invoiceByTaskId.get(task.id) ?? (task.job_id ? invoiceByJobId.get(task.job_id) ?? null : null) }));
 
 servicePacks = clientSummary.servicePacks.map((pack) => {
   const taskCount = servicePacks.find((item) => item.id === pack.id)?.task_count ?? 0;
@@ -341,8 +448,77 @@ function formatHours(minutes: number) {
                       <div class="font-medium uppercase text-slate-700">{job.status}</div>
                       <div>Billable hours: {(Number(job.billable_minutes ?? 0) / 60).toFixed(2)}</div>
                       <div>Billable value: ${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</div>
-                      <div>Invoice number: {job.invoice_number ?? 'Not set'}</div>
+                      <div>Invoice: {job.invoice?.id ? <span class="font-semibold text-slate-900">{job.invoice.invoice_number ?? 'Draft invoice'}</span> : <span class="font-semibold text-slate-900">Not linked</span>}</div>
                       <div class="mt-2"><span class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">Edit</span></div>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+
+          <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-lg font-semibold text-slate-900">Invoices</h3>
+              <a href="/crm/invoices/" class="text-sm font-medium text-sky-700 hover:underline">View all</a>
+            </div>
+            <form method="post" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <input type="hidden" name="action" value="create-invoice" />
+              <div class="grid gap-3 md:grid-cols-2">
+                <label class="text-sm text-slate-700">
+                  <span class="mb-1 block">Invoice number</span>
+                  <input name="invoice_number" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                </label>
+                <label class="text-sm text-slate-700">
+                  <span class="mb-1 block">Status</span>
+                  <select name="invoice_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="draft" selected>Draft</option>
+                    <option value="issued">Issued</option>
+                    <option value="paid">Paid</option>
+                    <option value="void">Void</option>
+                  </select>
+                </label>
+                <label class="text-sm text-slate-700 md:col-span-2">
+                  <span class="mb-1 block">Jobs to include</span>
+                  <div class="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                    {eligibleInvoiceJobs.length === 0 ? <p class="text-sm text-slate-500">No uninvoiced jobs available.</p> : eligibleInvoiceJobs.map((job) => (
+                      <label class="flex items-center justify-between gap-3 text-sm text-slate-700">
+                        <span><input type="checkbox" name="invoice_job_ids" value={job.id} class="mr-2" />{job.job_reference} · {job.title}</span>
+                        <span class="font-medium text-slate-900">${Number(job.calculated_billable_amount ?? 0).toFixed(2)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </label>
+                <label class="text-sm text-slate-700 md:col-span-2">
+                  <span class="mb-1 block">Standalone tasks to include</span>
+                  <div class="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                    {eligibleInvoiceTasks.length === 0 ? <p class="text-sm text-slate-500">No uninvoiced standalone tasks available.</p> : eligibleInvoiceTasks.map((task) => (
+                      <label class="flex items-center justify-between gap-3 text-sm text-slate-700">
+                        <span><input type="checkbox" name="invoice_task_ids" value={task.id} class="mr-2" />{task.title}</span>
+                        <span class="font-medium text-slate-900">{formatHours(Number(task.billable_minutes ?? 0))}h</span>
+                      </label>
+                    ))}
+                  </div>
+                </label>
+                <label class="text-sm text-slate-700 md:col-span-2">
+                  <span class="mb-1 block">Notes</span>
+                  <textarea name="invoice_notes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+                </label>
+              </div>
+              <div class="mt-3 flex justify-end">
+                <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Create invoice</button>
+              </div>
+            </form>
+            <div class="mt-4 space-y-3">
+              {invoices.length === 0 ? <p class="text-sm text-slate-600">No invoices yet.</p> : invoices.slice(0, 5).map((invoice) => (
+                <a href={`/crm/invoices/${invoice.id}`} class="block rounded-xl border border-slate-200 p-4 hover:border-sky-300">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-semibold text-slate-900">{invoice.invoice_number ?? 'Draft invoice'}</div>
+                      <div class="text-sm text-slate-600">Status: {invoice.status}</div>
+                    </div>
+                    <div class="text-right text-sm text-slate-600">
+                      <div class="font-semibold text-slate-900">${Number(invoice.total_amount ?? 0).toFixed(2)}</div>
                     </div>
                   </div>
                 </a>

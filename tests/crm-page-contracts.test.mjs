@@ -50,6 +50,14 @@ function makeFixture() {
     invoice_number: 'INV-001',
   };
 
+  const invoices = [
+    { id: 'inv-1', client_id: 'client-1', invoice_number: 'INV-001', total_amount: 240 },
+  ];
+
+  const invoiceLineItems = [
+    { id: 'ili-1', invoice_id: 'inv-1', source_type: 'job', job_id: 'job-2', task_id: null },
+  ];
+
   const tasks = [
     {
       id: 'task-1',
@@ -103,12 +111,14 @@ function makeFixture() {
     tasks,
     job1,
     servicePack,
+    invoices,
+    invoiceLineItems,
   };
 }
 
 test('client detail contract stays aligned across summary cards and pack list', () => {
-  const { jobs, tasks, servicePacks } = makeFixture();
-  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
+  const { jobs, tasks, servicePacks, invoices, invoiceLineItems } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
 
   assert.equal(summary.activeJobs, 1);
   assert.equal(summary.taskCount, 4);

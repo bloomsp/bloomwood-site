@@ -27,7 +27,14 @@ function makeFixture() {
     { id: 'task-4', client_id: 'client-1', job_id: null, title: 'ccc', status: 'open', billable_minutes: 90, non_billable_minutes: 0, service_pack_id: null, completed_at: '2026-04-18T12:00:00.000Z', service_type: { hourly_rate: 80, billing_increment_minutes: 15 } },
   ];
 
-  return { servicePacks, jobs, tasks };
+  const invoices = [
+    { id: 'inv-1', client_id: 'client-1', invoice_number: 'INV-001', total_amount: 240 },
+  ];
+  const invoiceLineItems = [
+    { id: 'ili-1', invoice_id: 'inv-1', source_type: 'job', job_id: 'job-2', task_id: null },
+  ];
+
+  return { servicePacks, jobs, tasks, invoices, invoiceLineItems };
 }
 
 async function withPage(run) {
@@ -150,8 +157,8 @@ test('job detail summary cards render values consistent with shared summary logi
 
 
 test('client summary excludes invoiced job work from to-be-invoiced totals and includes standalone task service rate', async () => {
-  const { servicePacks, jobs, tasks } = makeFixture();
-  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
+  const { servicePacks, jobs, tasks, invoices, invoiceLineItems } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
 
   await withPage(async (page) => {
     await page.setContent(`

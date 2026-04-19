@@ -12,17 +12,25 @@ function getTaskRateContext(task) {
   };
 }
 
-export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
+export function summarizeClientDetail({ jobs = [], tasks = [], packs = [], invoices = [], invoiceLineItems = [] }) {
   const allocation = allocatePackMinutes({ packs, tasks });
   const derivedPacks = deriveServicePacks(packs, tasks);
 
+  const invoicedJobIds = new Set(invoiceLineItems.filter((item) => item.source_type === 'job' && item.job_id).map((item) => item.job_id));
+  const invoicedTaskIds = new Set(invoiceLineItems.filter((item) => item.source_type === 'task' && item.task_id).map((item) => item.task_id));
+
   const totalBillableMinutes = tasks.reduce((sum, task) => sum + (Number(task.billable_minutes ?? 0) || 0), 0);
   const totalPackCoveredMinutes = [...allocation.taskBillingBreakdown.values()].reduce((sum, item) => sum + item.packCoveredMinutes, 0);
-  const totalInvoiced = jobs.reduce((sum, job) => {
-    return sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) || 0 : 0);
-  }, 0);
+  const totalInvoiced = invoices.length > 0
+    ? invoices.reduce((sum, invoice) => sum + (Number(invoice.total_amount ?? 0) || 0), 0)
+    : jobs.reduce((sum, job) => sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) || 0 : 0), 0);
 
-  const toBeInvoicedTasks = tasks.filter((task) => !task.job?.invoice_number);
+  const toBeInvoicedTasks = tasks.filter((task) => {
+    if (invoicedTaskIds.has(task.id)) return false;
+    if (task.job_id && invoicedJobIds.has(task.job_id)) return false;
+    if (!invoiceLineItems.length && task.job?.invoice_number) return false;
+    return true;
+  });
   const totalToBeInvoicedMinutes = toBeInvoicedTasks.reduce((sum, task) => {
     return sum + (Number(allocation.taskBillingBreakdown.get(task.id)?.overflowBillableMinutes ?? task.billable_minutes ?? 0) || 0);
   }, 0);
@@ -76,6 +84,8 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
     totalPackMinutesRemaining,
     servicePacks,
     taskBillingBreakdown: allocation.taskBillingBreakdown,
+    invoicedJobIds,
+    invoicedTaskIds,
   };
 }
 

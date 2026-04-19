@@ -19,6 +19,7 @@ let notes: any[] = [];
 let tasks: any[] = [];
 let fileDeliveries: any[] = [];
 let packUsage: any[] = [];
+let invoices: any[] = [];
 let loadError: string | null = null;
 let clientPackTasks: any[] = [];
 
@@ -207,7 +208,7 @@ if (Astro.request.method === 'POST' && supabase) {
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
-  const [jobResult, notesResult, tasksResult, fileDeliveriesResult, packUsageResult] = await Promise.all([
+  const [jobResult, notesResult, tasksResult, fileDeliveriesResult, packUsageResult, invoiceItemsResult] = await Promise.all([
     supabase
       .from('jobs')
       .select('*, client:clients(id, display_name, business_name, email, phone), service_type:service_types(name, item_code)')
@@ -221,16 +222,21 @@ if (!supabase) {
       .select('id, minutes_applied, notes, created_at, service_pack:service_packs(id, minutes_purchased, minutes_used, status, service_type:service_types(name, item_code))')
       .eq('job_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('invoice_line_items')
+      .select('id, source_type, job_id, task_id, invoice:invoices(id, invoice_number, status)')
+      .eq('job_id', id),
   ]);
 
-  if (jobResult.error || notesResult.error || tasksResult.error || fileDeliveriesResult.error || packUsageResult.error) {
-    console.error('Failed to load job detail', jobResult.error || notesResult.error || tasksResult.error || fileDeliveriesResult.error || packUsageResult.error);
+  if (jobResult.error || notesResult.error || tasksResult.error || fileDeliveriesResult.error || packUsageResult.error || invoiceItemsResult.error) {
+    console.error('Failed to load job detail', jobResult.error || notesResult.error || tasksResult.error || fileDeliveriesResult.error || packUsageResult.error || invoiceItemsResult.error);
     loadError = 'Could not load this job yet. The latest CRM migration may still need to be applied.';
   } else {
     job = jobResult.data;
     notes = notesResult.data ?? [];
     tasks = tasksResult.data ?? [];
     fileDeliveries = fileDeliveriesResult.data ?? [];
+    invoices = (invoiceItemsResult.data ?? []).map((item) => item.invoice).filter(Boolean);
     packUsage = (packUsageResult.data ?? []).map((usage) => ({
       ...usage,
       minutes_remaining: usage.service_pack
@@ -366,7 +372,7 @@ packUsage = packUsage.map((usage) => {
               </div>
               <div class="rounded-xl bg-slate-50 p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-500">Invoice</div>
-                <div class="mt-1 text-sm font-semibold text-slate-900">{job.invoice_number ?? 'Not set'}</div>
+                <div class="mt-1 text-sm font-semibold text-slate-900">{invoices[0]?.id ? <a class="text-sky-700 hover:underline" href={`/crm/invoices/${invoices[0].id}`}>{invoices[0].invoice_number ?? 'Draft invoice'}</a> : 'Not linked'}</div>
               </div>
             </div>
           </div>

@@ -73,8 +73,7 @@ if (Astro.request.method === 'POST' && supabase && job) {
     hourly_rate_snapshot: serviceType?.hourly_rate ?? null,
     billing_increment_minutes_snapshot: serviceType?.billing_increment_minutes ?? null,
     calculated_billable_amount: Number(formData.get('calculated_billable_amount') ?? 0) || 0,
-    invoice_number: String(formData.get('invoice_number') ?? '').trim() || null,
-    invoice_status: status === 'completed' ? 'ready_to_invoice' : String(formData.get('invoice_status') ?? 'not_invoiced'),
+    invoice_status: status === 'completed' ? 'ready_to_invoice' : 'not_invoiced',
     opened_at: String(formData.get('opened_at') ?? '').trim() || null,
     closed_at: ['completed', 'cancelled'].includes(status) ? (submittedClosedAt || currentIsoDateTime()) : null,
   };
@@ -216,20 +215,6 @@ const estimateParts = splitMinutes(Number(job?.billable_minutes ?? 0));
         <label class="block text-sm font-medium text-slate-700">
           Calculated billable amount
           <input id="job-calculated-billable" type="number" min="0" step="0.01" name="calculated_billable_amount" value={job.calculated_billable_amount ?? 0} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
-        </label>
-        <label class="block text-sm font-medium text-slate-700">
-          Invoice number
-          <input name="invoice_number" value={job.invoice_number ?? ''} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
-        </label>
-        <label class="block text-sm font-medium text-slate-700">
-          Invoice status
-          <select name="invoice_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-            <option value="not_invoiced" selected={job.invoice_status === 'not_invoiced'}>Not invoiced</option>
-            <option value="ready_to_invoice" selected={job.invoice_status === 'ready_to_invoice'}>Ready to invoice</option>
-            <option value="invoiced" selected={job.invoice_status === 'invoiced'}>Invoiced</option>
-            <option value="paid" selected={job.invoice_status === 'paid'}>Paid</option>
-            <option value="void" selected={job.invoice_status === 'void'}>Void</option>
-          </select>
         </label>
         <label class="block text-sm font-medium text-slate-700">
           Opened at
