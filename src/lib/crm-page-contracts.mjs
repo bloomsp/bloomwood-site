@@ -184,6 +184,11 @@ export function summarizeJobDetail({ job, tasks = [], servicePacks = [], clientP
   };
 }
 
+// CRM formatting rule of thumb:
+// - use formatCrmDateTime(...) for event timestamps and audit-style fields
+//   like created/updated/issued/paid/due/completed values
+// - use formatCrmDate(...) for date-only business fields like DOB,
+//   purchase dates, and expiry dates
 function parseCrmDateParts(text) {
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return null;
