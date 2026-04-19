@@ -14,6 +14,7 @@ function makeFixture() {
     hours_purchased: 5,
     minutes_purchased: 300,
     minutes_used: 999,
+    purchase_price: 570,
     status: 'active',
   };
 
@@ -23,6 +24,7 @@ function makeFixture() {
     hours_purchased: 2,
     minutes_purchased: 120,
     minutes_used: 0,
+    purchase_price: 240,
     status: 'active',
   };
 
@@ -58,7 +60,7 @@ function makeFixture() {
       non_billable_minutes: 0,
       service_pack_id: 'pack-1',
       completed_at: '2026-04-18T09:00:00.000Z',
-      job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
+      job: { invoice_number: null, hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
     },
     {
       id: 'task-2',
@@ -69,7 +71,7 @@ function makeFixture() {
       non_billable_minutes: 30,
       service_pack_id: 'pack-1',
       completed_at: '2026-04-18T10:00:00.000Z',
-      job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
+      job: { invoice_number: null, hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
     },
     {
       id: 'task-3',
@@ -80,7 +82,7 @@ function makeFixture() {
       non_billable_minutes: 0,
       service_pack_id: null,
       completed_at: '2026-04-18T11:00:00.000Z',
-      job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
+      job: { invoice_number: 'INV-001', hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
     },
   ];
 
@@ -98,12 +100,14 @@ test('client detail contract stays aligned across summary cards and pack list', 
   const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
 
   assert.equal(summary.activeJobs, 1);
-  assert.equal(summary.openTasks, 1);
+  assert.equal(summary.taskCount, 3);
   assert.equal(summary.totalBillableMinutes, 480);
   assert.equal(summary.totalPackCoveredMinutes, 300);
-  assert.equal(summary.totalStillBillableMinutes, 180);
-  assert.equal(summary.totalBillableDollars, 360);
+  assert.equal(summary.totalToBeInvoicedMinutes, 60);
+  assert.equal(summary.totalToBeInvoicedDollars, 120);
   assert.equal(summary.totalInvoiced, 240);
+  assert.equal(summary.totalServicePackPurchased, 810);
+  assert.equal(summary.totalRevenue, 1050);
   assert.equal(summary.totalPackMinutesRemaining, 120);
 
   const pack1 = summary.servicePacks.find((pack) => pack.id === 'pack-1');

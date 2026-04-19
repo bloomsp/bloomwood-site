@@ -11,8 +11,15 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
 
   const totalBillableMinutes = tasks.reduce((sum, task) => sum + (Number(task.billable_minutes ?? 0) || 0), 0);
   const totalPackCoveredMinutes = [...allocation.taskBillingBreakdown.values()].reduce((sum, item) => sum + item.packCoveredMinutes, 0);
-  const totalStillBillableMinutes = [...allocation.taskBillingBreakdown.values()].reduce((sum, item) => sum + item.overflowBillableMinutes, 0);
-  const totalBillableDollars = tasks.reduce((sum, task) => {
+  const totalInvoiced = jobs.reduce((sum, job) => {
+    return sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) || 0 : 0);
+  }, 0);
+
+  const toBeInvoicedTasks = tasks.filter((task) => !task.job?.invoice_number);
+  const totalToBeInvoicedMinutes = toBeInvoicedTasks.reduce((sum, task) => {
+    return sum + (Number(allocation.taskBillingBreakdown.get(task.id)?.overflowBillableMinutes ?? task.billable_minutes ?? 0) || 0);
+  }, 0);
+  const totalToBeInvoicedDollars = toBeInvoicedTasks.reduce((sum, task) => {
     const breakdown = allocation.taskBillingBreakdown.get(task.id) ?? {
       packCoveredMinutes: 0,
       overflowBillableMinutes: Number(task.billable_minutes ?? 0) || 0,
@@ -24,12 +31,11 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
     );
   }, 0);
 
-  const totalInvoiced = jobs.reduce((sum, job) => {
-    return sum + (job.invoice_number ? Number(job.calculated_billable_amount ?? 0) || 0 : 0);
-  }, 0);
+  const totalServicePackPurchased = packs.reduce((sum, pack) => sum + (Number(pack.purchase_price ?? 0) || 0), 0);
+  const totalRevenue = totalInvoiced + totalServicePackPurchased;
 
   const activeJobs = jobs.filter((job) => !['completed', 'cancelled'].includes(job.status)).length;
-  const openTasks = tasks.filter((task) => !['done', 'cancelled'].includes(task.status)).length;
+  const taskCount = tasks.filter((task) => !['cancelled'].includes(task.status)).length;
   const activePacks = derivedPacks.filter((pack) => pack.status === 'active');
   const totalPackMinutesRemaining = activePacks.reduce((sum, pack) => sum + (Number(pack.minutes_remaining ?? 0) || 0), 0);
 
@@ -52,11 +58,13 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
   return {
     totalBillableMinutes,
     totalPackCoveredMinutes,
-    totalStillBillableMinutes,
-    totalBillableDollars,
+    totalToBeInvoicedMinutes,
+    totalToBeInvoicedDollars,
     totalInvoiced,
+    totalServicePackPurchased,
+    totalRevenue,
     activeJobs,
-    openTasks,
+    taskCount,
     totalPackMinutesRemaining,
     servicePacks,
     taskBillingBreakdown: allocation.taskBillingBreakdown,

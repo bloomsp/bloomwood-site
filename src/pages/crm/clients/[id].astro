@@ -1,5 +1,6 @@
 ---
 import CrmLayout from '@/layouts/CrmLayout.astro';
+import TaskCard from '@/components/crm/TaskCard.astro';
 import { getTaskServicePackOptions } from '@/lib/crm-metrics.mjs';
 import { summarizeClientDetail } from '@/lib/crm-page-contracts.mjs';
 
@@ -23,14 +24,6 @@ let loadError: string | null = null;
 
 function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
   return ((Number(hours ?? 0) || 0) * 60) + (Number(minutes ?? 0) || 0);
-}
-
-function splitMinutes(totalMinutes: number) {
-  const safeMinutes = Math.max(0, Number(totalMinutes ?? 0) || 0);
-  return {
-    hours: Math.floor(safeMinutes / 60),
-    minutes: safeMinutes % 60,
-  };
 }
 
 async function syncClientServicePacks(clientId: string) {
@@ -180,7 +173,7 @@ if (!supabase) {
       .limit(8),
     supabase
       .from('tasks')
-      .select('id, title, details, status, due_at, completed_at, job_id, billable_minutes, non_billable_minutes, service_pack_id, job:jobs(id, job_reference, title, hourly_rate_snapshot, billing_increment_minutes_snapshot)')
+      .select('id, title, details, status, due_at, completed_at, job_id, time_taken_minutes, billable_minutes, non_billable_minutes, service_pack_id, job:jobs(id, job_reference, title, invoice_number, hourly_rate_snapshot, billing_increment_minutes_snapshot)')
       .eq('client_id', id)
       .order('completed_at', { ascending: true, nullsFirst: false }),
     supabase
@@ -217,11 +210,13 @@ const {
   totalBillableMinutes,
   totalInvoiced,
   activeJobs,
-  openTasks,
+  taskCount,
   totalPackMinutesRemaining,
   totalPackCoveredMinutes,
-  totalStillBillableMinutes,
-  totalBillableDollars,
+  totalToBeInvoicedMinutes,
+  totalToBeInvoicedDollars,
+  totalServicePackPurchased,
+  totalRevenue,
   taskBillingBreakdown,
 } = clientSummary;
 
@@ -279,8 +274,8 @@ function formatHours(minutes: number) {
               <div class="mt-1 text-xl font-semibold text-slate-900">{activeJobs}</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Open tasks</div>
-              <div class="mt-1 text-xl font-semibold text-slate-900">{openTasks}</div>
+              <div class="text-xs uppercase tracking-wide text-slate-500">Tasks</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">{taskCount}</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Total billable time</div>
@@ -291,18 +286,26 @@ function formatHours(minutes: number) {
               <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalPackCoveredMinutes)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Still billable</div>
-              <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalStillBillableMinutes)} hrs</div>
+              <div class="text-xs uppercase tracking-wide text-slate-500">Hours to be invoiced</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalToBeInvoicedMinutes)} hrs</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
-              <div class="text-xs uppercase tracking-wide text-slate-500">Still billable dollars</div>
-              <div class="mt-1 text-xl font-semibold text-slate-900">${totalBillableDollars.toFixed(2)}</div>
+              <div class="text-xs uppercase tracking-wide text-slate-500">Total to be invoiced</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">${totalToBeInvoicedDollars.toFixed(2)}</div>
             </div>
             <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Total invoiced</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">${totalInvoiced.toFixed(2)}</div>
             </div>
-            <div class="rounded-xl bg-slate-50 p-3 col-span-2">
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Total service packs purchased</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">${totalServicePackPurchased.toFixed(2)}</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
+              <div class="text-xs uppercase tracking-wide text-slate-500">Total revenue</div>
+              <div class="mt-1 text-xl font-semibold text-slate-900">${totalRevenue.toFixed(2)}</div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-3">
               <div class="text-xs uppercase tracking-wide text-slate-500">Service packs remaining</div>
               <div class="mt-1 text-xl font-semibold text-slate-900">{formatHours(totalPackMinutesRemaining)} hrs</div>
             </div>
@@ -369,70 +372,16 @@ function formatHours(minutes: number) {
 
         <div class="space-y-6">
           <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Open tasks</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Tasks</h3>
             <div class="mt-4 space-y-3">
               {tasks.length === 0 ? <p class="text-sm text-slate-600">No tasks yet.</p> : null}
               {tasks.map((task) => {
-                const billableParts = splitMinutes(Number(task.billable_minutes ?? 0));
-                const nonBillableParts = splitMinutes(Number(task.non_billable_minutes ?? 0));
                 const billingBreakdown = taskBillingBreakdown.get(task.id) ?? {
                   packCoveredMinutes: 0,
                   overflowBillableMinutes: Number(task.billable_minutes ?? 0),
                 };
                 const taskServicePackOptions = getTaskServicePackOptions({ availableServicePacks, servicePacks, task });
-                return (
-                  <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="flex items-start justify-between gap-3">
-                      <div>
-                        <div class="text-sm font-semibold text-slate-900">{task.title}</div>
-                        {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
-                      </div>
-                      <div class="text-right text-xs uppercase tracking-wide text-slate-500">
-                        <div>{task.status}</div>
-                        {task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
-                        {task.billable_minutes ? <div class="mt-1 normal-case tracking-normal">Pack covered: {formatHours(billingBreakdown.packCoveredMinutes)}h</div> : null}
-                        {billingBreakdown.overflowBillableMinutes ? <div class="normal-case tracking-normal">Still billable: {formatHours(billingBreakdown.overflowBillableMinutes)}h</div> : null}
-                        {task.status === 'open' ? (
-                          <form method="post" class="mt-2">
-                            <input type="hidden" name="action" value="complete-task" />
-                            <input type="hidden" name="task_id" value={task.id} />
-                            <div class="mt-2 grid gap-2">
-                              <label class="text-[11px] font-medium text-slate-500">
-                                Billable time
-                                <div class="mt-1 grid grid-cols-2 gap-2">
-                                  <select name="billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                    {Array.from({ length: 9 }, (_, i) => <option value={i} selected={billableParts.hours === i}>{i}h</option>)}
-                                  </select>
-                                  <select name="billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                    {[0, 15, 30, 45].map((minute) => <option value={minute} selected={billableParts.minutes === minute}>{minute}m</option>)}
-                                  </select>
-                                </div>
-                              </label>
-                              <label class="text-[11px] font-medium text-slate-500">
-                                Non-billable time
-                                <div class="mt-1 grid grid-cols-2 gap-2">
-                                  <select name="non_billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                    {Array.from({ length: 9 }, (_, i) => <option value={i} selected={nonBillableParts.hours === i}>{i}h</option>)}
-                                  </select>
-                                  <select name="non_billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                    {[0, 15, 30, 45].map((minute) => <option value={minute} selected={nonBillableParts.minutes === minute}>{minute}m</option>)}
-                                  </select>
-                                </div>
-                              </label>
-                              <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                <option value="">No pack</option>
-                                {taskServicePackOptions.map((pack) => (
-                                  <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
-                                ))}
-                              </select>
-                              <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
-                            </div>
-                          </form>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                );
+                return <TaskCard task={task} billingBreakdown={billingBreakdown} taskServicePackOptions={taskServicePackOptions} showJobLink={true} />;
               })}
             </div>
             <form method="post" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">

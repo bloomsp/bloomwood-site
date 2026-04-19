@@ -1,0 +1,88 @@
+---
+const {
+  task,
+  billingBreakdown,
+  taskServicePackOptions = [],
+  showJobLink = false,
+} = Astro.props;
+
+function formatHours(minutes) {
+  return (Math.max(0, Number(minutes ?? 0) || 0) / 60).toFixed(2);
+}
+
+function splitMinutes(totalMinutes) {
+  const safeMinutes = Math.max(0, Number(totalMinutes ?? 0) || 0);
+  return {
+    hours: Math.floor(safeMinutes / 60),
+    minutes: safeMinutes % 60,
+  };
+}
+
+const billableMinutes = Number(task?.billable_minutes ?? 0) || 0;
+const nonBillableMinutes = Number(task?.non_billable_minutes ?? 0) || 0;
+const totalTaskMinutes = Number(task?.time_taken_minutes ?? (billableMinutes + nonBillableMinutes)) || 0;
+const billableParts = splitMinutes(billableMinutes);
+const nonBillableParts = splitMinutes(nonBillableMinutes);
+const packCoveredMinutes = Number(billingBreakdown?.packCoveredMinutes ?? 0) || 0;
+---
+
+<div class="rounded-xl border border-slate-200 p-4">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <div class="text-sm font-semibold text-slate-900">{task.title}</div>
+      {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
+      {showJobLink && task.job?.id && task.job?.job_reference ? (
+        <div class="mt-2 text-xs text-slate-500">
+          Job: <a class="font-medium text-sky-700 hover:underline" href={`/crm/jobs/${task.job.id}`}>{task.job.job_reference}</a>
+        </div>
+      ) : null}
+    </div>
+    <div class="text-right text-xs uppercase tracking-wide text-slate-500">
+      <div>{task.status}</div>
+      {task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
+      <div class="mt-2 space-y-1 normal-case tracking-normal">
+        <div>Billable time: {formatHours(billableMinutes)}h</div>
+        <div>Non-billable time: {formatHours(nonBillableMinutes)}h</div>
+        <div>Time covered by pack: {formatHours(packCoveredMinutes)}h</div>
+        <div>Total task time: {formatHours(totalTaskMinutes)}h</div>
+      </div>
+      {task.status === 'open' ? (
+        <form method="post" class="mt-3">
+          <input type="hidden" name="action" value="complete-task" />
+          <input type="hidden" name="task_id" value={task.id} />
+          <div class="grid gap-2">
+            <label class="text-[11px] font-medium text-slate-500">
+              Billable time
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <select name="billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={billableParts.hours === i}>{i}h</option>)}
+                </select>
+                <select name="billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={billableParts.minutes === minute}>{minute}m</option>)}
+                </select>
+              </div>
+            </label>
+            <label class="text-[11px] font-medium text-slate-500">
+              Non-billable time
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <select name="non_billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={nonBillableParts.hours === i}>{i}h</option>)}
+                </select>
+                <select name="non_billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={nonBillableParts.minutes === minute}>{minute}m</option>)}
+                </select>
+              </div>
+            </label>
+            <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+              <option value="">No pack</option>
+              {taskServicePackOptions.map((pack) => (
+                <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
+              ))}
+            </select>
+            <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+          </div>
+        </form>
+      ) : null}
+    </div>
+  </div>
+</div>
