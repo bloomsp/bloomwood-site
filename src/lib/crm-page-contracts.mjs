@@ -12,6 +12,35 @@ function getTaskRateContext(task) {
   };
 }
 
+export function buildClientInvoiceLineItems({ invoiceId, selectedJobs = [], selectedTasks = [], summary }) {
+  const jobBillingBreakdown = summary?.jobBillingBreakdown ?? new Map();
+
+  return [
+    ...selectedJobs.map((job, index) => ({
+      invoice_id: invoiceId,
+      source_type: 'job',
+      job_id: job.id,
+      description: `${job.job_reference} · ${job.title}`,
+      amount: Number(jobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0) || 0,
+      sort_order: index,
+    })),
+    ...selectedTasks.map((task, index) => {
+      const { hourlyRate, billingIncrementMinutes } = getTaskRateContext(task);
+      const billableMinutes = Number(task.billable_minutes ?? 0) || 0;
+      return {
+        invoice_id: invoiceId,
+        source_type: 'task',
+        task_id: task.id,
+        description: `${task.title}${task.service_type?.name ? ` · ${task.service_type.name}` : ''}`,
+        quantity: billableMinutes / 60,
+        unit_amount: hourlyRate || null,
+        amount: getCalculatedAmount(billableMinutes, hourlyRate, billingIncrementMinutes),
+        sort_order: selectedJobs.length + index,
+      };
+    }),
+  ];
+}
+
 export function summarizeClientDetail({ jobs = [], tasks = [], packs = [], invoices = [], invoiceLineItems = [] }) {
   const allocation = allocatePackMinutes({ packs, tasks });
   const derivedPacks = deriveServicePacks(packs, tasks);

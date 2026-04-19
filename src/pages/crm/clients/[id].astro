@@ -2,7 +2,7 @@
 import CrmLayout from '@/layouts/CrmLayout.astro';
 import TaskCard from '@/components/crm/TaskCard.astro';
 import { getCalculatedAmount, getTaskServicePackOptions } from '@/lib/crm-metrics.mjs';
-import { summarizeClientDetail } from '@/lib/crm-page-contracts.mjs';
+import { buildClientInvoiceLineItems, summarizeClientDetail } from '@/lib/crm-page-contracts.mjs';
 
 export const prerender = false;
 
@@ -243,32 +243,12 @@ if (Astro.request.method === 'POST' && supabase) {
             invoices: [],
             invoiceLineItems: (itemsRes.data ?? []).filter((item: any) => item.invoice?.client_id === id),
           });
-          const localJobBillingBreakdown = invoiceSummary.jobBillingBreakdown;
-          const lineItems = [
-            ...selectedJobs.map((job, index) => ({
-              invoice_id: invoice.id,
-              source_type: 'job',
-              job_id: job.id,
-              description: `${job.job_reference} · ${job.title}`,
-              amount: Number(localJobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0) || 0,
-              sort_order: index,
-            })),
-            ...selectedTasks.map((task, index) => {
-              const hourlyRate = Number(task?.service_type?.hourly_rate ?? 0);
-              const increment = Number(task?.service_type?.billing_increment_minutes ?? 0) || null;
-              const billableMinutes = Number(task.billable_minutes ?? 0) || 0;
-              return {
-                invoice_id: invoice.id,
-                source_type: 'task',
-                task_id: task.id,
-                description: `${task.title}${task.service_type?.name ? ` · ${task.service_type.name}` : ''}`,
-                quantity: billableMinutes / 60,
-                unit_amount: hourlyRate || null,
-                amount: getCalculatedAmount(billableMinutes, hourlyRate, increment),
-                sort_order: selectedJobs.length + index,
-              };
-            }),
-          ];
+          const lineItems = buildClientInvoiceLineItems({
+            invoiceId: invoice.id,
+            selectedJobs,
+            selectedTasks,
+            summary: invoiceSummary,
+          });
 
           const { error: itemsError } = await supabase.from('invoice_line_items').insert(lineItems);
           if (itemsError) {

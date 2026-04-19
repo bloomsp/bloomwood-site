@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildClientInvoiceLineItems,
   summarizeClientDetail,
   summarizeJobDetail,
   summarizeServicePackDetail,
@@ -31,6 +32,8 @@ function makeFixture() {
   const job1 = {
     id: 'job-1',
     client_id: 'client-1',
+    job_reference: 'JOB-001',
+    title: 'Primary support job',
     status: 'in_progress',
     billable_minutes: 360,
     calculated_billable_amount: 720,
@@ -42,6 +45,8 @@ function makeFixture() {
   const job2 = {
     id: 'job-2',
     client_id: 'client-1',
+    job_reference: 'JOB-002',
+    title: 'Completed invoiced job',
     status: 'completed',
     billable_minutes: 120,
     calculated_billable_amount: 240,
@@ -96,12 +101,13 @@ function makeFixture() {
       id: 'task-4',
       client_id: 'client-1',
       job_id: null,
+      title: 'Standalone follow-up',
       status: 'open',
       billable_minutes: 90,
       non_billable_minutes: 0,
       service_pack_id: null,
       completed_at: '2026-04-18T12:00:00.000Z',
-      service_type: { hourly_rate: 80, billing_increment_minutes: 15 },
+      service_type: { name: 'Support', hourly_rate: 80, billing_increment_minutes: 15 },
     },
   ];
 
@@ -174,4 +180,38 @@ test('service pack detail contract keeps header totals aligned with task rows', 
   const secondTask = summary.tasksWithPackCoverage.find((task) => task.id === 'task-2');
   assert.equal(secondTask.pack_covered_minutes, 240);
   assert.equal(secondTask.overflow_billable_minutes, 60);
+});
+
+test('client invoice line item builder derives selected job and standalone task amounts from summary data', () => {
+  const { jobs, tasks, servicePacks, invoices, invoiceLineItems } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
+  const selectedJobs = jobs.filter((job) => job.id === 'job-1');
+  const selectedTasks = tasks.filter((task) => task.id === 'task-4');
+
+  const lineItems = buildClientInvoiceLineItems({
+    invoiceId: 'inv-new',
+    selectedJobs,
+    selectedTasks,
+    summary,
+  });
+
+  assert.equal(lineItems.length, 2);
+  assert.deepEqual(lineItems[0], {
+    invoice_id: 'inv-new',
+    source_type: 'job',
+    job_id: 'job-1',
+    description: 'JOB-001 · Primary support job',
+    amount: 120,
+    sort_order: 0,
+  });
+  assert.deepEqual(lineItems[1], {
+    invoice_id: 'inv-new',
+    source_type: 'task',
+    task_id: 'task-4',
+    description: 'Standalone follow-up · Support',
+    quantity: 1.5,
+    unit_amount: 80,
+    amount: 120,
+    sort_order: 1,
+  });
 });
