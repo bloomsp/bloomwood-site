@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 
 import { getCalculatedAmount, getTaskServicePackOptions } from '../src/lib/crm-metrics.mjs';
 import {
+  formatCrmDate,
   summarizeClientDetail,
   summarizeJobDetail,
   summarizeServicePackDetail,
@@ -11,8 +12,8 @@ import {
 
 function makeFixture() {
   const servicePacks = [
-    { id: 'pack-1', client_id: 'client-1', hours_purchased: 5, minutes_purchased: 300, purchase_price: 570, status: 'active', service_type: { item_code: 'FA40', name: 'Five Hour Pack' } },
-    { id: 'pack-2', client_id: 'client-1', hours_purchased: 2, minutes_purchased: 120, purchase_price: 510, status: 'active', service_type: { item_code: 'IT100', name: 'Two Hour Pack' } },
+    { id: 'pack-1', client_id: 'client-1', hours_purchased: 5, minutes_purchased: 300, purchase_price: 570, purchase_date: '2026-04-19', status: 'active', service_type: { item_code: 'FA40', name: 'Five Hour Pack' } },
+    { id: 'pack-2', client_id: 'client-1', hours_purchased: 2, minutes_purchased: 120, purchase_price: 510, purchase_date: '2026-04-20', status: 'active', service_type: { item_code: 'IT100', name: 'Two Hour Pack' } },
   ];
 
   const jobs = [
@@ -195,6 +196,29 @@ test('client invoice panel job rows show uncovered invoiceable amounts after pac
     `);
 
     assert.equal(await page.locator('[data-job-id="job-1"] .job-amount').textContent(), '$120.00');
+  });
+});
+
+test('client detail renders date-only fields without time for dob and service-pack purchase date', async () => {
+  const { servicePacks } = makeFixture();
+  const client = { date_of_birth: '1988-07-09' };
+
+  await withPage(async (page) => {
+    await page.setContent(`
+      <section>
+        <div id="dob">Date of birth: ${formatCrmDate(client.date_of_birth)}</div>
+        ${servicePacks.map((pack) => `
+          <article data-pack-id="${pack.id}">
+            <div class="purchase-date">${formatCrmDate(pack.purchase_date)}</div>
+          </article>
+        `).join('')}
+      </section>
+    `);
+
+    assert.equal(await page.textContent('#dob'), 'Date of birth: 1988-07-09');
+    assert.equal(await page.locator('[data-pack-id="pack-1"] .purchase-date').textContent(), '2026-04-19');
+    assert.equal(await page.locator('[data-pack-id="pack-2"] .purchase-date').textContent(), '2026-04-20');
+    assert.equal((await page.textContent('#dob'))?.includes('00:00:00'), false);
   });
 });
 
