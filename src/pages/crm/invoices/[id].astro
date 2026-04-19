@@ -17,6 +17,113 @@ let lineItems: any[] = [];
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
+  if (Astro.request.method === 'POST') {
+    const formData = await Astro.request.formData();
+    const action = String(formData.get('action') ?? '').trim();
+
+    if (action === 'update-invoice') {
+      const invoiceNumber = String(formData.get('invoice_number') ?? '').trim() || null;
+      const status = String(formData.get('status') ?? 'draft').trim() || 'draft';
+      const notes = String(formData.get('notes') ?? '').trim() || null;
+      const payload: Record<string, any> = {
+        invoice_number: invoiceNumber,
+        status,
+        notes,
+      };
+
+      if (status === 'issued' && !String(formData.get('issued_at') ?? '').trim()) {
+        payload.issued_at = new Date().toISOString();
+      }
+      if (status === 'paid') {
+        payload.issued_at = String(formData.get('issued_at') ?? '').trim() || new Date().toISOString();
+        payload.paid_at = String(formData.get('paid_at') ?? '').trim() || new Date().toISOString();
+      }
+      if (status === 'draft') {
+        payload.issued_at = null;
+        payload.paid_at = null;
+      }
+      if (status === 'void') {
+        payload.paid_at = null;
+      }
+
+      const { error } = await supabase.from('invoices').update(payload).eq('id', id);
+      if (error) {
+        console.error('Failed to update invoice', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/invoices/${id}`);
+      }
+    }
+
+    if (action === 'mark-paid') {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'paid', issued_at: now, paid_at: now })
+        .eq('id', id);
+      if (error) {
+        console.error('Failed to mark invoice paid', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/invoices/${id}`);
+      }
+    }
+
+    if (action === 'void-invoice') {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'void', paid_at: null })
+        .eq('id', id);
+      if (error) {
+        console.error('Failed to void invoice', error);
+        loadError = error.message;
+      } else {
+        return Astro.redirect(`/crm/invoices/${id}`);
+      }
+    }
+
+    if (action === 'add-manual-line-item') {
+      const description = String(formData.get('description') ?? '').trim();
+      const quantityValue = String(formData.get('quantity') ?? '').trim();
+      const unitAmountValue = String(formData.get('unit_amount') ?? '').trim();
+      const amountValue = String(formData.get('amount') ?? '').trim();
+      const quantity = quantityValue ? Number(quantityValue) : null;
+      const unitAmount = unitAmountValue ? Number(unitAmountValue) : null;
+      const amount = amountValue ? Number(amountValue) : ((quantity ?? 1) * (unitAmount ?? 0));
+
+      if (!description) {
+        loadError = 'Manual line item description is required.';
+      } else if (Number.isNaN(amount)) {
+        loadError = 'Manual line item amount must be a valid number.';
+      } else {
+        const { data: lastLineItem } = await supabase
+          .from('invoice_line_items')
+          .select('sort_order')
+          .eq('invoice_id', id)
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const nextSortOrder = Number(lastLineItem?.sort_order ?? -1) + 1;
+
+        const { error } = await supabase.from('invoice_line_items').insert({
+          invoice_id: id,
+          source_type: 'manual',
+          description,
+          quantity,
+          unit_amount: unitAmount,
+          amount,
+          sort_order: nextSortOrder,
+        });
+        if (error) {
+          console.error('Failed to add manual invoice line item', error);
+          loadError = error.message;
+        } else {
+          return Astro.redirect(`/crm/invoices/${id}`);
+        }
+      }
+    }
+  }
+
   const [invoiceResult, itemsResult] = await Promise.all([
     supabase.from('invoices').select('*, client:clients(id, display_name)').eq('id', id).single(),
     supabase.from('invoice_line_items').select('id, source_type, description, quantity, unit_amount, amount, job:jobs(id, job_reference), task:tasks(id, title), service_pack:service_packs(id)').eq('invoice_id', id).order('sort_order', { ascending: true }),
@@ -30,30 +137,107 @@ if (!supabase) {
     lineItems = itemsResult.data ?? [];
   }
 }
+
+function toLocalInput(value: string | null) {
+  if (!value) return '';
+  return value.slice(0, 16);
+}
 ---
 
 <CrmLayout title="Invoice detail" description="Bloomwood CRM invoice detail">
-  {loadError ? <section class="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{loadError}</section> : null}
+  {loadError ? <section class="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{loadError}</section> : null}
   {!loadError && !invoice ? <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><p class="text-sm text-slate-600">Invoice not found.</p></section> : null}
   {invoice ? (
     <>
       <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Invoice</p>
             <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{invoice.invoice_number ?? 'Draft invoice'}</h2>
             <div class="mt-2 text-sm text-slate-600">Client: {invoice.client?.display_name ?? 'Unknown client'}</div>
             <div class="text-sm text-slate-600">Status: {invoice.status}</div>
+            {invoice.issued_at ? <div class="text-sm text-slate-600">Issued: {invoice.issued_at}</div> : null}
+            {invoice.paid_at ? <div class="text-sm text-slate-600">Paid: {invoice.paid_at}</div> : null}
           </div>
           <div class="text-right">
             <div class="text-xs uppercase tracking-wide text-slate-500">Total</div>
             <div class="mt-1 text-2xl font-semibold text-slate-900">${Number(invoice.total_amount ?? 0).toFixed(2)}</div>
           </div>
         </div>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <form method="post" class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+            <input type="hidden" name="action" value="update-invoice" />
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">Invoice number</span>
+              <input name="invoice_number" value={invoice.invoice_number ?? ''} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+            </label>
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">Status</span>
+              <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2">
+                <option value="draft" selected={invoice.status === 'draft'}>Draft</option>
+                <option value="issued" selected={invoice.status === 'issued'}>Issued</option>
+                <option value="paid" selected={invoice.status === 'paid'}>Paid</option>
+                <option value="void" selected={invoice.status === 'void'}>Void</option>
+              </select>
+            </label>
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">Issued at</span>
+              <input type="datetime-local" name="issued_at" value={toLocalInput(invoice.issued_at)} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+            </label>
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">Paid at</span>
+              <input type="datetime-local" name="paid_at" value={toLocalInput(invoice.paid_at)} class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+            </label>
+            <label class="text-sm text-slate-700 md:col-span-2">
+              <span class="mb-1 block">Notes</span>
+              <textarea name="notes" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2">{invoice.notes ?? ''}</textarea>
+            </label>
+            <div class="md:col-span-2 flex justify-end">
+              <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Save invoice</button>
+            </div>
+          </form>
+
+          <div class="flex flex-col gap-3">
+            <form method="post">
+              <input type="hidden" name="action" value="mark-paid" />
+              <button class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Mark paid</button>
+            </form>
+            <form method="post">
+              <input type="hidden" name="action" value="void-invoice" />
+              <button class="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Void invoice</button>
+            </form>
+          </div>
+        </div>
       </section>
 
       <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Line items</h3>
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-lg font-semibold text-slate-900">Line items</h3>
+          <div class="text-sm text-slate-500">{lineItems.length} item{lineItems.length === 1 ? '' : 's'}</div>
+        </div>
+        <form method="post" class="mt-4 grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-4">
+          <input type="hidden" name="action" value="add-manual-line-item" />
+          <label class="text-sm text-slate-700 md:col-span-2">
+            <span class="mb-1 block">Description</span>
+            <input name="description" class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Additional charge or adjustment" />
+          </label>
+          <label class="text-sm text-slate-700">
+            <span class="mb-1 block">Qty</span>
+            <input type="number" min="0" step="0.01" name="quantity" class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="1" />
+          </label>
+          <label class="text-sm text-slate-700">
+            <span class="mb-1 block">Unit amount</span>
+            <input type="number" min="0" step="0.01" name="unit_amount" class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="0.00" />
+          </label>
+          <label class="text-sm text-slate-700 md:col-span-1">
+            <span class="mb-1 block">Amount override</span>
+            <input type="number" min="0" step="0.01" name="amount" class="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Auto-calc if blank" />
+          </label>
+          <div class="md:col-span-3 flex items-end justify-end">
+            <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Add manual line item</button>
+          </div>
+        </form>
         <div class="mt-4 space-y-3">
           {lineItems.length === 0 ? <p class="text-sm text-slate-600">No line items yet.</p> : null}
           {lineItems.map((item) => (
