@@ -196,6 +196,7 @@ test('job detail open task keeps exhausted selected pack and renders pack breakd
         <div class="meta">
           <div class="pack-covered">Pack covered: ${(billingBreakdown.packCoveredMinutes / 60).toFixed(2)}h</div>
           <div class="still-billable">Still billable: ${(billingBreakdown.overflowBillableMinutes / 60).toFixed(2)}h</div>
+          <div class="to-be-invoiced">Time to be invoiced: ${(billingBreakdown.overflowBillableMinutes / 60).toFixed(2)}h</div>
         </div>
         <form>
           <select id="service-pack-id">
@@ -208,6 +209,7 @@ test('job detail open task keeps exhausted selected pack and renders pack breakd
 
     assert.equal(await page.textContent('.pack-covered'), 'Pack covered: 4.00h');
     assert.equal(await page.textContent('.still-billable'), 'Still billable: 1.00h');
+    assert.equal(await page.textContent('.to-be-invoiced'), 'Time to be invoiced: 1.00h');
     assert.equal(await page.locator('#service-pack-id').inputValue(), 'pack-1');
     assert.equal(await page.locator('#service-pack-id option:checked').textContent(), 'FA40 (0.00h)');
   });

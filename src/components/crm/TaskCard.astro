@@ -24,6 +24,7 @@ const totalTaskMinutes = Number(task?.time_taken_minutes ?? (billableMinutes + n
 const billableParts = splitMinutes(billableMinutes);
 const nonBillableParts = splitMinutes(nonBillableMinutes);
 const packCoveredMinutes = Number(billingBreakdown?.packCoveredMinutes ?? 0) || 0;
+const timeToBeInvoicedMinutes = Number(billingBreakdown?.overflowBillableMinutes ?? billableMinutes) || 0;
 ---
 
 <div class="rounded-xl border border-slate-200 p-4">
@@ -49,6 +50,7 @@ const packCoveredMinutes = Number(billingBreakdown?.packCoveredMinutes ?? 0) || 
         <div>Billable time: {formatHours(billableMinutes)}h</div>
         <div>Non-billable time: {formatHours(nonBillableMinutes)}h</div>
         <div>Time covered by pack: {formatHours(packCoveredMinutes)}h</div>
+        <div>Time to be invoiced: {formatHours(timeToBeInvoicedMinutes)}h</div>
         <div>Total task time: {formatHours(totalTaskMinutes)}h</div>
       </div>
       {task.status === 'open' ? (
