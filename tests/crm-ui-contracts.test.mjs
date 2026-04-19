@@ -146,3 +146,40 @@ test('job detail summary cards render values consistent with shared summary logi
     assert.equal(await page.textContent('#open-tasks'), '1');
   });
 });
+
+
+test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
+  const { servicePacks, jobs, tasks } = makeFixture();
+  const summary = summarizeJobDetail({
+    job: jobs[0],
+    tasks: tasks.filter((task) => task.job_id === 'job-1'),
+    servicePacks,
+    clientPackTasks: tasks,
+  });
+  const task = tasks.find((item) => item.id === 'task-2');
+  const availableServicePacks = summary.servicePacks.filter((pack) => pack.status === 'active' && pack.minutes_remaining > 0);
+  const options = getTaskServicePackOptions({ availableServicePacks, servicePacks: summary.servicePacks, task });
+  const billingBreakdown = summary.taskBillingBreakdown.get(task.id);
+
+  await withPage(async (page) => {
+    await page.setContent(`
+      <article class="task-card">
+        <div class="meta">
+          <div class="pack-covered">Pack covered: ${(billingBreakdown.packCoveredMinutes / 60).toFixed(2)}h</div>
+          <div class="still-billable">Still billable: ${(billingBreakdown.overflowBillableMinutes / 60).toFixed(2)}h</div>
+        </div>
+        <form>
+          <select id="service-pack-id">
+            <option value="">No pack</option>
+            ${options.map((pack) => `<option value="${pack.id}" ${task.service_pack_id === pack.id ? 'selected' : ''}>${pack.service_type?.item_code ?? 'Pack'} (${(pack.minutes_remaining / 60).toFixed(2)}h)</option>`).join('')}
+          </select>
+        </form>
+      </article>
+    `);
+
+    assert.equal(await page.textContent('.pack-covered'), 'Pack covered: 4.00h');
+    assert.equal(await page.textContent('.still-billable'), 'Still billable: 1.00h');
+    assert.equal(await page.locator('#service-pack-id').inputValue(), 'pack-1');
+    assert.equal(await page.locator('#service-pack-id option:checked').textContent(), 'FA40 (0.00h)');
+  });
+});
