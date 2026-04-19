@@ -11,8 +11,8 @@ import {
 
 function makeFixture() {
   const servicePacks = [
-    { id: 'pack-1', client_id: 'client-1', hours_purchased: 5, minutes_purchased: 300, status: 'active', service_type: { item_code: 'FA40', name: 'Five Hour Pack' } },
-    { id: 'pack-2', client_id: 'client-1', hours_purchased: 2, minutes_purchased: 120, status: 'active', service_type: { item_code: 'IT100', name: 'Two Hour Pack' } },
+    { id: 'pack-1', client_id: 'client-1', hours_purchased: 5, minutes_purchased: 300, purchase_price: 570, status: 'active', service_type: { item_code: 'FA40', name: 'Five Hour Pack' } },
+    { id: 'pack-2', client_id: 'client-1', hours_purchased: 2, minutes_purchased: 120, purchase_price: 510, status: 'active', service_type: { item_code: 'IT100', name: 'Two Hour Pack' } },
   ];
 
   const jobs = [
@@ -21,9 +21,10 @@ function makeFixture() {
   ];
 
   const tasks = [
-    { id: 'task-1', client_id: 'client-1', job_id: 'job-1', title: 'aaa', status: 'done', billable_minutes: 60, non_billable_minutes: 0, service_pack_id: 'pack-1', completed_at: '2026-04-18T09:00:00.000Z', job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
-    { id: 'task-2', client_id: 'client-1', job_id: 'job-1', title: 'www', status: 'open', billable_minutes: 300, non_billable_minutes: 30, service_pack_id: 'pack-1', completed_at: '2026-04-18T10:00:00.000Z', job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
-    { id: 'task-3', client_id: 'client-1', job_id: 'job-2', title: 'bbb', status: 'done', billable_minutes: 120, non_billable_minutes: 0, service_pack_id: null, completed_at: '2026-04-18T11:00:00.000Z', job: { hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
+    { id: 'task-1', client_id: 'client-1', job_id: 'job-1', title: 'aaa', status: 'done', billable_minutes: 60, non_billable_minutes: 0, service_pack_id: 'pack-1', completed_at: '2026-04-18T09:00:00.000Z', job: { invoice_number: null, hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
+    { id: 'task-2', client_id: 'client-1', job_id: 'job-1', title: 'www', status: 'open', billable_minutes: 300, non_billable_minutes: 30, service_pack_id: 'pack-1', completed_at: '2026-04-18T10:00:00.000Z', job: { invoice_number: null, hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
+    { id: 'task-3', client_id: 'client-1', job_id: 'job-2', title: 'bbb', status: 'done', billable_minutes: 120, non_billable_minutes: 0, service_pack_id: null, completed_at: '2026-04-18T11:00:00.000Z', job: { invoice_number: 'INV-001', hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 } },
+    { id: 'task-4', client_id: 'client-1', job_id: null, title: 'ccc', status: 'open', billable_minutes: 90, non_billable_minutes: 0, service_pack_id: null, completed_at: '2026-04-18T12:00:00.000Z', service_type: { hourly_rate: 80, billing_increment_minutes: 15 } },
   ];
 
   return { servicePacks, jobs, tasks };
@@ -147,6 +148,25 @@ test('job detail summary cards render values consistent with shared summary logi
   });
 });
 
+
+test('client summary excludes invoiced job work from to-be-invoiced totals and includes standalone task service rate', async () => {
+  const { servicePacks, jobs, tasks } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
+
+  await withPage(async (page) => {
+    await page.setContent(`
+      <div id="hours-to-be-invoiced">${(summary.totalToBeInvoicedMinutes / 60).toFixed(2)} hrs</div>
+      <div id="total-to-be-invoiced">$${summary.totalToBeInvoicedDollars.toFixed(2)}</div>
+      <div id="total-invoiced">$${summary.totalInvoiced.toFixed(2)}</div>
+      <div id="total-revenue">$${summary.totalRevenue.toFixed(2)}</div>
+    `);
+
+    assert.equal(await page.textContent('#hours-to-be-invoiced'), '2.50 hrs');
+    assert.equal(await page.textContent('#total-to-be-invoiced'), '$240.00');
+    assert.equal(await page.textContent('#total-invoiced'), '$240.00');
+    assert.equal(await page.textContent('#total-revenue'), '$1320.00');
+  });
+});
 
 test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
   const { servicePacks, jobs, tasks } = makeFixture();

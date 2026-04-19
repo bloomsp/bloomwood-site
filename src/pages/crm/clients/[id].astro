@@ -20,6 +20,7 @@ let notes: any[] = [];
 let tasks: any[] = [];
 let servicePacks: any[] = [];
 let availableServicePacks: any[] = [];
+let serviceTypes: any[] = [];
 let loadError: string | null = null;
 
 function minutesFromParts(hours: FormDataEntryValue | null, minutes: FormDataEntryValue | null) {
@@ -98,6 +99,7 @@ if (Astro.request.method === 'POST' && supabase) {
     const initialStatus = String(formData.get('status') ?? 'open');
     const payload = {
       client_id: id,
+      service_type_id: String(formData.get('service_type_id') ?? '').trim() || null,
       service_pack_id: String(formData.get('service_pack_id') ?? '').trim() || null,
       title: String(formData.get('title') ?? '').trim(),
       details: String(formData.get('details') ?? '').trim() || null,
@@ -158,7 +160,7 @@ if (Astro.request.method === 'POST' && supabase) {
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
-  const [clientResult, jobsResult, notesResult, tasksResult, packsResult] = await Promise.all([
+  const [clientResult, jobsResult, notesResult, tasksResult, packsResult, serviceTypesResult] = await Promise.all([
     supabase.from('clients').select('*').eq('id', id).single(),
     supabase
       .from('jobs')
@@ -173,7 +175,7 @@ if (!supabase) {
       .limit(8),
     supabase
       .from('tasks')
-      .select('id, title, details, status, due_at, completed_at, job_id, time_taken_minutes, billable_minutes, non_billable_minutes, service_pack_id, job:jobs(id, job_reference, title, invoice_number, hourly_rate_snapshot, billing_increment_minutes_snapshot)')
+      .select('id, title, details, status, due_at, completed_at, job_id, service_type_id, time_taken_minutes, billable_minutes, non_billable_minutes, service_pack_id, job:jobs(id, job_reference, title, invoice_number, hourly_rate_snapshot, billing_increment_minutes_snapshot), service_type:service_types(id, name, item_code, hourly_rate, billing_increment_minutes)')
       .eq('client_id', id)
       .order('completed_at', { ascending: true, nullsFirst: false }),
     supabase
@@ -181,10 +183,16 @@ if (!supabase) {
       .select('id, hours_purchased, minutes_purchased, minutes_used, purchase_price, purchase_date, status, service_type:service_types(name, item_code)')
       .eq('client_id', id)
       .order('purchase_date', { ascending: false }),
+    supabase
+      .from('service_types')
+      .select('id, name, item_code, hourly_rate, billing_increment_minutes, is_service_pack, active, sort_order')
+      .eq('active', true)
+      .eq('is_service_pack', false)
+      .order('sort_order', { ascending: true }),
   ]);
 
-  if (clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error) {
-    console.error('Failed to load client detail', clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error);
+  if (clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error) {
+    console.error('Failed to load client detail', clientResult.error || jobsResult.error || notesResult.error || tasksResult.error || packsResult.error || serviceTypesResult.error);
     loadError = 'Could not load this client yet. The latest CRM migration may still need to be applied.';
   } else {
     client = clientResult.data;
@@ -202,6 +210,7 @@ if (!supabase) {
       ...pack,
       task_count: servicePackTaskCounts.get(pack.id) ?? 0,
     }));
+    serviceTypes = serviceTypesResult.data ?? [];
   }
 }
 
@@ -416,6 +425,16 @@ function formatHours(minutes: number) {
                   <select name="non_billable_minutes" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     {[0, 15, 30, 45].map((minute) => <option value={minute}>{minute}</option>)}
                   </select>
+                </label>
+                <label class="text-sm text-slate-700 md:col-span-2">
+                  <span class="mb-1 block">Service type</span>
+                  <select name="service_type_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="">No service type</option>
+                    {serviceTypes.map((serviceType) => (
+                      <option value={serviceType.id}>{serviceType.name}{serviceType.item_code ? ` (${serviceType.item_code})` : ''}</option>
+                    ))}
+                  </select>
+                  <p class="mt-1 text-xs text-slate-500">Use this for tasks not attached to a job so to-be-invoiced totals can use the correct rate.</p>
                 </label>
                 <label class="text-sm text-slate-700 md:col-span-2">
                   <span class="mb-1 block">Service pack</span>

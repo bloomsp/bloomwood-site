@@ -5,6 +5,13 @@ import {
   getPackMinutesPurchased,
 } from './crm-metrics.mjs';
 
+function getTaskRateContext(task) {
+  return {
+    hourlyRate: Number(task?.job?.hourly_rate_snapshot ?? task?.service_type?.hourly_rate ?? 0),
+    billingIncrementMinutes: Number(task?.job?.billing_increment_minutes_snapshot ?? task?.service_type?.billing_increment_minutes ?? 0) || null,
+  };
+}
+
 export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
   const allocation = allocatePackMinutes({ packs, tasks });
   const derivedPacks = deriveServicePacks(packs, tasks);
@@ -24,10 +31,11 @@ export function summarizeClientDetail({ jobs = [], tasks = [], packs = [] }) {
       packCoveredMinutes: 0,
       overflowBillableMinutes: Number(task.billable_minutes ?? 0) || 0,
     };
+    const { hourlyRate, billingIncrementMinutes } = getTaskRateContext(task);
     return sum + getCalculatedAmount(
       breakdown.overflowBillableMinutes,
-      Number(task.job?.hourly_rate_snapshot ?? 0),
-      Number(task.job?.billing_increment_minutes_snapshot ?? 0) || null,
+      hourlyRate,
+      billingIncrementMinutes,
     );
   }, 0);
 

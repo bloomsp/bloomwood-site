@@ -84,6 +84,17 @@ function makeFixture() {
       completed_at: '2026-04-18T11:00:00.000Z',
       job: { invoice_number: 'INV-001', hourly_rate_snapshot: 120, billing_increment_minutes_snapshot: 15 },
     },
+    {
+      id: 'task-4',
+      client_id: 'client-1',
+      job_id: null,
+      status: 'open',
+      billable_minutes: 90,
+      non_billable_minutes: 0,
+      service_pack_id: null,
+      completed_at: '2026-04-18T12:00:00.000Z',
+      service_type: { hourly_rate: 80, billing_increment_minutes: 15 },
+    },
   ];
 
   return {
@@ -100,11 +111,11 @@ test('client detail contract stays aligned across summary cards and pack list', 
   const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks });
 
   assert.equal(summary.activeJobs, 1);
-  assert.equal(summary.taskCount, 3);
-  assert.equal(summary.totalBillableMinutes, 480);
+  assert.equal(summary.taskCount, 4);
+  assert.equal(summary.totalBillableMinutes, 570);
   assert.equal(summary.totalPackCoveredMinutes, 300);
-  assert.equal(summary.totalToBeInvoicedMinutes, 60);
-  assert.equal(summary.totalToBeInvoicedDollars, 120);
+  assert.equal(summary.totalToBeInvoicedMinutes, 150);
+  assert.equal(summary.totalToBeInvoicedDollars, 240);
   assert.equal(summary.totalInvoiced, 240);
   assert.equal(summary.totalServicePackPurchased, 810);
   assert.equal(summary.totalRevenue, 1050);
