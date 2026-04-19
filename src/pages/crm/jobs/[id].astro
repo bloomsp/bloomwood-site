@@ -254,7 +254,6 @@ if (supabase && job?.client?.id) {
     .from('service_packs')
     .select('id, minutes_purchased, hours_purchased, minutes_used, status, service_type:service_types(name, item_code)')
     .eq('client_id', job.client.id)
-    .eq('status', 'active')
     .order('purchase_date', { ascending: false });
 
   servicePacks = (data ?? []).map((pack) => ({
@@ -264,10 +263,12 @@ if (supabase && job?.client?.id) {
 
   const { data: packTasksData } = await supabase
     .from('tasks')
-    .select('id, service_pack_id, billable_minutes, completed_at')
+    .select('id, service_pack_id, billable_minutes, completed_at, due_at')
     .eq('client_id', job.client.id)
     .not('service_pack_id', 'is', null)
-    .order('completed_at', { ascending: true, nullsFirst: false });
+    .gt('billable_minutes', 0)
+    .order('completed_at', { ascending: true, nullsFirst: false })
+    .order('due_at', { ascending: true, nullsFirst: false });
 
   clientPackTasks = packTasksData ?? [];
 }
@@ -473,54 +474,54 @@ packUsage = packUsage.map((usage) => {
                 const taskServicePackOptions = getTaskServicePackOptions({ availableServicePacks, servicePacks, task });
                 return (
                   <div class="rounded-xl border border-slate-200 p-4">
-                    <div class="text-sm font-semibold text-slate-900">{task.title}</div>
-                    {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
-                    <div class="mt-2 flex items-center justify-between gap-3 text-xs uppercase tracking-wide text-slate-500">
+                    <div class="flex items-start justify-between gap-3">
                       <div>
-                        {task.status}
-                        {task.due_at ? ` • ${task.due_at}` : ''}
-                        {task.billable_minutes ? ` • billable ${formatHours(Number(task.billable_minutes))}h` : ''}
-                        {task.non_billable_minutes ? ` • non-billable ${formatHours(Number(task.non_billable_minutes))}h` : ''}
-                        {task.billable_minutes ? ` • pack ${formatHours(billingBreakdown.packCoveredMinutes)}h` : ''}
-                        {billingBreakdown.overflowBillableMinutes ? ` • outside pack ${formatHours(billingBreakdown.overflowBillableMinutes)}h` : ''}
+                        <div class="text-sm font-semibold text-slate-900">{task.title}</div>
+                        {task.details ? <div class="mt-1 text-sm text-slate-600">{task.details}</div> : null}
                       </div>
-                      {task.status === 'open' ? (
-                        <form method="post">
-                          <input type="hidden" name="action" value="complete-task" />
-                          <input type="hidden" name="task_id" value={task.id} />
-                          <div class="mt-2 grid gap-2">
-                            <label class="text-[11px] font-medium text-slate-500">
-                              Billable time
-                              <div class="mt-1 grid grid-cols-2 gap-2">
-                                <select name="billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={billableParts.hours === i}>{i}h</option>)}
-                                </select>
-                                <select name="billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={billableParts.minutes === minute}>{minute}m</option>)}
-                                </select>
-                              </div>
-                            </label>
-                            <label class="text-[11px] font-medium text-slate-500">
-                              Non-billable time
-                              <div class="mt-1 grid grid-cols-2 gap-2">
-                                <select name="non_billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                  {Array.from({ length: 9 }, (_, i) => <option value={i} selected={nonBillableParts.hours === i}>{i}h</option>)}
-                                </select>
-                                <select name="non_billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                                  {[0, 15, 30, 45].map((minute) => <option value={minute} selected={nonBillableParts.minutes === minute}>{minute}m</option>)}
-                                </select>
-                              </div>
-                            </label>
-                            <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
-                              <option value="">No pack</option>
-                              {taskServicePackOptions.map((pack) => (
-                                <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
-                              ))}
-                            </select>
-                            <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
-                          </div>
-                        </form>
-                      ) : null}
+                      <div class="text-right text-xs uppercase tracking-wide text-slate-500">
+                        <div>{task.status}</div>
+                        {task.due_at ? <div class="mt-1 normal-case tracking-normal">{task.due_at}</div> : null}
+                        {task.billable_minutes ? <div class="mt-1 normal-case tracking-normal">Pack covered: {formatHours(billingBreakdown.packCoveredMinutes)}h</div> : null}
+                        {billingBreakdown.overflowBillableMinutes ? <div class="normal-case tracking-normal">Still billable: {formatHours(billingBreakdown.overflowBillableMinutes)}h</div> : null}
+                        {task.status === 'open' ? (
+                          <form method="post" class="mt-2">
+                            <input type="hidden" name="action" value="complete-task" />
+                            <input type="hidden" name="task_id" value={task.id} />
+                            <div class="mt-2 grid gap-2">
+                              <label class="text-[11px] font-medium text-slate-500">
+                                Billable time
+                                <div class="mt-1 grid grid-cols-2 gap-2">
+                                  <select name="billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                    {Array.from({ length: 9 }, (_, i) => <option value={i} selected={billableParts.hours === i}>{i}h</option>)}
+                                  </select>
+                                  <select name="billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                    {[0, 15, 30, 45].map((minute) => <option value={minute} selected={billableParts.minutes === minute}>{minute}m</option>)}
+                                  </select>
+                                </div>
+                              </label>
+                              <label class="text-[11px] font-medium text-slate-500">
+                                Non-billable time
+                                <div class="mt-1 grid grid-cols-2 gap-2">
+                                  <select name="non_billable_hours" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                    {Array.from({ length: 9 }, (_, i) => <option value={i} selected={nonBillableParts.hours === i}>{i}h</option>)}
+                                  </select>
+                                  <select name="non_billable_minutes" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                    {[0, 15, 30, 45].map((minute) => <option value={minute} selected={nonBillableParts.minutes === minute}>{minute}m</option>)}
+                                  </select>
+                                </div>
+                              </label>
+                              <select name="service_pack_id" class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                                <option value="">No pack</option>
+                                {taskServicePackOptions.map((pack) => (
+                                  <option value={pack.id} selected={task.service_pack_id === pack.id}>{pack.service_type?.item_code ?? 'Pack'} ({formatHours(pack.minutes_remaining)}h)</option>
+                                ))}
+                              </select>
+                              <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">Mark done</button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 );
