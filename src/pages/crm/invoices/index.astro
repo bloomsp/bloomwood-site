@@ -20,7 +20,7 @@ if (!supabase) {
 } else {
   const { data, error } = await supabase
     .from('invoices')
-    .select('id, invoice_number, status, total_amount, created_at, client:clients(display_name)')
+    .select('id, invoice_number, status, total_amount, created_at, external_provider, external_invoice_id, client:clients(display_name)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -33,7 +33,7 @@ if (!supabase) {
 
 const filteredInvoices = invoices.filter((invoice) => {
   const matchesStatus = !statusFilter || invoice.status === statusFilter;
-  const haystack = [invoice.invoice_number, invoice.client?.display_name, invoice.status]
+  const haystack = [invoice.invoice_number, invoice.client?.display_name, invoice.status, invoice.external_provider, invoice.external_invoice_id]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
@@ -100,6 +100,8 @@ const statusCounts = {
             <div class="text-base font-semibold text-slate-900">{invoice.invoice_number ?? 'Draft invoice'}</div>
             <div class="text-sm text-slate-600">{invoice.client?.display_name ?? 'Unknown client'}</div>
             <div class="text-sm text-slate-600">Status: {invoice.status}</div>
+            {invoice.external_provider ? <div class="text-sm text-slate-600">Provider: {invoice.external_provider}</div> : null}
+            {invoice.external_invoice_id ? <div class="text-sm text-slate-600">External ID: {invoice.external_invoice_id}</div> : null}
           </div>
           <div class="text-right text-sm text-slate-600">
             <div class="font-semibold text-slate-900">${Number(invoice.total_amount ?? 0).toFixed(2)}</div>

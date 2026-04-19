@@ -40,10 +40,14 @@ if (!supabase) {
         const invoiceNumber = String(formData.get('invoice_number') ?? '').trim() || null;
         const status = String(formData.get('status') ?? 'draft').trim() || 'draft';
         const notes = String(formData.get('notes') ?? '').trim() || null;
+        const externalProvider = String(formData.get('external_provider') ?? '').trim() || null;
+        const externalInvoiceId = String(formData.get('external_invoice_id') ?? '').trim() || null;
         const payload: Record<string, any> = {
           invoice_number: invoiceNumber,
           status,
           notes,
+          external_provider: externalProvider,
+          external_invoice_id: externalInvoiceId,
         };
 
         if (status === 'issued' && !String(formData.get('issued_at') ?? '').trim()) {
@@ -201,6 +205,8 @@ function toLocalInput(value: string | null) {
             <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{invoice.invoice_number ?? 'Draft invoice'}</h2>
             <div class="mt-2 text-sm text-slate-600">Client: {invoice.client?.display_name ?? 'Unknown client'}</div>
             <div class="text-sm text-slate-600">Status: {invoice.status}</div>
+            {invoice.external_provider ? <div class="text-sm text-slate-600">Provider: {invoice.external_provider}</div> : null}
+            {invoice.external_invoice_id ? <div class="text-sm text-slate-600">External ID: {invoice.external_invoice_id}</div> : null}
             {invoice.issued_at ? <div class="text-sm text-slate-600">Issued: {invoice.issued_at}</div> : null}
             {invoice.paid_at ? <div class="text-sm text-slate-600">Paid: {invoice.paid_at}</div> : null}
           </div>
@@ -227,6 +233,14 @@ function toLocalInput(value: string | null) {
                 <option value="paid" selected={invoice.status === 'paid'}>Paid</option>
                 <option value="void" selected={invoice.status === 'void'}>Void</option>
               </select>
+            </label>
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">Provider</span>
+              <input name="external_provider" value={invoice.external_provider ?? 'Xero'} disabled={isPaidInvoice} class="w-full rounded-lg border border-slate-300 px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500" />
+            </label>
+            <label class="text-sm text-slate-700">
+              <span class="mb-1 block">External invoice ID</span>
+              <input name="external_invoice_id" value={invoice.external_invoice_id ?? ''} disabled={isPaidInvoice} placeholder="Xero invoice ID or reference" class="w-full rounded-lg border border-slate-300 px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500" />
             </label>
             <label class="text-sm text-slate-700">
               <span class="mb-1 block">Issued at</span>
