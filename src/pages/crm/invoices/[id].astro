@@ -16,6 +16,12 @@ let invoice: any = null;
 let lineItems: any[] = [];
 let isPaidInvoice = false;
 
+function normalizeDateTimeInput(value: FormDataEntryValue | null) {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  return text.length === 16 ? `${text}:00` : text;
+}
+
 if (!supabase) {
   loadError = 'Supabase is not configured for this environment yet.';
 } else {
@@ -51,12 +57,16 @@ if (!supabase) {
           external_invoice_id: externalInvoiceId,
         };
 
-        if (status === 'issued' && !String(formData.get('issued_at') ?? '').trim()) {
-          payload.issued_at = new Date().toISOString();
+        const submittedIssuedAt = normalizeDateTimeInput(formData.get('issued_at'));
+        const submittedPaidAt = normalizeDateTimeInput(formData.get('paid_at'));
+
+        if (status === 'issued') {
+          payload.issued_at = submittedIssuedAt || new Date().toISOString();
+          payload.paid_at = null;
         }
         if (status === 'paid') {
-          payload.issued_at = String(formData.get('issued_at') ?? '').trim() || new Date().toISOString();
-          payload.paid_at = String(formData.get('paid_at') ?? '').trim() || new Date().toISOString();
+          payload.issued_at = submittedIssuedAt || new Date().toISOString();
+          payload.paid_at = submittedPaidAt || new Date().toISOString();
         }
         if (status === 'draft') {
           payload.issued_at = null;

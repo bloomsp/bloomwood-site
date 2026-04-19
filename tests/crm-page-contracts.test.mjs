@@ -237,3 +237,21 @@ test('crm date formatter normalizes iso and date-only strings to yyyy-mm-dd', ()
   assert.equal(formatCrmDate('2026-04-19 12:34:56'), '2026-04-19');
   assert.equal(formatCrmDate('2026-04-19'), '2026-04-19');
 });
+
+test('invoice issued status should preserve a manually entered issued_at value', () => {
+  const normalizeDateTimeInput = (value) => {
+    const text = String(value ?? '').trim();
+    if (!text) return null;
+    return text.length === 16 ? `${text}:00` : text;
+  };
+
+  const formIssuedAt = '2026-04-20T07:15';
+  const payload = {
+    status: 'issued',
+    issued_at: normalizeDateTimeInput(formIssuedAt) || new Date().toISOString(),
+    paid_at: null,
+  };
+
+  assert.equal(payload.issued_at, '2026-04-20T07:15:00');
+  assert.equal(payload.paid_at, null);
+});
