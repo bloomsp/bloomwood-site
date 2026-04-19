@@ -324,6 +324,36 @@ test('invoice edit form preserves manual issued date input when saving issued st
   });
 });
 
+test('mark paid preserves existing issued date and fills missing paid date', async () => {
+  await withPage(async (page) => {
+    await page.setContent(`
+      <form>
+        <input id="existing-issued-at" value="2026-04-20T07:15:00.000Z" />
+        <input id="existing-paid-at" value="" />
+      </form>
+      <script>
+        window.collectMarkPaidPayload = () => {
+          const existingIssuedAt = document.getElementById('existing-issued-at').value || null;
+          const existingPaidAt = document.getElementById('existing-paid-at').value || null;
+          const nowIso = '2026-04-20T09:00:00.000Z';
+          return {
+            status: 'paid',
+            issued_at: existingIssuedAt || nowIso,
+            paid_at: existingPaidAt || nowIso,
+          };
+        };
+      </script>
+    `);
+
+    const payload = await page.evaluate(() => window.collectMarkPaidPayload());
+    assert.deepEqual(payload, {
+      status: 'paid',
+      issued_at: '2026-04-20T07:15:00.000Z',
+      paid_at: '2026-04-20T09:00:00.000Z',
+    });
+  });
+});
+
 test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
   const { servicePacks, jobs, tasks } = makeFixture();
   const summary = summarizeJobDetail({
