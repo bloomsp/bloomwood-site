@@ -185,32 +185,72 @@ if (Astro.request.method === 'POST' && supabase) {
         console.error('Failed to create invoice', invoiceError);
         loadError = invoiceError?.message ?? 'Could not create invoice.';
       } else {
-        const { data: selectedJobs = [], error: selectedJobsError } = selectedJobIds.length > 0
-          ? await supabase
-              .from('jobs')
-              .select('id, job_reference, title, calculated_billable_amount')
-              .eq('client_id', id)
-              .in('id', selectedJobIds)
-          : { data: [], error: null };
-        const { data: selectedTasks = [], error: selectedTasksError } = selectedTaskIds.length > 0
-          ? await supabase
-              .from('tasks')
-              .select('id, title, billable_minutes, service_type:service_types(name, hourly_rate, billing_increment_minutes)')
-              .eq('client_id', id)
-              .is('job_id', null)
-              .in('id', selectedTaskIds)
-          : { data: [], error: null };
+        const [selectedJobsResult, selectedTasksResult, invoiceSummaryResult] = await Promise.all([
+          selectedJobIds.length > 0
+            ? supabase
+                .from('jobs')
+                .select('id, job_reference, title, calculated_billable_amount, hourly_rate_snapshot, billing_increment_minutes_snapshot')
+                .eq('client_id', id)
+                .in('id', selectedJobIds)
+            : Promise.resolve({ data: [], error: null }),
+          selectedTaskIds.length > 0
+            ? supabase
+                .from('tasks')
+                .select('id, title, billable_minutes, service_type:service_types(name, hourly_rate, billing_increment_minutes)')
+                .eq('client_id', id)
+                .is('job_id', null)
+                .in('id', selectedTaskIds)
+            : Promise.resolve({ data: [], error: null }),
+          supabase
+            .from('jobs')
+            .select('id, client_id, status, billable_minutes, calculated_billable_amount, hourly_rate_snapshot, billing_increment_minutes_snapshot')
+            .eq('client_id', id)
+            .then(async (jobsRes) => {
+              const [tasksRes, packsRes, itemsRes] = await Promise.all([
+                supabase
+                  .from('tasks')
+                  .select('id, client_id, job_id, title, status, billable_minutes, non_billable_minutes, service_pack_id, completed_at, due_at, service_type_id, service_type:service_types(name, hourly_rate, billing_increment_minutes), job:jobs(invoice_number, hourly_rate_snapshot, billing_increment_minutes_snapshot)')
+                  .eq('client_id', id),
+                supabase
+                  .from('service_packs')
+                  .select('id, client_id, hours_purchased, minutes_purchased, minutes_used, purchase_price, status, service_type:service_types(name, item_code)')
+                  .eq('client_id', id),
+                supabase
+                  .from('invoice_line_items')
+                  .select('id, source_type, job_id, task_id, invoice:invoices(id, client_id, invoice_number, total_amount)')
+                  .not('invoice_id', 'is', null),
+              ]);
+              return {
+                jobsRes,
+                tasksRes,
+                packsRes,
+                itemsRes,
+              };
+            }),
+        ]);
 
-        if (selectedJobsError || selectedTasksError) {
-          loadError = selectedJobsError?.message || selectedTasksError?.message || 'Could not load selected invoice items.';
+        const { data: selectedJobs = [], error: selectedJobsError } = selectedJobsResult as any;
+        const { data: selectedTasks = [], error: selectedTasksError } = selectedTasksResult as any;
+        const { jobsRes, tasksRes, packsRes, itemsRes } = invoiceSummaryResult as any;
+
+        if (selectedJobsError || selectedTasksError || jobsRes?.error || tasksRes?.error || packsRes?.error || itemsRes?.error) {
+          loadError = selectedJobsError?.message || selectedTasksError?.message || jobsRes?.error?.message || tasksRes?.error?.message || packsRes?.error?.message || itemsRes?.error?.message || 'Could not load selected invoice items.';
         } else {
+          const invoiceSummary = summarizeClientDetail({
+            jobs: jobsRes.data ?? [],
+            tasks: tasksRes.data ?? [],
+            packs: packsRes.data ?? [],
+            invoices: [],
+            invoiceLineItems: (itemsRes.data ?? []).filter((item: any) => item.invoice?.client_id === id),
+          });
+          const localJobBillingBreakdown = invoiceSummary.jobBillingBreakdown;
           const lineItems = [
             ...selectedJobs.map((job, index) => ({
               invoice_id: invoice.id,
               source_type: 'job',
               job_id: job.id,
               description: `${job.job_reference} · ${job.title}`,
-              amount: Number(jobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0) || 0,
+              amount: Number(localJobBillingBreakdown.get(job.id)?.stillBillableAmount ?? 0) || 0,
               sort_order: index,
             })),
             ...selectedTasks.map((task, index) => {
