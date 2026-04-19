@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
-import { getTaskServicePackOptions } from '../src/lib/crm-metrics.mjs';
+import { getCalculatedAmount, getTaskServicePackOptions } from '../src/lib/crm-metrics.mjs';
 import {
   summarizeClientDetail,
   summarizeJobDetail,
@@ -195,6 +195,72 @@ test('client invoice panel job rows show uncovered invoiceable amounts after pac
     `);
 
     assert.equal(await page.locator('[data-job-id="job-1"] .job-amount').textContent(), '$120.00');
+  });
+});
+
+test('client invoice preview updates selected hours and amount across jobs and standalone tasks', async () => {
+  const { servicePacks, jobs, tasks, invoices, invoiceLineItems } = makeFixture();
+  const summary = summarizeClientDetail({ jobs, tasks, packs: servicePacks, invoices, invoiceLineItems });
+  const jobBreakdown = summary.jobBillingBreakdown.get('job-1');
+  const standaloneTask = tasks.find((task) => task.id === 'task-4');
+  const standaloneTaskAmount = getCalculatedAmount(
+    Number(standaloneTask?.billable_minutes ?? 0),
+    Number(standaloneTask?.service_type?.hourly_rate ?? 0),
+    Number(standaloneTask?.service_type?.billing_increment_minutes ?? 0) || null,
+  );
+
+  await withPage(async (page) => {
+    await page.setContent(`
+      <form>
+        <label>
+          <input type="checkbox" class="invoice-selection" data-hours="${(Number(jobBreakdown?.stillBillableMinutes ?? 0) / 60).toFixed(2)}" data-amount="${Number(jobBreakdown?.stillBillableAmount ?? 0).toFixed(2)}" />
+          Job 1
+        </label>
+        <label>
+          <input type="checkbox" class="invoice-selection" data-hours="${(Number(standaloneTask?.billable_minutes ?? 0) / 60).toFixed(2)}" data-amount="${standaloneTaskAmount.toFixed(2)}" />
+          Task 4
+        </label>
+        <div id="invoice-preview-hours">0.00h</div>
+        <div id="invoice-preview-amount">$0.00</div>
+      </form>
+      <script>
+        (() => {
+          const checkboxes = Array.from(document.querySelectorAll('.invoice-selection'));
+          const hoursEl = document.getElementById('invoice-preview-hours');
+          const amountEl = document.getElementById('invoice-preview-amount');
+          if (!checkboxes.length || !hoursEl || !amountEl) return;
+
+          const updatePreview = () => {
+            let totalHours = 0;
+            let totalAmount = 0;
+            for (const checkbox of checkboxes) {
+              if (!(checkbox instanceof HTMLInputElement) || !checkbox.checked) continue;
+              totalHours += Number(checkbox.dataset.hours ?? 0) || 0;
+              totalAmount += Number(checkbox.dataset.amount ?? 0) || 0;
+            }
+            hoursEl.textContent = totalHours.toFixed(2) + 'h';
+            amountEl.textContent = '$' + totalAmount.toFixed(2);
+          };
+
+          for (const checkbox of checkboxes) {
+            checkbox.addEventListener('change', updatePreview);
+          }
+          updatePreview();
+        })();
+      </script>
+    `);
+
+    assert.equal(await page.textContent('#invoice-preview-hours'), '0.00h');
+    assert.equal(await page.textContent('#invoice-preview-amount'), '$0.00');
+
+    const selections = page.locator('.invoice-selection');
+    await selections.nth(0).check();
+    assert.equal(await page.textContent('#invoice-preview-hours'), '1.00h');
+    assert.equal(await page.textContent('#invoice-preview-amount'), '$120.00');
+
+    await selections.nth(1).check();
+    assert.equal(await page.textContent('#invoice-preview-hours'), '2.50h');
+    assert.equal(await page.textContent('#invoice-preview-amount'), '$240.00');
   });
 });
 
