@@ -160,6 +160,24 @@ if (Astro.request.method === 'POST' && supabase) {
     }
   }
 
+  if (action === 'complete-job') {
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        status: 'completed',
+        closed_at: new Date().toISOString(),
+        invoice_status: 'ready_to_invoice',
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to complete job', error);
+      loadError = error.message;
+    } else {
+      return Astro.redirect(`/crm/jobs/${id}`);
+    }
+  }
+
   if (action === 'add-file-delivery') {
     const payload = {
       job_id: id,
@@ -328,6 +346,12 @@ packUsage = packUsage.map((usage) => {
           </div>
           <div class="grid gap-3 md:w-[26rem]">
             <div class="flex justify-end gap-2">
+              {job.status !== 'completed' ? (
+                <form method="post">
+                  <input type="hidden" name="action" value="complete-job" />
+                  <button class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">Done</button>
+                </form>
+              ) : null}
               <a href={`/crm/jobs/${id}/edit`} class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit job</a>
             </div>
             <div class="grid grid-cols-2 gap-3">

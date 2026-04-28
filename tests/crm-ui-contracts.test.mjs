@@ -354,6 +354,29 @@ test('mark paid preserves existing issued date and fills missing paid date', asy
   });
 });
 
+test('job detail shows a done action only for incomplete jobs', async () => {
+  await withPage(async (page) => {
+    await page.setContent(`
+      <section>
+        <div id="open-job-actions">
+          <form method="post">
+            <input type="hidden" name="action" value="complete-job" />
+            <button id="done-button">Done</button>
+          </form>
+          <a id="edit-button" href="/crm/jobs/job-1/edit">Edit job</a>
+        </div>
+        <div id="completed-job-actions">
+          <a id="edit-button-completed" href="/crm/jobs/job-2/edit">Edit job</a>
+        </div>
+      </section>
+    `);
+
+    assert.equal(await page.locator('#done-button').textContent(), 'Done');
+    assert.equal(await page.locator('#open-job-actions [name="action"]').inputValue(), 'complete-job');
+    assert.equal(await page.locator('#completed-job-actions button').count(), 0);
+  });
+});
+
 test('job detail open task keeps exhausted selected pack and renders pack breakdown labels', async () => {
   const { servicePacks, jobs, tasks } = makeFixture();
   const summary = summarizeJobDetail({
