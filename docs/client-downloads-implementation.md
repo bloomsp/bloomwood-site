@@ -6,6 +6,104 @@ Add these bindings when you wire the feature into deployment:
 
 - D1 binding: `CLIENT_DOWNLOADS_DB`
 - R2 binding: `CLIENT_DOWNLOADS_BUCKET`
+- Worker secret: `DOWNLOAD_ADMIN_KEY`
+
+## Cloudflare setup instructions
+
+### 1) Create the R2 bucket
+Create a bucket for client deliveries, for example:
+
+- `bloomwood-client-downloads`
+
+CLI:
+
+```bash
+npx wrangler r2 bucket create bloomwood-client-downloads
+```
+
+### 2) Create the D1 database
+Create a database for download metadata and audit events.
+
+CLI:
+
+```bash
+npx wrangler d1 create CLIENT_DOWNLOADS_DB
+```
+
+After creation, Cloudflare will print a database ID. Copy that value.
+
+### 3) Add the bindings to `wrangler.jsonc`
+Add these blocks to the existing Bloomwood config.
+
+```jsonc
+{
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "164603dba67945b3b3bf853beba8fed9"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "CLIENT_DOWNLOADS_DB",
+      "database_name": "CLIENT_DOWNLOADS_DB",
+      "database_id": "<paste-d1-database-id-here>"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "CLIENT_DOWNLOADS_BUCKET",
+      "bucket_name": "bloomwood-client-downloads"
+    }
+  ]
+}
+```
+
+If you prefer, the binding names can stay as above even if the actual Cloudflare resource names differ.
+
+### 4) Set the admin helper secret
+Set a Worker secret for the gated internal helper page.
+
+CLI:
+
+```bash
+npx wrangler secret put DOWNLOAD_ADMIN_KEY
+```
+
+Choose a long random value. This secret is required for:
+- `/solutions/download-admin?key=<your-secret>`
+
+### 5) Apply the D1 migration
+Run the download schema migration against the remote D1 database.
+
+```bash
+npx wrangler d1 execute CLIENT_DOWNLOADS_DB \
+  --file ./migrations/0001_client_downloads.sql \
+  --remote
+```
+
+### 6) Deploy Bloomwood
+After bindings and secret are configured:
+
+```bash
+npm run deploy
+```
+
+### 7) Test the internal helper
+After deploy, open:
+
+```text
+https://bloomwood.com.au/solutions/download-admin?key=<your-secret>
+```
+
+### 8) Strongly recommended: Cloudflare Access
+The query key is only a light gate. Put this route behind Cloudflare Access as well.
+
+Suggested Access policy:
+- application hostname: `bloomwood.com.au`
+- path: `/solutions/download-admin*`
+- allow only your email identity
+- optionally require OTP / identity provider login
 
 ## Files scaffolded in this repo
 
