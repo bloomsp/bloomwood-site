@@ -63,4 +63,5 @@ Last local verification on 2026-05-21:
 
 - Supabase project URL `https://woqyuqikeijvnmrhzfux.supabase.co` is reachable again after project reactivation; `/auth/v1/settings` returned `200 OK`.
 - CRM login had previously failed while the Supabase hostname did not resolve, likely because the Supabase project was deactivated for inactivity.
+- Live CRM smoke checks on 2026-05-21 confirmed `/crm` redirects unauthenticated users to `/crm/login?next=%2Fcrm`, `/crm/login` returns `200`, and `/api/crm/request-link` reaches Supabase. A request for `help@bloomwood.com.au` returned `Signups not allowed for otp`, which means that address is not currently an invited Supabase Auth user for CRM magic-link login.
 - The project has moved from the original “Cloudflare Pages project” framing to a Worker-first deployment while retaining `.pages.yml` for Pages CMS/content editing.
