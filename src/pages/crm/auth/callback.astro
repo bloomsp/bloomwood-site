@@ -1,0 +1,127 @@
+---
+import type { EmailOtpType } from '@supabase/supabase-js';
+import { env } from 'cloudflare:workers';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export const prerender = false;
+
+const code = Astro.url.searchParams.get('code');
+const tokenHash = Astro.url.searchParams.get('token_hash');
+const type = Astro.url.searchParams.get('type');
+const next = Astro.url.searchParams.get('next') || '/crm';
+const safeNext = next.startsWith('/crm') ? next : '/crm';
+
+const supabase = createSupabaseServerClient({
+  cookies: Astro.cookies,
+  request: Astro.request,
+});
+
+if (code) {
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    console.error('Supabase auth callback code exchange failed', error);
+    return Astro.redirect('/crm/login?error=auth_callback_failed', 302);
+  }
+
+  return Astro.redirect(safeNext, 302);
+}
+
+if (tokenHash && type) {
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type: type as EmailOtpType,
+  });
+
+  if (error) {
+    console.error('Supabase auth callback OTP verification failed', error);
+    return Astro.redirect('/crm/login?error=otp_verification_failed', 302);
+  }
+
+  return Astro.redirect(safeNext, 302);
+}
+
+const supabaseUrl = env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+  return Astro.redirect('/crm/login?error=missing_supabase_config', 302);
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signing you in...</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; padding: 2rem; color: #0f172a;">
+    <p>Signing you in...</p>
+    <script id="crm-auth-config" type="application/json" set:html={JSON.stringify({
+      next: safeNext,
+      supabaseUrl,
+      supabaseAnonKey,
+    })}></script>
+    <script>
+      import { createBrowserClient } from '@supabase/ssr';
+
+      const configElement = document.getElementById('crm-auth-config');
+      const config = configElement?.textContent ? JSON.parse(configElement.textContent) : null;
+
+      if (!config) {
+        window.location.replace('/crm/login?error=missing_supabase_config');
+      } else {
+        const supabase = createBrowserClient(config.supabaseUrl, config.supabaseAnonKey);
+        const loginUrl = '/crm/login';
+
+        async function run() {
+          const current = new URL(window.location.href);
+          const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+          const query = current.searchParams;
+
+          const accessToken = hash.get('access_token');
+          const refreshToken = hash.get('refresh_token');
+          const code = query.get('code');
+          const tokenHash = query.get('token_hash');
+          const type = query.get('type');
+
+          try {
+            if (accessToken && refreshToken) {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) throw error;
+              window.location.replace(config.next);
+              return;
+            }
+
+            if (code) {
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) throw error;
+              window.location.replace(config.next);
+              return;
+            }
+
+            if (tokenHash && type) {
+              const { error } = await supabase.auth.verifyOtp({
+                token_hash: tokenHash,
+                type,
+              });
+              if (error) throw error;
+              window.location.replace(config.next);
+              return;
+            }
+
+            window.location.replace(loginUrl + '?error=missing_auth_params');
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'auth_callback_failed';
+            window.location.replace(loginUrl + '?error=' + encodeURIComponent(message));
+          }
+        }
+
+        run();
+      }
+    </script>
+  </body>
+</html>
