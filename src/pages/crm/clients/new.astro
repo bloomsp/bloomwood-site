@@ -55,6 +55,10 @@ if (Astro.request.method === 'POST') {
     };
 
     if (!payload.display_name) {
+      payload.display_name = [payload.first_name, payload.last_name].filter(Boolean).join(' ').trim();
+    }
+
+    if (!payload.display_name) {
       formError = 'Display name is required.';
     } else if (clientType === 'person' && !payload.first_name && !payload.last_name) {
       formError = 'Add at least a first name or last name for a person.';
@@ -84,7 +88,7 @@ if (Astro.request.method === 'POST') {
 
   {formError ? <section class="mb-6 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950">{formError}</section> : null}
 
-  <form method="post" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <form method="post" data-client-name-autofill class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <section class="grid gap-4 md:grid-cols-2">
       <label class="block text-sm font-medium text-slate-700">
         Client type
@@ -94,16 +98,16 @@ if (Astro.request.method === 'POST') {
         </select>
       </label>
       <label class="block text-sm font-medium text-slate-700">
-        Display name
-        <input name="display_name" required value={values.display_name} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
-      </label>
-      <label class="block text-sm font-medium text-slate-700">
         First name
         <input name="first_name" value={values.first_name} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700">
         Last name
         <input name="last_name" value={values.last_name} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Display name
+        <input name="display_name" data-autofill-display-name required value={values.display_name} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
       </label>
       <label class="block text-sm font-medium text-slate-700 md:col-span-2">
         Business name
@@ -165,5 +169,29 @@ if (Astro.request.method === 'POST') {
       <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Create client</button>
     </div>
   </form>
+  <script is:inline>
+    (() => {
+      const form = document.querySelector('[data-client-name-autofill]');
+      const firstName = form?.querySelector('[name="first_name"]');
+      const lastName = form?.querySelector('[name="last_name"]');
+      const displayName = form?.querySelector('[data-autofill-display-name]');
+      if (!(firstName instanceof HTMLInputElement) || !(lastName instanceof HTMLInputElement) || !(displayName instanceof HTMLInputElement)) return;
+
+      const buildDisplayName = () => [firstName.value, lastName.value].map((part) => part.trim()).filter(Boolean).join(' ');
+      let displayNameTouched = Boolean(displayName.value.trim() && displayName.value.trim() !== buildDisplayName());
+
+      const updateDisplayName = () => {
+        if (displayNameTouched) return;
+        displayName.value = buildDisplayName();
+      };
+
+      displayName.addEventListener('input', () => {
+        displayNameTouched = displayName.value.trim() !== buildDisplayName();
+      });
+      firstName.addEventListener('input', updateDisplayName);
+      lastName.addEventListener('input', updateDisplayName);
+      updateDisplayName();
+    })();
+  </script>
 </CrmLayout>
 

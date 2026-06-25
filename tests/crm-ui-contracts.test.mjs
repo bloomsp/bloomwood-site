@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 import { getCalculatedAmount, getTaskServicePackOptions } from '../src/lib/crm-metrics.mjs';
@@ -413,4 +414,73 @@ test('job detail open task keeps exhausted selected pack and renders pack breakd
     assert.equal(await page.locator('#service-pack-id').inputValue(), 'pack-1');
     assert.equal(await page.locator('#service-pack-id option:checked').textContent(), 'FA40 (0.00h)');
   });
+});
+
+test('task cards expose an edit task form that can save additional task notes', async () => {
+  const source = await readFile(new URL('../src/components/crm/TaskCard.astro', import.meta.url), 'utf8');
+
+  assert.match(source, /name="action" value="edit-task"/);
+  assert.match(source, /name="task_id" value=\{task\.id\}/);
+  assert.match(source, /textarea[^>]+name="details"/);
+  assert.match(source, />Save task</);
+});
+
+test('client and job task endpoints update task details when editing a task', async () => {
+  const clientSource = await readFile(new URL('../src/pages/crm/clients/[id].astro', import.meta.url), 'utf8');
+  const jobSource = await readFile(new URL('../src/pages/crm/jobs/[id].astro', import.meta.url), 'utf8');
+
+  for (const source of [clientSource, jobSource]) {
+    assert.match(source, /action === 'edit-task'/);
+    assert.match(source, /details: String\(formData\.get\('details'\)/);
+    assert.match(source, /\.from\('tasks'\)\s*\.update\(/s);
+  }
+});
+
+test('new client form auto-fills display name from first and last name until manually changed', async () => {
+  await withPage(async (page) => {
+    await page.setContent(`
+      <form data-client-name-autofill>
+        <input name="first_name" />
+        <input name="last_name" />
+        <input name="display_name" data-autofill-display-name />
+      </form>
+      <script>
+        (() => {
+          const form = document.querySelector('[data-client-name-autofill]');
+          const firstName = form?.querySelector('[name="first_name"]');
+          const lastName = form?.querySelector('[name="last_name"]');
+          const displayName = form?.querySelector('[name="display_name"]');
+          if (!(firstName instanceof HTMLInputElement) || !(lastName instanceof HTMLInputElement) || !(displayName instanceof HTMLInputElement)) return;
+          let displayNameTouched = Boolean(displayName.value.trim());
+          const buildDisplayName = () => [firstName.value, lastName.value].map((part) => part.trim()).filter(Boolean).join(' ');
+          const updateDisplayName = () => {
+            if (displayNameTouched) return;
+            displayName.value = buildDisplayName();
+          };
+          displayName.addEventListener('input', () => {
+            displayNameTouched = displayName.value.trim() !== buildDisplayName();
+          });
+          firstName.addEventListener('input', updateDisplayName);
+          lastName.addEventListener('input', updateDisplayName);
+          updateDisplayName();
+        })();
+      </script>
+    `);
+
+    await page.fill('[name="first_name"]', 'Ada');
+    assert.equal(await page.inputValue('[name="display_name"]'), 'Ada');
+    await page.fill('[name="last_name"]', 'Lovelace');
+    assert.equal(await page.inputValue('[name="display_name"]'), 'Ada Lovelace');
+    await page.fill('[name="display_name"]', 'Countess of Lovelace');
+    await page.fill('[name="first_name"]', 'Augusta Ada');
+    assert.equal(await page.inputValue('[name="display_name"]'), 'Countess of Lovelace');
+  });
+});
+
+test('new client source includes name-autofill hooks and preserves editable display names', async () => {
+  const source = await readFile(new URL('../src/pages/crm/clients/new.astro', import.meta.url), 'utf8');
+
+  assert.match(source, /data-client-name-autofill/);
+  assert.match(source, /data-autofill-display-name/);
+  assert.match(source, /displayNameTouched/);
 });

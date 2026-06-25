@@ -129,6 +129,45 @@ if (Astro.request.method === 'POST' && supabase) {
     }
   }
 
+  if (action === 'edit-task') {
+    const taskId = String(formData.get('task_id') ?? '').trim();
+    const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
+    const nonBillableMinutes = minutesFromParts(formData.get('non_billable_hours'), formData.get('non_billable_minutes'));
+    const servicePackId = String(formData.get('service_pack_id') ?? '').trim() || null;
+    const status = String(formData.get('status') ?? 'open');
+    const totalMinutes = billableMinutes + nonBillableMinutes;
+    const payload = {
+      title: String(formData.get('title') ?? '').trim(),
+      details: String(formData.get('details') ?? '').trim() || null,
+      status,
+      due_at: String(formData.get('due_at') ?? '').trim() || null,
+      billable_minutes: billableMinutes,
+      non_billable_minutes: nonBillableMinutes,
+      time_taken_minutes: totalMinutes,
+      service_pack_id: servicePackId,
+      completed_at: status === 'done' ? new Date().toISOString() : null,
+    };
+
+    if (!taskId) {
+      loadError = 'Task id is required.';
+    } else if (!payload.title) {
+      loadError = 'Task title is required.';
+    } else {
+      const { error } = await supabase
+        .from('tasks')
+        .update(payload)
+        .eq('id', taskId)
+        .eq('job_id', id);
+      if (error) {
+        console.error('Failed to edit job task', error);
+        loadError = error.message;
+      } else {
+        if (job?.client?.id) await syncClientServicePacks(job.client.id);
+        return Astro.redirect(`/crm/jobs/${id}`);
+      }
+    }
+  }
+
   if (action === 'complete-task') {
     const taskId = String(formData.get('task_id') ?? '').trim();
     const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));

@@ -127,6 +127,43 @@ if (Astro.request.method === 'POST' && supabase) {
     }
   }
 
+  if (action === 'edit-task') {
+    const taskId = String(formData.get('task_id') ?? '').trim();
+    const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
+    const nonBillableMinutes = minutesFromParts(formData.get('non_billable_hours'), formData.get('non_billable_minutes'));
+    const status = String(formData.get('status') ?? 'open');
+    const payload = {
+      title: String(formData.get('title') ?? '').trim(),
+      details: String(formData.get('details') ?? '').trim() || null,
+      status,
+      due_at: String(formData.get('due_at') ?? '').trim() || null,
+      billable_minutes: billableMinutes,
+      non_billable_minutes: nonBillableMinutes,
+      time_taken_minutes: billableMinutes + nonBillableMinutes,
+      service_pack_id: String(formData.get('service_pack_id') ?? '').trim() || null,
+      completed_at: status === 'done' ? new Date().toISOString() : null,
+    };
+
+    if (!taskId) {
+      loadError = 'Task id is required.';
+    } else if (!payload.title) {
+      loadError = 'Task title is required.';
+    } else {
+      const { error } = await supabase
+        .from('tasks')
+        .update(payload)
+        .eq('id', taskId)
+        .eq('client_id', id);
+      if (error) {
+        console.error('Failed to edit client task', error);
+        loadError = error.message;
+      } else {
+        await syncClientServicePacks(id);
+        return Astro.redirect(`/crm/clients/${id}`);
+      }
+    }
+  }
+
   if (action === 'complete-task') {
     const taskId = String(formData.get('task_id') ?? '').trim();
     const billableMinutes = minutesFromParts(formData.get('billable_hours'), formData.get('billable_minutes'));
