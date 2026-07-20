@@ -4,7 +4,7 @@ export const SITE = {
   solutionsName: 'Bloomwood Solutions',
   mediaName: 'Bloomwood Media',
 
-  phone: '+61492991759',
+  phone: '+61408668908',
   email: 'help@bloomwood.com.au',
 
   address: {

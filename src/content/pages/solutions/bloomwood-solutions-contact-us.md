@@ -11,13 +11,13 @@ Get expert assistance for all your technology needs, right here in the Far North
 
 [Chat with us now!](https://tawk.to/chat/68a2f3cfd8c4f119281983d9/1j2u8gole)
 
-[Chat with us on WhatsApp!](https://wa.me/61492991759)
+[Chat with us on WhatsApp!](https://wa.me/61408668908)
 
 ## Get in Touch with Us
 
 ### Phone
 
-[0492 991 759](tel:0492991759)
+[0408 668 908](tel:0408668908)
 
 ### Email us
 

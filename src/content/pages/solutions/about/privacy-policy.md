@@ -17,7 +17,7 @@ THE TRUSTEE FOR STEVEN P BLOOM TRUST trading as Bloomwood Solutions (ABN 40 264 
 Queensland 4870,
 Australia,
 email: info@bloomwood.com.au,
-phone: 0492991759 
+phone: 0408668908
 
 on the collection, use and disclosure of your information that we collect when you use our website (bloomwood.com.au ).
 (the “Service”). By accessing or using the Service, you are consenting to the collection, use and disclosure of your information in accordance with this Privacy Policy. If you do not consent to the same, please do not access or use the Service.  
