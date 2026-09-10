@@ -22,7 +22,7 @@ type Pack = {
 const packs: Pack[] = [
   {
     key: "explorer-5",
-    name: "Explorer",
+    name: "5 Pack",
     hours: 5,
     price: "$540",
     bullets: [
@@ -34,7 +34,7 @@ const packs: Pack[] = [
   },
   {
     key: "adventurer-10",
-    name: "Adventurer",
+    name: "10 Pack",
     hours: 10,
     price: "$1080",
     bullets: [
@@ -46,7 +46,7 @@ const packs: Pack[] = [
   },
   {
     key: "hero-20",
-    name: "Hero",
+    name: "20 Pack",
     hours: 20,
     price: "$2040",
     bullets: [
@@ -58,7 +58,7 @@ const packs: Pack[] = [
   },
   {
     key: "legend-40",
-    name: "Legend",
+    name: "40 Pack",
     hours: 40,
     price: "$3840",
     bullets: [
