@@ -174,6 +174,12 @@ export async function getDownloadFile(env: DownloadEnv, rawToken: string, fileId
     throw new Error(`File missing in R2 for key: ${file.r2Key}`);
   }
 
+  // Reserve a download atomically after confirming the file exists, before exposing its body.
+  if (!(await claimDownload(env, access.token.tokenId))) {
+    await object.body.cancel();
+    return null;
+  }
+
   return { access, file, object };
 }
 
@@ -222,17 +228,22 @@ export async function logDownloadEvent(
     .run();
 }
 
-export async function incrementDownloadCount(env: DownloadEnv, tokenId: string) {
+async function claimDownload(env: DownloadEnv, tokenId: string): Promise<boolean> {
   const db = requireDb(env);
-  await db
+  const now = new Date().toISOString();
+  const result = await db
     .prepare(`
       UPDATE download_tokens
       SET download_count = download_count + 1,
           last_downloaded_at = ?
       WHERE id = ?
+        AND status = 'active'
+        AND julianday(expires_at) > julianday(?)
+        AND (max_downloads IS NULL OR download_count < max_downloads)
     `)
-    .bind(new Date().toISOString(), tokenId)
+    .bind(now, tokenId, now)
     .run();
+  return result.success === true && result.meta?.changes === 1;
 }
 
 export function formatBytes(sizeBytes: number | null): string {

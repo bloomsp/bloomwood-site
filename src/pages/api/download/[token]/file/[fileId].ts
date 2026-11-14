@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
+import { env as workerEnv } from 'cloudflare:workers';
 import {
   getDownloadFile,
-  incrementDownloadCount,
   logDownloadEvent,
   sha256Hex,
   type DownloadEnv,
@@ -9,8 +9,8 @@ import {
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ params, locals, request }) => {
-  const env = (locals.runtime?.env ?? {}) as DownloadEnv;
+export const GET: APIRoute = async ({ params, request }) => {
+  const env = workerEnv as DownloadEnv;
   const token = params.token ?? '';
   const fileId = params.fileId ?? '';
 
@@ -46,7 +46,6 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     headers.set('Cache-Control', 'private, no-store');
     if (object.httpEtag) headers.set('ETag', object.httpEtag);
 
-    await incrementDownloadCount(env, access.token.tokenId);
     await logDownloadEvent(env, {
       tokenId: access.token.tokenId,
       jobId: access.job.id,

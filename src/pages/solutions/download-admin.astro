@@ -9,7 +9,7 @@ const providedKey = Astro.url.searchParams.get('key')?.trim() ?? '';
 const isAuthorized = Boolean(accessKey) && providedKey === accessKey;
 ---
 
-<PageLayout title="Download admin helper" description="Internal helper for Bloomwood client download issuance">
+<PageLayout title="Download admin helper" description="Internal helper for Bloomwood client download issuance" privatePage>
   <section class="space-y-8">
     {isAuthorized ? (
       <>

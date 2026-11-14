@@ -2,6 +2,7 @@
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { env } from 'cloudflare:workers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { serializeJsonForHtml } from '@/lib/html-json.mjs';
 
 export const prerender = false;
 
@@ -57,7 +58,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   </head>
   <body style="font-family: system-ui, sans-serif; padding: 2rem; color: #0f172a;">
     <p>Signing you in...</p>
-    <script id="crm-auth-config" type="application/json" set:html={JSON.stringify({
+    <script id="crm-auth-config" type="application/json" set:html={serializeJsonForHtml({
       next: safeNext,
       supabaseUrl,
       supabaseAnonKey,

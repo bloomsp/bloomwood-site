@@ -4,6 +4,7 @@ import Schema from '../components/Schema.astro';
 
 export interface Props {
   title: string;
+  privatePage?: boolean;
   siteName?: string;
   description?: string;
   canonicalUrl?: URL;
@@ -12,7 +13,7 @@ export interface Props {
   jsonLd?: Record<string, any> | Array<Record<string, any>>;
 }
 
-const { title, siteName = 'Bloomwood', description, canonicalUrl, ogImage, jsonLd } = Astro.props;
+const { title, privatePage = false, siteName = 'Bloomwood', description, canonicalUrl, ogImage, jsonLd } = Astro.props;
 
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const canonical = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site ?? Astro.url);
@@ -52,6 +53,7 @@ const enableTawkByDefault = envTawk
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {privatePage && <meta name="referrer" content="no-referrer" />}
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -113,12 +115,12 @@ const enableTawkByDefault = envTawk
     <Schema jsonLd={jsonLd} />
 
     <!-- Start cookieyes banner -->
-    <script
+    {!privatePage && <script
       id="cookieyes"
       type="text/javascript"
       data-cfasync="false"
       src="https://cdn-cookieyes.com/client_data/e7abd98f2e74bd76f22e4144/script.js"
-    ></script>
+    ></script>}
     <!-- End cookieyes banner -->
 
     <slot name="head" />
@@ -128,7 +130,7 @@ const enableTawkByDefault = envTawk
 
 
     <!--Start of Tawk.to Script (conditionally loaded)-->
-    <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault, disableTawkOnPage }}>
+    {!privatePage && <script is:inline data-cfasync="false" define:vars={{ defaultEnabled: enableTawkByDefault, disableTawkOnPage }}>
       (function () {
         try {
 
@@ -174,7 +176,7 @@ const enableTawkByDefault = envTawk
           // ignore
         }
       })();
-    </script>
+    </script>}
     <!--End of Tawk.to Script-->
   </body>
 </html>
