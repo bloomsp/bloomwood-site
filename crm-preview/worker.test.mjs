@@ -30,5 +30,9 @@ test('preview checks staff identity before reading D1 on every route', async () 
   const page=await req('/',valid);assert.equal(page.status,200);assert.match(await page.text(),/Sample records only/);
   const staged=await req('/directory',valid);assert.equal(staged.status,200);assert.equal(staged.headers.get('Cache-Control'),'private, no-store');
   const html=await staged.text();assert.match(html,/&lt;Example&gt;/);assert.doesNotMatch(html,/hidden@example|Sample records only/);
+  const twoStaff = {...env, STAFF_EMAIL: 'first@example.test, STAFF@example.test'};
+  for (const [email, status] of [['first@example.test',200],['staff@example.test',200],['other@example.test',403],['staff@example.test.invalid',403]]) {
+    assert.equal((await req('/directory',await sign({email}),'GET','crm-preview.bloomwood.com.au',twoStaff)).status,status);
+  }
   const api=await req('/api/clients',valid);assert.equal(api.headers.get('Cache-Control'),'private, no-store');assert.equal((await api.json()).length,3);db.close();
 });

@@ -34,7 +34,10 @@ export function createHandler(keysFor = accessKeys) {
       const { payload } = await jwtVerify(token, keysFor(issuer), {
         issuer, audience, algorithms:['RS256'], requiredClaims:['exp','sub','email']
       });
-      if (typeof payload.email !== 'string' || payload.email.toLowerCase() !== staff.trim().toLowerCase()) return respond('Access denied', 403);
+      const approvedEmails = staff.split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
+      if (typeof payload.email !== 'string' || !approvedEmails.includes(payload.email.toLowerCase())) {
+        return respond('Access denied: your verified sign-in email is not on the CRM staff list.', 403);
+      }
     } catch { return respond('Invalid staff session', 401); }
     if (request.method !== 'GET') return respond('Read-only directory', 405, 'text/plain', { Allow:'GET' });
     if (!['/', '/api/clients', '/directory'].includes(url.pathname)) return respond('Not found', 404);
