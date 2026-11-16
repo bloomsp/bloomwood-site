@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
+import {generateKeyPair, SignJWT} from 'jose';
+import {createHandler} from './worker.mjs';
+
+test('preview checks staff identity before reading D1 on every route', async () => {
+  const db = new DatabaseSync(':memory:');
+  db.exec(readFileSync(new URL('./migrations/0001_sample_clients.sql', import.meta.url),'utf8'));
+  const key = await generateKeyPair('RS256');
+  const handle = createHandler(() => key.publicKey);
+  let reads = 0;
+  const env = {ACCESS_ISSUER:'https://sample-team.cloudflareaccess.com', ACCESS_AUD:'preview', STAFF_EMAIL:'staff@example.test',
+    PREVIEW_DB:{prepare(sql){reads++; return {all:async()=>({results:db.prepare(sql).all()})};}}};
+  const sign = (changes={}, signingKey=key.privateKey) => new SignJWT({email:env.STAFF_EMAIL,sub:'sample',iss:env.ACCESS_ISSUER,aud:'preview',exp:Math.floor(Date.now()/1000)+60,...changes}).setProtectedHeader({alg:'RS256'}).sign(signingKey);
+  const req = (path, token, method='GET', host='crm-preview.bloomwood.com.au', bindings=env) => handle(new Request('https://'+host+path,{method,headers:token?{'Cf-Access-Jwt-Assertion':token}:{}}),bindings);
+  const valid = await sign();
+  for(const path of ['/','/api/clients']){
+    for(const token of [null,'invalid',await sign({aud:'other'}),await sign({iss:'https://other.cloudflareaccess.com'}),await sign({exp:1}),await sign({},(await generateKeyPair('RS256')).privateKey)])
+      assert.equal((await req(path,token)).status,401);
+    assert.equal((await req(path,await sign({email:'other@example.test'}))).status,403);
+    assert.equal((await req(path,valid,'GET','alternate.example')).status,404);
+    assert.equal((await req(path,valid,'POST')).status,405);
+    assert.equal((await req(path,valid,'GET','crm-preview.bloomwood.com.au',{})).status,503);
+  }
+  assert.equal(reads,0);
+  const page=await req('/',valid);assert.equal(page.status,200);assert.match(await page.text(),/Sample records only/);
+  const api=await req('/api/clients',valid);assert.equal(api.headers.get('Cache-Control'),'private, no-store');assert.equal((await api.json()).length,3);db.close();
+});
