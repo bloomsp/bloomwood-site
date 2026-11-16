@@ -15,6 +15,11 @@
 			"binding": "PREVIEW_DB",
 			"database_name": "bloomwood-crm-preview",
 			"database_id": "7b105461-f8bd-4f3b-9af8-848642eb9fe2"
+		},
+		{
+			"binding": "DIRECTORY_STAGE",
+			"database_name": "bloomwood-crm-directory-rehearsal",
+			"database_id": "3eb2cbbe-b1b9-4b8b-abb8-9a008f0bb396"
 		}
 	]
 }

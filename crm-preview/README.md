@@ -12,3 +12,7 @@ This standalone Worker serves a GET-only directory at https://crm-preview.bloomw
 ## Maintenance
 
 From the repository root: npm ci; npm run test:security. Apply migrations with npx wrangler d1 migrations apply PREVIEW_DB --config crm-preview/wrangler.jsonc --remote. Deploy only this Worker with npx wrangler deploy --config crm-preview/wrangler.jsonc. The root deployment command deploys the separate production website. Missing or invalid Access configuration denies requests before querying D1.
+
+## Private staged directory
+
+The separate /directory page reads names and status from DIRECTORY_STAGE, the 16 November 2026 rehearsal snapshot. It has the same Access checks as the sample routes. Only the sample database is served by /api/clients. To remove the staged view, remove its route and binding and redeploy this preview Worker.
