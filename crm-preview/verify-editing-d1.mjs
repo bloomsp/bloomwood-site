@@ -1,3 +1,4 @@
+import {verifyInvoices} from '../tests/helpers/invoice-scenario.mjs';
 import {verifyServices} from '../tests/helpers/service-scenario.mjs';
 // Explicit opt-in: creates a fictional client in the dedicated remote editing sandbox.
 import {execFileSync} from 'node:child_process';
@@ -36,5 +37,6 @@ try{
  assert.equal(saved.client_id,v.id);assert.equal(saved.time_taken_minutes,60);assert.ok(saved.completed_at);
  assert.equal((await query('SELECT count(*) n FROM work_audit WHERE record_id IN (?,?)',[job.id,task.id])).results[0].n,4);
  await verifyServices(f);
- console.log('PASS actual D1: services, rates, pack allocation, cancellation and reassignment balances;  clients, linked jobs/tasks, generated totals, completion, closure, stale-write rejection and atomic audits.');
+ await verifyInvoices(f);
+ console.log('PASS actual D1: invoice snapshots, duplicate prevention and lifecycle; services, rates, pack allocation, cancellation and reassignment balances;  clients, linked jobs/tasks, generated totals, completion, closure, stale-write rejection and atomic audits.');
 }finally{f.db.close()}

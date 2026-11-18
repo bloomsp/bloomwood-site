@@ -8,6 +8,7 @@ export async function editingFixture() {
  db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0001_clients.sql',import.meta.url),'utf8'));
  db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0002_jobs_tasks.sql',import.meta.url),'utf8'));
  db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0003_services.sql',import.meta.url),'utf8'));
+ db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0004_invoices.sql',import.meta.url),'utf8'));
  const key=await generateKeyPair('RS256'),issuer='https://test.cloudflareaccess.com';
  const token=await new SignJWT({email:'staff@example.test'}).setProtectedHeader({alg:'RS256'}).setSubject('staff-1').setIssuer(issuer).setAudience('test').setExpirationTime('5m').sign(key.privateKey);
  let calls=0;

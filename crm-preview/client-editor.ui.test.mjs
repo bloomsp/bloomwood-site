@@ -84,6 +84,26 @@ test('desktop and mobile create and edit fictional clients through rendered form
  assert.match(await page.locator('main').innerText(),/45 pack-covered minutes · 0 uncovered billable minutes/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-billing-'+viewport.width+'.png',fullPage:true});
+ await page.getByRole('link',{name:'Service packs',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional hour pack'}).click();
+ await page.getByLabel('Purchased minutes').fill('30');
+ await page.getByRole('button',{name:'Save service pack'}).click();
+ await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='2');
+ await page.getByRole('link',{name:'Invoices',exact:true}).click();
+ await page.getByRole('link',{name:'Create draft invoice'}).click();
+ await page.getByRole('checkbox').check();
+ await page.getByRole('button',{name:'Create draft invoice'}).click();
+ await page.getByRole('heading',{name:'Test invoice',exact:true}).waitFor();
+ assert.match(await page.locator('main').innerText(),/Total: \$31\.38 AUD/);
+ await page.getByLabel('Status',{exact:true}).selectOption('issued');
+ await page.getByRole('button',{name:'Update invoice status'}).click();
+ await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='2');
+ await page.getByLabel('Status',{exact:true}).selectOption('paid');
+ await page.getByRole('button',{name:'Update invoice status'}).click();
+ await page.waitForFunction(()=>!document.querySelector('[name=version]'));
+ assert.match(await page.locator('main').innerText(),/· paid/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-invoice-'+viewport.width+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}

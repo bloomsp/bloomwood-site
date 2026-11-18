@@ -41,3 +41,13 @@ Visit `/sandbox/services` to maintain service names and hourly reference rates (
 On an existing task, use **Service and pack allocation** to choose its service and optional matching client pack. Exhausted packs remain selectable; excess time is shown as overflow. Pack details derive balances from non-cancelled tasks in creation order (ID breaks ties). Open tasks reserve time, non-billable time consumes no allowance, and cancellations/reassignments restore available time. Reducing a purchased allowance can increase overflow; balances never become negative. These are sandbox reference rates and time allocations, not invoicing or historical price snapshots.
 
 Apply migration `0003_services.sql` to EDITING_DB before deploying. Rate/pack edits and task assignments use version checks and atomic audit triggers; database triggers reject mismatched pack/client/service links. `npm run test:security`, `npm run test:crm`, and `npm run test:ui` cover this stage; the opt-in remote verification script includes the service-pack scenario using fictional records only.
+
+### Fictional invoices
+
+`/sandbox/invoices` creates drafts from selected completed tasks for one client. The selection lists each task's job, uncovered minutes and current amount; fully pack-covered, unpriced, cancelled, open or already-reserved tasks are excluded. Drafts save client name, task description, billable/covered minutes, hourly rate in cents and rounded per-task amounts. Rates are captured atomically when the draft is created. There is no invoice sending, tax calculation, PDF, credit note or payment integration in this sandbox.
+
+Drafts reserve tasks using a unique active claim. Creating the invoice, lines and audit is one database statement with triggers, so a failed or competing claim leaves no partial invoice. Draft → issued → paid and draft/issued → cancelled are supported with version checks and audit entries. Cancelling retains the saved invoice but releases its claims. Paid invoices are final here. Changing a service rate does not alter saved lines.
+
+Active invoice claims lock their tasks and associated shared pack allocations/allowances to keep saved coverage consistent. Cancel a draft or issued invoice to change that work; paid-invoice corrections are a future credit-note workflow. Job billing summaries exclude reserved tasks while still counting their pack consumption. No real CRM data is changed.
+
+Apply `0004_invoices.sql` only to EDITING_DB before deployment. The remote opt-in verification includes invoice duplicate races, saved price checks, cancellation/rebilling and issued/paid transitions. Browser tests cover draft → issued → paid on desktop and mobile. Local tests also check atomic rollback on invalid selections and audit failure.

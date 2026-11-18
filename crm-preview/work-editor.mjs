@@ -4,7 +4,7 @@ export function jobBilling(jobId,tasks,packs){
  const coverage=new Map();
  for(const pack of packs)for(const t of allocation(tasks.filter(t=>t.service_pack_id===pack.id),pack.purchased_minutes))coverage.set(t.id,t.covered);
  let covered=0,uncovered=0,cents=0,unpriced=0;
- for(const t of tasks.filter(t=>t.job_id===jobId&&t.status!=='cancelled')){
+ for(const t of tasks.filter(t=>t.job_id===jobId&&t.status!=='cancelled'&&!t.invoice_reserved)){
  const used=coverage.get(t.id)||0,minutes=t.billable_minutes-used;
  covered+=used;uncovered+=minutes;
  if(t.hourly_rate_cents==null)unpriced+=minutes;
@@ -38,13 +38,14 @@ export async function workEditor(request,env,actor,respond){
  let extra='';
  if(task)extra=`${existing?`<p><a href="/sandbox/allocations/${existing.id}">Service and pack allocation</a></p>`:''}<p><a href="/sandbox/jobs/${esc(parent.id)}/edit">Back to ${esc(parent.title)}</a></p>`;
  if(!task&&existing){const rows=(await db.prepare('SELECT * FROM tasks WHERE job_id=? ORDER BY created_at,id').bind(id).all()).results;
- const allTasks=(await db.prepare('SELECT t.*,s.hourly_rate_cents FROM tasks t LEFT JOIN service_types s ON s.id=t.service_type_id WHERE t.client_id=? ORDER BY t.created_at,t.id').bind(existing.client_id).all()).results;
+ const allTasks=(await db.prepare('SELECT t.*,s.hourly_rate_cents,EXISTS(SELECT 1 FROM invoice_lines l WHERE l.task_id=t.id AND l.active=1) invoice_reserved FROM tasks t LEFT JOIN service_types s ON s.id=t.service_type_id WHERE t.client_id=? ORDER BY t.created_at,t.id').bind(existing.client_id).all()).results;
  const packs=(await db.prepare('SELECT id,purchased_minutes FROM service_packs WHERE client_id=?').bind(existing.client_id).all()).results;
  const billing=jobBilling(id,allTasks,packs);
- const billingHtml=`<h3>To be billed outside service packs</h3><p><strong>${billing.unpriced?'Priced subtotal':'Total to be billed'}: $${(billing.cents/100).toFixed(2)} AUD</strong></p><p>${billing.covered} pack-covered minutes · ${billing.uncovered} uncovered billable minutes.</p>${billing.unpriced?`<p role="status">${billing.unpriced} uncovered minutes need a service rate before the total is complete. Open each task’s Service and pack allocation to choose a service.</p>`:''}<p>Based on current service rates, rounded per task. Includes open and done tasks; cancelled and non-billable time are excluded. Shared packs account for tasks in other jobs. No invoice has been created.</p>`;
+ const billingHtml=`<h3>To be billed outside service packs</h3><p><strong>${billing.unpriced?'Priced subtotal':'Total to be billed'}: $${(billing.cents/100).toFixed(2)} AUD</strong></p><p>${billing.covered} pack-covered minutes · ${billing.uncovered} uncovered billable minutes.</p>${billing.unpriced?`<p role="status">${billing.unpriced} uncovered minutes need a service rate before the total is complete. Open each task’s Service and pack allocation to choose a service.</p>`:''}<p>Based on current service rates, rounded per task. Includes open and done tasks; cancelled and non-billable time are excluded. Shared packs account for tasks in other jobs. Work already reserved by draft, issued or paid invoices is excluded.</p>`;
  const active=rows.filter(t=>t.status!=='cancelled'),bill=active.reduce((a,t)=>a+t.billable_minutes,0),non=active.reduce((a,t)=>a+t.non_billable_minutes,0);
  extra=`<h2>Tasks and time</h2><p>Recorded time (open and done tasks; cancelled tasks excluded): <strong>${bill} billable minutes</strong>, ${non} non-billable minutes; ${bill+non} total minutes.</p>${billingHtml}${closed(existing.status)?'<p>Reopen this job to add or edit tasks.</p>':`<a href="/sandbox/jobs/${id}/tasks/new">Add test task</a>`}<ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${esc(t.status)} · ${t.time_taken_minutes} minutes</span></li>`).join('')}</ul>`;
  }
+ if(task&&existing){const locked=await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND (task_id=? OR service_pack_id=?) LIMIT 1').bind(id,existing.service_pack_id).first();if(locked)return respond(page('Task reserved by an invoice',`<p>This task or its shared pack is reserved by an active invoice. Cancel the draft or issued invoice before editing. Paid invoices are final in this sandbox.</p><a href="/sandbox/invoices">View invoices</a>${extra}`),409,'text/html')}
  if(task&&closed(parent.status))return respond(page('Job is closed',`<p>Reopen the job before adding or editing tasks.</p>${extra}`),409,'text/html');
  if(request.method==='GET')return respond(form(existing||{id:crypto.randomUUID(),status:'open'},path,task,clients,'',extra),200,'text/html');
  let v;try{v=await readForm(request,task?taskFields:jobFields)}catch(e){return respond(e.message,400)}

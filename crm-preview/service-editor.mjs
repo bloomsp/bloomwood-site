@@ -25,6 +25,7 @@ export async function serviceEditor(request,env,actor,respond){
  const table=kind==='services'?'service_types':kind==='packs'?'service_packs':'tasks';
  const current=isNew?null:await db.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first();
  if(!isNew&&!current)return respond('Record not found',404);
+ if(kind==='allocation'&&await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND (task_id=? OR service_pack_id=?) LIMIT 1').bind(id,current.service_pack_id).first())return respond(page('Allocation reserved',`<p>Cancel the active invoice before editing this task or shared pack.</p><a href="/sandbox/invoices">View invoices</a>`),409,'text/html');
  let summary='';
  if(kind==='packs'&&current){const tasks=(await db.prepare('SELECT * FROM tasks WHERE service_pack_id=? ORDER BY created_at,id').bind(id).all()).results,rows=allocation(tasks,current.purchased_minutes),used=rows.reduce((s,t)=>s+t.covered,0),overflow=rows.reduce((s,t)=>s+t.overflow,0);
  summary=`<h2>Pack balance</h2><p>${used} used minutes · ${current.purchased_minutes-used} remaining minutes · ${overflow} overflow minutes</p><p>Open and completed tasks reserve billable time in creation order. Cancelled tasks and non-billable time use no pack minutes. Overflow is time beyond the purchased allowance.</p><ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${t.covered} covered · ${t.overflow} overflow minutes</span></li>`).join('')}</ul>`;
@@ -45,6 +46,8 @@ export async function serviceEditor(request,env,actor,respond){
  if(kind==='packs'&&(!/^\d{1,7}$/.test(v.purchased_minutes)||Number(v.purchased_minutes)>1000000||!clients.some(c=>c.id===v.client_id)||!services.some(s=>s.id===v.service_type_id)||current&&(current.client_id!==v.client_id||current.service_type_id!==v.service_type_id)))error='Choose a valid client and service and whole purchased minutes (0–1000000). Existing pack links cannot change.';
  if(kind==='allocation'&&(v.service_type_id&&!services.some(s=>s.id===v.service_type_id)||v.service_pack_id&&!packs.some(p=>p.id===v.service_pack_id&&p.client_id===current.client_id&&p.service_type_id===v.service_type_id)))error='The pack must match this task’s client and selected service.';
  if(error)return respond(render(v,error),400,'text/html');
+ if(kind==='packs'&&current&&Number(v.purchased_minutes)!==current.purchased_minutes&&await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND service_pack_id=? LIMIT 1').bind(id).first())return respond(render(v,'This allowance is reserved by an active invoice. Cancel that invoice before changing the allowance.'),409,'text/html');
+ if(kind==='allocation'&&v.service_pack_id&&await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND service_pack_id=? LIMIT 1').bind(v.service_pack_id).first())return respond(render(v,'This pack is reserved by an active invoice. Choose another pack or cancel the invoice.'),409,'text/html');
  const now=new Date().toISOString();let result;
  if(kind==='allocation')result=await db.prepare("UPDATE tasks SET service_type_id=?,service_pack_id=?,version=version+1,changed_by=?,updated_at=? WHERE id=? AND version=? AND EXISTS(SELECT 1 FROM jobs WHERE id=tasks.job_id AND status IN ('open','in_progress')) RETURNING id").bind(v.service_type_id||null,v.service_pack_id||null,actor,now,id,Number(v.version)).all();
  else{
