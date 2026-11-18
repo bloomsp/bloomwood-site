@@ -112,6 +112,19 @@ test('desktop and mobile create and edit fictional clients through rendered form
  await page.getByRole('link',{name:/^Invoice /}).click();
  assert.equal(page.url(),invoiceUrl);
  assert.match(await page.locator('main').innerText(),/· paid/);
+ await page.getByRole('link',{name:'Files',exact:true}).click();
+ await page.getByRole('link',{name:'Upload test file'}).click();
+ await page.getByLabel('Test file',{exact:true}).setInputFiles({name:'fictional.txt',mimeType:'text/plain',buffer:Buffer.from('Fictional delivery content')});
+ await page.getByRole('button',{name:'Upload test file'}).click();
+ await page.getByRole('heading',{name:'Test file delivery',exact:true}).waitFor();
+ const downloadPromise=page.waitForEvent('download');
+ await page.getByRole('link',{name:'Download test file'}).click();
+ const downloaded=await downloadPromise;assert.equal(downloaded.suggestedFilename(),'fictional.txt');
+ assert.match(await page.locator('main').innerText(),/Not sent/);
+ if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-delivery-'+viewport.width+'.png',fullPage:true});
+ await page.getByRole('button',{name:'Revoke file access'}).click();
+ await page.getByText('Download unavailable.',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}

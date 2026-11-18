@@ -1,3 +1,4 @@
+import {deliveryEditor} from './delivery-editor.mjs';
 import {invoiceEditor} from './invoice-editor.mjs';
 import {serviceEditor} from './service-editor.mjs';
 import { workEditor } from './work-editor.mjs';
@@ -45,6 +46,7 @@ export function createHandler(keysFor = accessKeys) {
         return respond('Access denied: your verified sign-in email is not on the CRM staff list.', 403);
       }
     } catch { return respond('Invalid staff session', 401); }
+    if (url.pathname === '/sandbox/deliveries' || url.pathname.startsWith('/sandbox/deliveries/')) return deliveryEditor(request, env, actor, respond);
     if (url.pathname === '/sandbox/invoices' || url.pathname.startsWith('/sandbox/invoices/')) return invoiceEditor(request, env, actor, respond);
     if (/^\/sandbox\/(services|packs|allocations)(\/|$)/.test(url.pathname)) return serviceEditor(request, env, actor, respond);
     if (url.pathname === '/sandbox/jobs' || url.pathname.startsWith('/sandbox/jobs/') || url.pathname.startsWith('/sandbox/tasks/')) return workEditor(request, env, actor, respond);
