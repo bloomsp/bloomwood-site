@@ -53,6 +53,31 @@ test('desktop and mobile create and edit fictional clients through rendered form
  assert.match(await page.locator('main').innerText(),/45 billable minutes/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-jobs-'+viewport.width+'.png',fullPage:true});
+ await page.getByRole('link',{name:'Services',exact:true}).click();
+ await page.getByRole('link',{name:'Create service type'}).click();
+ await page.getByLabel('Name',{exact:true}).fill('Fictional consulting');
+ await page.getByLabel('Hourly rate (AUD)').fill('125.50');
+ await page.getByRole('button',{name:'Save service type'}).click();
+ await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='1');
+ await page.getByRole('link',{name:'Service packs',exact:true}).click();
+ await page.getByRole('link',{name:'Create service pack'}).click();
+ await page.getByLabel('Name',{exact:true}).fill('Fictional hour pack');
+ await page.getByLabel('Purchased minutes').fill('60');
+ await page.getByRole('button',{name:'Save service pack'}).click();
+ await page.getByRole('heading',{name:'Pack balance'}).waitFor();
+ await page.getByRole('link',{name:'Test jobs',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional browser job',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional browser task',exact:true}).click();
+ await page.getByRole('link',{name:'Service and pack allocation'}).click();
+ await page.getByLabel('Service type',{exact:true}).selectOption({label:'Fictional consulting'});
+ await page.getByLabel('Service pack',{exact:true}).selectOption({label:'Fictional hour pack'});
+ await page.getByRole('button',{name:'Save allocation'}).click();
+ await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='3');
+ await page.getByRole('link',{name:'Service packs',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional hour pack'}).click();
+ assert.match(await page.locator('main').innerText(),/45 used minutes · 15 remaining minutes · 0 overflow minutes/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-packs-'+viewport.width+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}

@@ -1,3 +1,4 @@
+import {verifyServices} from '../tests/helpers/service-scenario.mjs';
 // Explicit opt-in: creates a fictional client in the dedicated remote editing sandbox.
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -34,5 +35,6 @@ try{
  const saved=(await query('SELECT * FROM tasks WHERE id=?',[task.id])).results[0];
  assert.equal(saved.client_id,v.id);assert.equal(saved.time_taken_minutes,60);assert.ok(saved.completed_at);
  assert.equal((await query('SELECT count(*) n FROM work_audit WHERE record_id IN (?,?)',[job.id,task.id])).results[0].n,4);
- console.log('PASS actual D1: clients, linked jobs/tasks, generated totals, completion, closure, stale-write rejection and atomic audits.');
+ await verifyServices(f);
+ console.log('PASS actual D1: services, rates, pack allocation, cancellation and reassignment balances;  clients, linked jobs/tasks, generated totals, completion, closure, stale-write rejection and atomic audits.');
 }finally{f.db.close()}

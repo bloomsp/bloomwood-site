@@ -23,7 +23,7 @@ export async function workEditor(request,env,actor,respond){
  const parent=task?await db.prepare('SELECT * FROM jobs WHERE id=?').bind(newTaskMatch?id:existing.job_id).first():null;
  if(task&&!parent)return respond('Job not found',404);
  let extra='';
- if(task)extra=`<p><a href="/sandbox/jobs/${esc(parent.id)}/edit">Back to ${esc(parent.title)}</a></p>`;
+ if(task)extra=`${existing?`<p><a href="/sandbox/allocations/${existing.id}">Service and pack allocation</a></p>`:''}<p><a href="/sandbox/jobs/${esc(parent.id)}/edit">Back to ${esc(parent.title)}</a></p>`;
  if(!task&&existing){const rows=(await db.prepare('SELECT * FROM tasks WHERE job_id=? ORDER BY created_at,id').bind(id).all()).results;
  const active=rows.filter(t=>t.status!=='cancelled'),bill=active.reduce((a,t)=>a+t.billable_minutes,0),non=active.reduce((a,t)=>a+t.non_billable_minutes,0);
  extra=`<h2>Tasks and time</h2><p>Recorded time (open and done tasks; cancelled tasks excluded): <strong>${bill} billable minutes</strong>, ${non} non-billable minutes; ${bill+non} total minutes.</p>${closed(existing.status)?'<p>Reopen this job to add or edit tasks.</p>':`<a href="/sandbox/jobs/${id}/tasks/new">Add test task</a>`}<ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${esc(t.status)} · ${t.time_taken_minutes} minutes</span></li>`).join('')}</ul>`;

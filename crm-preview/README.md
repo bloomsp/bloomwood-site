@@ -33,3 +33,11 @@ The original Referrer-Policy no-referrer can suppress Origin on form navigation.
 ### Fictional jobs and tasks
 
 Visit `/sandbox/jobs` to create a job for a test client, add tasks, record billable/non-billable minutes, and complete tasks. Close a job after finishing or cancelling its open tasks; reopen it before editing tasks again. Totals exclude cancelled tasks. This does not calculate invoices or service-pack coverage. Apply `editing-migrations/0002_jobs_tasks.sql` through the EDITING_DB migration binding before deploying. See `docs/crm-jobs-tasks-editing-2026-11-18.md` for validation and scope.
+
+### Fictional service types and packs
+
+Visit `/sandbox/services` to maintain service names and hourly reference rates (AUD, stored in whole cents). Visit `/sandbox/packs` to create a pack for a test client and service, with a purchased allowance in whole minutes (60 minutes = one hour). A pack's client/service links cannot change after creation.
+
+On an existing task, use **Service and pack allocation** to choose its service and optional matching client pack. Exhausted packs remain selectable; excess time is shown as overflow. Pack details derive balances from non-cancelled tasks in creation order (ID breaks ties). Open tasks reserve time, non-billable time consumes no allowance, and cancellations/reassignments restore available time. Reducing a purchased allowance can increase overflow; balances never become negative. These are sandbox reference rates and time allocations, not invoicing or historical price snapshots.
+
+Apply migration `0003_services.sql` to EDITING_DB before deploying. Rate/pack edits and task assignments use version checks and atomic audit triggers; database triggers reject mismatched pack/client/service links. `npm run test:security`, `npm run test:crm`, and `npm run test:ui` cover this stage; the opt-in remote verification script includes the service-pack scenario using fictional records only.
