@@ -20,6 +20,12 @@
 			"binding": "DIRECTORY_STAGE",
 			"database_name": "bloomwood-crm-directory-rehearsal",
 			"database_id": "3eb2cbbe-b1b9-4b8b-abb8-9a008f0bb396"
+		},
+		{
+			"binding": "EDITING_DB",
+			"database_name": "bloomwood-crm-editing-sandbox",
+			"database_id": "1147ffdc-6285-404f-8a0a-b17eaa925656",
+			"migrations_dir": "editing-migrations"
 		}
 	]
 }

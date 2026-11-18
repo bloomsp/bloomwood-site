@@ -1,3 +1,4 @@
+import { clientEditor } from './client-editor.mjs';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const hostname = 'crm-preview.bloomwood.com.au';
@@ -12,8 +13,8 @@ function accessKeys(issuer) {
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
 const respond = (body, status, type = 'text/plain', extra = {}) => new Response(body, {
   status, headers: { 'Content-Type': type + '; charset=utf-8', 'Cache-Control':'private, no-store',
-    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
-    'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'no-referrer', 'X-Robots-Tag':'noindex, nofollow', ...extra }
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'same-origin', 'X-Robots-Tag':'noindex, nofollow', ...extra }
 });
 
 function directory(rows, staged = false) {
@@ -30,15 +31,18 @@ export function createHandler(keysFor = accessKeys) {
     if (!token) return respond('Staff sign-in required', 401);
     const { ACCESS_ISSUER: issuer, ACCESS_AUD: audience, STAFF_EMAIL: staff } = env;
     if (!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(issuer ?? '') || !audience || !staff?.trim()) return respond('Staff access is not configured', 503);
+    let actor;
     try {
       const { payload } = await jwtVerify(token, keysFor(issuer), {
         issuer, audience, algorithms:['RS256'], requiredClaims:['exp','sub','email']
       });
+      actor = issuer + '|' + payload.sub;
       const approvedEmails = staff.split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
       if (typeof payload.email !== 'string' || !approvedEmails.includes(payload.email.toLowerCase())) {
         return respond('Access denied: your verified sign-in email is not on the CRM staff list.', 403);
       }
     } catch { return respond('Invalid staff session', 401); }
+    if (url.pathname === '/sandbox/clients' || url.pathname.startsWith('/sandbox/clients/')) return clientEditor(request, env, actor, respond);
     if (request.method !== 'GET') return respond('Read-only directory', 405, 'text/plain', { Allow:'GET' });
     if (!['/', '/api/clients', '/directory'].includes(url.pathname)) return respond('Not found', 404);
     try {
