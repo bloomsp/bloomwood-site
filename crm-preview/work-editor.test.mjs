@@ -37,3 +37,12 @@ test('job and task writes reject unauthorized and cross-origin submissions befor
  }assert.equal(f.calls(),0);
  }finally{f.db.close()}
 });
+
+test('job billing shares pack capacity across jobs and distinguishes unpriced time',async()=>{
+ const {jobBilling}=await import('./work-editor.mjs');
+ const task=(id,job_id,billable_minutes,rate,pack='p',status='done')=>({id,job_id,billable_minutes,hourly_rate_cents:rate,service_pack_id:pack,status,created_at:id});
+ const tasks=[task('1','other',45,12000),task('2','job',45,12000),task('3','job',30,6000,null),task('4','job',500,12000,'p','cancelled'),task('5','job',10,null,null),task('6','job',5,0,null)];
+ assert.deepEqual(jobBilling('job',tasks,[{id:'p',purchased_minutes:60}]),{covered:15,uncovered:75,cents:9000,unpriced:10});
+ assert.deepEqual(jobBilling('job',[],[]),{covered:0,uncovered:0,cents:0,unpriced:0});
+ assert.equal(jobBilling('job',[task('1','job',1,12550,null),task('2','job',1,12550,null)],[]).cents,418);
+});

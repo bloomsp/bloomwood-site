@@ -78,6 +78,12 @@ test('desktop and mobile create and edit fictional clients through rendered form
  assert.match(await page.locator('main').innerText(),/45 used minutes · 15 remaining minutes · 0 overflow minutes/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-packs-'+viewport.width+'.png',fullPage:true});
+ await page.getByRole('link',{name:'Test jobs',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional browser job',exact:true}).click();
+ assert.match(await page.locator('main').innerText(),/Total to be billed: \$0\.00 AUD/);
+ assert.match(await page.locator('main').innerText(),/45 pack-covered minutes · 0 uncovered billable minutes/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-billing-'+viewport.width+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}

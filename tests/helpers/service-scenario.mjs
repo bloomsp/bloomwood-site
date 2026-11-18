@@ -18,6 +18,7 @@ export async function verifyServices(f){
  assert.equal((await send('/sandbox/allocations/'+t.id,v)).status,303);
  assert.equal((await send('/sandbox/allocations/'+t.id,v)).status,409);
  }
+ assert.match(await (await f.request('/sandbox/jobs/'+j.id+'/edit')).text(),/Total to be billed: \$62\.75 AUD/);
  const path='/sandbox/packs/'+pack.id+'/edit';
  assert.match(await (await f.request(path)).text(),/60 used minutes · 0 remaining minutes · 30 overflow minutes/);
  assert.equal((await send('/sandbox/tasks/'+tasks[0].id+'/edit',{...tasks[0],version:'2',status:'cancelled'})).status,303);
