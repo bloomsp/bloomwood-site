@@ -20,5 +20,19 @@ try{
  assert.equal((await send(path,{...v,version:'1',status:'active'})).status,409);
  const r=await query('SELECT version,status FROM clients WHERE id=?',[v.id]);assert.equal(r.results[0].version,2);assert.equal(r.results[0].status,'inactive');
  assert.equal((await query('SELECT count(*) n FROM client_audit WHERE client_id=?',[v.id])).results[0].n,2);
- console.log('PASS actual D1: creation, editing, stale-write rejection and two atomic audit entries.');
+ const job={id:crypto.randomUUID(),version:'',client_id:v.id,title:'Fictional D1 verification job',details:'',status:'open'};
+ assert.equal((await send('/sandbox/jobs/new',job)).status,303);
+ const jobPath='/sandbox/jobs/'+job.id+'/edit';
+ const task={id:crypto.randomUUID(),version:'',title:'Fictional D1 verification task',details:'',status:'open',billable_minutes:'45',non_billable_minutes:'15'};
+ assert.equal((await send('/sandbox/jobs/'+job.id+'/tasks/new',task)).status,303);
+ assert.equal((await send(jobPath,{...job,version:'1',status:'completed'})).status,409);
+ const taskPath='/sandbox/tasks/'+task.id+'/edit';
+ assert.equal((await send(taskPath,{...task,version:'1',status:'done'})).status,303);
+ assert.equal((await send(taskPath,{...task,version:'1'})).status,409);
+ assert.equal((await send(jobPath,{...job,version:'1',status:'completed'})).status,303);
+ assert.equal((await send(taskPath,{...task,version:'2'})).status,409);
+ const saved=(await query('SELECT * FROM tasks WHERE id=?',[task.id])).results[0];
+ assert.equal(saved.client_id,v.id);assert.equal(saved.time_taken_minutes,60);assert.ok(saved.completed_at);
+ assert.equal((await query('SELECT count(*) n FROM work_audit WHERE record_id IN (?,?)',[job.id,task.id])).results[0].n,4);
+ console.log('PASS actual D1: clients, linked jobs/tasks, generated totals, completion, closure, stale-write rejection and atomic audits.');
 }finally{f.db.close()}

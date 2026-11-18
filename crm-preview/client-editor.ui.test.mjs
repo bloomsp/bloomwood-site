@@ -36,6 +36,23 @@ test('desktop and mobile create and edit fictional clients through rendered form
  assert.equal(await page.getByLabel('Status',{exact:true}).inputValue(),'inactive');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-'+viewport.width+'.png',fullPage:true});
+ await page.getByRole('link',{name:'Test jobs',exact:true}).click();
+ await page.getByRole('link',{name:'Create test job'}).click();
+ await page.getByLabel('Title',{exact:true}).fill('Fictional browser job');
+ await page.getByRole('button',{name:'Save test job'}).click();
+ await page.getByRole('link',{name:'Add test task'}).click();
+ await page.getByLabel('Title',{exact:true}).fill('Fictional browser task');
+ await page.getByLabel('Billable minutes',{exact:true}).fill('45');
+ await page.getByLabel('Non-billable minutes',{exact:true}).fill('15');
+ await page.getByRole('button',{name:'Save test task'}).click();
+ await page.getByRole('heading',{name:'Edit test task'}).waitFor();
+ await page.getByLabel('Status',{exact:true}).selectOption('done');
+ await page.getByRole('button',{name:'Save test task'}).click();
+ await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='2');
+ await page.getByRole('link',{name:'Back to Fictional browser job'}).click();
+ assert.match(await page.locator('main').innerText(),/45 billable minutes/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-jobs-'+viewport.width+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}

@@ -2,24 +2,24 @@ const root = '/sandbox/clients';
 export const fields = ['client_type','display_name','first_name','last_name','business_name','contact_name','contact_role','date_of_birth','email','phone','address','preferred_contact_method','status','tags'];
 const choices = {client_type:['person','company'],preferred_contact_method:['email','phone','sms','other'],status:['active','lead','inactive','archived']};
 const labels = {client_type:'Client type',display_name:'Display name',first_name:'First name',last_name:'Last name',business_name:'Business name',contact_name:'Contact name',contact_role:'Contact role',date_of_birth:'Date of birth',email:'Email',phone:'Phone',address:'Address',preferred_contact_method:'Preferred contact method',status:'Status',tags:'Tags (comma separated)'};
-const esc = x => String(x ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const page = (title,content) => `<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} | Bloomwood test CRM</title><style>
+export const esc = x => String(x ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+export const page = (title,content) => `<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} | Bloomwood test CRM</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f5f7f3;color:#213729;font:1rem/1.5 system-ui,sans-serif}main{max-width:56rem;margin:auto;padding:clamp(1rem,4vw,3rem)}nav{display:flex;gap:1rem;flex-wrap:wrap}a{color:#245c3d}header{border-bottom:2px solid #44654f;margin-bottom:1.5rem}h1{line-height:1.2}form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}label{display:flex;flex-direction:column;gap:.3rem}input,select,textarea,button{font:inherit;min-height:44px;border:1px solid #789080;border-radius:.3rem;padding:.55rem;width:100%;background:white;color:inherit}button{background:#245c3d;color:white;cursor:pointer}textarea{min-height:90px}.full{grid-column:1/-1}.error{border:2px solid #a12727;padding:1rem;color:#801b1b}ul{list-style:none;padding:0}li{padding:1rem;background:white;border:1px solid #d6dfd7;margin:.6rem 0;border-radius:.4rem}li span{display:block}*:focus-visible{outline:3px solid #ba6416;outline-offset:3px}@media(max-width:600px){form{grid-template-columns:1fr}}
-</style></head><body><main><header><nav><a href="${root}">Test clients</a><a href="/directory">Read-only snapshot</a></nav><h1>${esc(title)}</h1><p><strong>Editing sandbox — fictional data only.</strong> Changes here do not update the live CRM or the migration snapshot.</p></header>${content}</main></body></html>`;
+</style></head><body><main><header><nav><a href="${root}">Test clients</a><a href="/sandbox/jobs">Test jobs</a><a href="/directory">Read-only snapshot</a></nav><h1>${esc(title)}</h1><p><strong>Editing sandbox — fictional data only.</strong> Changes here do not update the live CRM or the migration snapshot.</p></header>${content}</main></body></html>`;
 function form(values, action, error='') {
  return page(values.version ? 'Edit test client' : 'Create test client',`${error ? `<p role="alert" class="error">${esc(error)}</p>` : ''}<form method="post" action="${esc(action)}">
  <input type="hidden" name="id" value="${esc(values.id)}"><input type="hidden" name="version" value="${esc(values.version ?? '')}">
  ${fields.map(k=>`<label${k==='address'?' class="full"':''}><span id="${k}-label">${labels[k]}</span>${choices[k]?`<select name="${k}" aria-labelledby="${k}-label">${choices[k].map(v=>`<option value="${v}" ${values[k]===v?'selected':''}>${esc(v)}</option>`).join('')}</select>`:k==='address'?`<textarea name="${k}" maxlength="2000">${esc(values[k])}</textarea>`:`<input name="${k}" type="${k==='date_of_birth'?'date':k==='email'?'email':'text'}" value="${esc(values[k])}" maxlength="${k==='tags'?1000:200}" ${k==='display_name'?'required':''}>`}</label>`).join('')}
  <p class="full">For a person, enter a first or last name. For a company, enter a business name.</p><button class="full">Save test client</button></form>`);
 }
-async function readForm(request) {
+export async function readForm(request, expectedFields = fields) {
  if (!request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) throw new Error('Use the client form to save changes.');
  const reader=request.body?.getReader(); if(!reader)throw new Error('Form is empty.');
  let size=0,parts=[];for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>16384){await reader.cancel();throw new Error('Form is too large.');}parts.push(value)}
  const bytes=new Uint8Array(size);let pos=0;for(const p of parts){bytes.set(p,pos);pos+=p.length}
  const f=new URLSearchParams(new TextDecoder().decode(bytes)), v={};
- for(const k of ['id','version',...fields]){if(f.getAll(k).length!==1)throw new Error('Form fields are missing or duplicated.');v[k]=f.get(k).trim();}
+ for(const k of ['id','version',...expectedFields]){if(f.getAll(k).length!==1)throw new Error('Form fields are missing or duplicated.');v[k]=f.get(k).trim();}
  return v;
 }
 export function validateClient(v) {

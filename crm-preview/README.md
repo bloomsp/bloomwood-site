@@ -29,3 +29,7 @@ Approved Access identities are checked before any database operation. POST requi
 The Worker tests use signed test identities and SQLite fixtures. The browser tests use a local HTTP fixture to exercise forms at desktop and mobile widths. To explicitly test writes against the remote fictional database, run `node crm-preview/verify-editing-d1.mjs --remote-sandbox`. Each run creates a fictional test client. That script's fixed target is not the migrated database.
 
 The original Referrer-Policy no-referrer can suppress Origin on form navigation. It is now same-origin: same-origin forms retain their origin while external destinations receive no referrer. The form CSP allows only same-origin submissions.
+
+### Fictional jobs and tasks
+
+Visit `/sandbox/jobs` to create a job for a test client, add tasks, record billable/non-billable minutes, and complete tasks. Close a job after finishing or cancelling its open tasks; reopen it before editing tasks again. Totals exclude cancelled tasks. This does not calculate invoices or service-pack coverage. Apply `editing-migrations/0002_jobs_tasks.sql` through the EDITING_DB migration binding before deploying. See `docs/crm-jobs-tasks-editing-2026-11-18.md` for validation and scope.

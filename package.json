@@ -8,7 +8,7 @@
     "preview": "astro preview",
     "test:crm": "node --test tests/crm-metrics.test.mjs tests/crm-page-contracts.test.mjs",
     "test:ui": "node --test tests/crm-ui-contracts.test.mjs crm-preview/client-editor.ui.test.mjs",
-    "test:security": "node --test tests/security-regressions.test.mjs crm-preview/worker.test.mjs crm-preview/client-editor.test.mjs",
+    "test:security": "node --test tests/security-regressions.test.mjs crm-preview/worker.test.mjs crm-preview/client-editor.test.mjs crm-preview/work-editor.test.mjs",
     "cf:check": "npm run build && wrangler deploy --dry-run --config dist/server/wrangler.json",
     "cf:dev": "npm run build && wrangler dev --config dist/server/wrangler.json",
     "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",

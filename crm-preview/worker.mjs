@@ -1,3 +1,4 @@
+import { workEditor } from './work-editor.mjs';
 import { clientEditor } from './client-editor.mjs';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
@@ -42,6 +43,7 @@ export function createHandler(keysFor = accessKeys) {
         return respond('Access denied: your verified sign-in email is not on the CRM staff list.', 403);
       }
     } catch { return respond('Invalid staff session', 401); }
+    if (url.pathname === '/sandbox/jobs' || url.pathname.startsWith('/sandbox/jobs/') || url.pathname.startsWith('/sandbox/tasks/')) return workEditor(request, env, actor, respond);
     if (url.pathname === '/sandbox/clients' || url.pathname.startsWith('/sandbox/clients/')) return clientEditor(request, env, actor, respond);
     if (request.method !== 'GET') return respond('Read-only directory', 405, 'text/plain', { Allow:'GET' });
     if (!['/', '/api/clients', '/directory'].includes(url.pathname)) return respond('Not found', 404);
