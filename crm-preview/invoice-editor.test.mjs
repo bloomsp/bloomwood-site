@@ -5,6 +5,10 @@ import {verifyInvoices} from '../tests/helpers/invoice-scenario.mjs';
 test('invoice snapshots, atomic duplicate prevention, cancellation release and status lifecycle',async()=>{
  const f=await editingFixture();try{
  const {invoiceId,task}=await verifyInvoices(f);
+ for(const path of ['/sandbox/tasks/'+task.id+'/edit','/sandbox/allocations/'+task.id]){
+ const response=await f.request(path);assert.equal(response.status,409);
+ const html=await response.text();assert.ok(html.includes('href="/sandbox/invoices/'+invoiceId+'"'));assert.match(html,/Status: paid/);
+ }
  const job=f.db.prepare('SELECT job_id FROM tasks WHERE id=?').get(task.id);
  assert.match(await (await f.request('/sandbox/jobs/'+job.job_id+'/edit')).text(),/Total to be billed: \$0\.00 AUD/);
  const row=f.db.prepare('SELECT * FROM invoices WHERE id=?').get(invoiceId);

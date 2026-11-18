@@ -1,3 +1,4 @@
+import {taskInvoiceLinks} from './invoice-links.mjs';
 import {esc,uuid,page,readForm} from './client-editor.mjs';
 export function allocation(tasks,capacity){
  let remaining=capacity;
@@ -25,7 +26,7 @@ export async function serviceEditor(request,env,actor,respond){
  const table=kind==='services'?'service_types':kind==='packs'?'service_packs':'tasks';
  const current=isNew?null:await db.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first();
  if(!isNew&&!current)return respond('Record not found',404);
- if(kind==='allocation'&&await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND (task_id=? OR service_pack_id=?) LIMIT 1').bind(id,current.service_pack_id).first())return respond(page('Allocation reserved',`<p>Cancel the active invoice before editing this task or shared pack.</p><a href="/sandbox/invoices">View invoices</a>`),409,'text/html');
+ if(kind==='allocation'){const links=await taskInvoiceLinks(db,current);if(links)return respond(page('Allocation reserved',`<p>This task or shared pack is reserved. Cancel the draft or issued invoice before editing. Paid invoices are final in this sandbox.</p>${links}`),409,'text/html')}
  let summary='';
  if(kind==='packs'&&current){const tasks=(await db.prepare('SELECT * FROM tasks WHERE service_pack_id=? ORDER BY created_at,id').bind(id).all()).results,rows=allocation(tasks,current.purchased_minutes),used=rows.reduce((s,t)=>s+t.covered,0),overflow=rows.reduce((s,t)=>s+t.overflow,0);
  summary=`<h2>Pack balance</h2><p>${used} used minutes · ${current.purchased_minutes-used} remaining minutes · ${overflow} overflow minutes</p><p>Open and completed tasks reserve billable time in creation order. Cancelled tasks and non-billable time use no pack minutes. Overflow is time beyond the purchased allowance.</p><ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${t.covered} covered · ${t.overflow} overflow minutes</span></li>`).join('')}</ul>`;

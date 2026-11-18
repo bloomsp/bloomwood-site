@@ -1,3 +1,4 @@
+import {taskInvoiceLinks} from './invoice-links.mjs';
 import {allocation} from './service-editor.mjs';
 import {esc,uuid,page,readForm} from './client-editor.mjs';
 export function jobBilling(jobId,tasks,packs){
@@ -45,7 +46,7 @@ export async function workEditor(request,env,actor,respond){
  const active=rows.filter(t=>t.status!=='cancelled'),bill=active.reduce((a,t)=>a+t.billable_minutes,0),non=active.reduce((a,t)=>a+t.non_billable_minutes,0);
  extra=`<h2>Tasks and time</h2><p>Recorded time (open and done tasks; cancelled tasks excluded): <strong>${bill} billable minutes</strong>, ${non} non-billable minutes; ${bill+non} total minutes.</p>${billingHtml}${closed(existing.status)?'<p>Reopen this job to add or edit tasks.</p>':`<a href="/sandbox/jobs/${id}/tasks/new">Add test task</a>`}<ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${esc(t.status)} · ${t.time_taken_minutes} minutes</span></li>`).join('')}</ul>`;
  }
- if(task&&existing){const locked=await db.prepare('SELECT 1 FROM invoice_lines WHERE active=1 AND (task_id=? OR service_pack_id=?) LIMIT 1').bind(id,existing.service_pack_id).first();if(locked)return respond(page('Task reserved by an invoice',`<p>This task or its shared pack is reserved by an active invoice. Cancel the draft or issued invoice before editing. Paid invoices are final in this sandbox.</p><a href="/sandbox/invoices">View invoices</a>${extra}`),409,'text/html')}
+ if(task&&existing){const links=await taskInvoiceLinks(db,existing);if(links)return respond(page('Task reserved by an invoice',`<p>This task or its shared pack is reserved by an active invoice. Cancel the draft or issued invoice before editing. Paid invoices are final in this sandbox.</p>${links}${extra}`),409,'text/html')}
  if(task&&closed(parent.status))return respond(page('Job is closed',`<p>Reopen the job before adding or editing tasks.</p>${extra}`),409,'text/html');
  if(request.method==='GET')return respond(form(existing||{id:crypto.randomUUID(),status:'open'},path,task,clients,'',extra),200,'text/html');
  let v;try{v=await readForm(request,task?taskFields:jobFields)}catch(e){return respond(e.message,400)}

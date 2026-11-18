@@ -104,6 +104,14 @@ test('desktop and mobile create and edit fictional clients through rendered form
  assert.match(await page.locator('main').innerText(),/· paid/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-invoice-'+viewport.width+'.png',fullPage:true});
+ const invoiceUrl=page.url();
+ await page.getByRole('link',{name:'Test jobs',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional browser job',exact:true}).click();
+ await page.getByRole('link',{name:'Fictional browser task',exact:true}).click();
+ await page.getByRole('heading',{name:'Task reserved by an invoice'}).waitFor();
+ await page.getByRole('link',{name:/^Invoice /}).click();
+ assert.equal(page.url(),invoiceUrl);
+ assert.match(await page.locator('main').innerText(),/· paid/);
  assert.deepEqual(errors,[]);
  }finally{await page.close();await new Promise(resolve=>server.close(resolve));f.db.close()}
  }}finally{await browser.close()}
