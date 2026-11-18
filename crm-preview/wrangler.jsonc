@@ -27,5 +27,11 @@
 			"database_id": "1147ffdc-6285-404f-8a0a-b17eaa925656",
 			"migrations_dir": "editing-migrations"
 		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "EDITING_FILES",
+			"bucket_name": "bloomwood-crm-editing-files"
+		}
 	]
 }
