@@ -1,3 +1,4 @@
+import {publicDownload,publicOrigin} from './public-download.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -15,7 +16,7 @@ test('desktop and mobile create and edit fictional clients through rendered form
    const parts=[];for await(const part of req)parts.push(part);
    const headers=new Headers(req.headers);headers.set('Cf-Access-Jwt-Assertion',f.token);
    if(headers.get('origin')===localOrigin)headers.set('origin',f.url);
-   const response=await f.handle(new Request(f.url+req.url,{method:req.method,headers,body:parts.length?Buffer.concat(parts):undefined}),f.env);
+   const response=req.url.startsWith('/d/')?await publicDownload(new Request(publicOrigin+req.url),f.env):await f.handle(new Request(f.url+req.url,{method:req.method,headers,body:parts.length?Buffer.concat(parts):undefined}),f.env);
    res.writeHead(response.status,Object.fromEntries(response.headers));res.end(await response.text());
   } catch {res.writeHead(500);res.end('Test fixture failed');}
  });
@@ -122,6 +123,14 @@ test('desktop and mobile create and edit fictional clients through rendered form
  const downloaded=await downloadPromise;assert.equal(downloaded.suggestedFilename(),'fictional.txt');
  assert.match(await page.locator('main').innerText(),/Not sent/);
  if(process.env.CRM_QA_SCREENSHOT)await page.screenshot({path:process.env.CRM_QA_SCREENSHOT+'-delivery-'+viewport.width+'.png',fullPage:true});
+ const deliveryUrl=page.url();
+ await page.getByRole('button',{name:'Generate client link',exact:true}).click();
+ const clientLink=await page.getByRole('link',{name:'Open test download link'}).getAttribute('href');
+ await page.goto(localOrigin+new URL(clientLink).pathname);
+ await page.getByRole('heading',{name:'Bloomwood test file'}).waitFor();
+ const publicFile=page.waitForEvent('download');await page.getByRole('link',{name:'Download file',exact:true}).click();
+ assert.equal((await publicFile).suggestedFilename(),'fictional.txt');
+ await page.goto(deliveryUrl);
  await page.getByRole('button',{name:'Revoke file access'}).click();
  await page.getByText('Download unavailable.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);

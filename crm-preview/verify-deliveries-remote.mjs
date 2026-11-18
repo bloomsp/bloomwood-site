@@ -19,8 +19,14 @@ try{
  assert.equal(uploaded.status,303);
  const path='/sandbox/deliveries/'+id;
  const downloaded=await f.request(path+'/download');assert.equal(downloaded.status,200);assert.equal(await downloaded.text(),'Fictional R2 verification bytes');
- assert.equal((await f.request(path,new URLSearchParams({id,version:'2',action:'revoke'}).toString())).status,303);
+ const issued=await f.request(path,new URLSearchParams({id,version:'2',action:'share'}).toString());assert.equal(issued.status,200);
+ const link=(await issued.text()).match(/https:\/\/files-preview\.bloomwood\.com\.au\/d\/[a-f0-9]{64}/)[0];
+ const landing=await fetch(link,{redirect:'manual'});assert.equal(landing.status,200);assert.match(await landing.text(),/Bloomwood test file/);
+ const publicFile=await fetch(link+'/download',{redirect:'manual'});assert.equal(publicFile.status,200);assert.equal(await publicFile.text(),'Fictional R2 verification bytes');
+ const row=(await query('SELECT version FROM deliveries WHERE id=?',[id])).results[0];
+ assert.equal((await f.request(path,new URLSearchParams({id,version:String(row.version),action:'revoke'}).toString())).status,303);
+ assert.equal((await fetch(link,{redirect:'manual'})).status,404);
  assert.equal((await f.request(path+'/download')).status,410);
  assert.equal((await query('SELECT count(*) n FROM delivery_downloads WHERE delivery_id=?',[id])).results[0].n,1);
- console.log('PASS real D1/R2: upload, exact-byte download, audit and revocation. Fictional file retained privately.');
+ console.log('PASS real D1/R2 and deployed public Worker: anonymous token landing/download, revoked link denial; upload, exact-byte download, audit and revocation. Fictional file retained privately.');
 }finally{f.db.close()}
