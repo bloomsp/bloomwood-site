@@ -21,7 +21,9 @@ export async function invoiceEditor(request,env,actor,respond){
  return respond('',303,'text/plain',{Location:root+'/'+v.id});
  }
  const invoice=await db.prepare('SELECT * FROM invoices WHERE id=?').bind(id).first();if(!invoice)return respond('Invoice not found',404);
+ const xero=await db.prepare('SELECT * FROM xero_exports WHERE invoice_id=?').bind(id).first();
  if(request.method==='POST'){
+ if(xero)return respond('Manage this invoice in Xero. Its CRM reservation cannot be released here.',409);
  let v;try{v=await readForm(request,['status'])}catch(e){return respond(e.message,400)}
  if(v.id!==id||!/^[1-9]\d{0,8}$/.test(v.version)||!['issued','paid','cancelled'].includes(v.status))return respond('Invalid invoice form.',400);
  const allowed=invoice.status==='draft'?['issued','cancelled']:invoice.status==='issued'?['paid','cancelled']:[];
@@ -30,7 +32,7 @@ export async function invoiceEditor(request,env,actor,respond){
  if(r.results.length!==1)return respond('Invoice changed in another session. Reload before trying again.',409);
  return respond('',303,'text/plain',{Location:path});
  }
- const lines=(await db.prepare('SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY task_id').bind(id).all()).results,states=invoice.status==='draft'?['issued','cancelled']:invoice.status==='issued'?['paid','cancelled']:[];
- return respond(page('Test invoice',`<p>${esc(invoice.client_name)} · ${esc(invoice.status)}</p><p>Reference: ${esc(id)}</p><h2>Total: ${money(lines.reduce((s,l)=>s+l.amount_cents,0))}</h2><p>Saved prices and pack coverage. This test invoice is not sent to the client.</p><ul>${lines.map(l=>`<li>${esc(l.title)}<span>${l.billable_minutes-l.covered_minutes} uncovered minutes at ${money(l.hourly_rate_cents)}/hour · ${money(l.amount_cents)}</span></li>`).join('')}</ul>${states.length?`<form method="post"><input type="hidden" name="id" value="${id}"><input type="hidden" name="version" value="${invoice.version}"><label>Status<select name="status" aria-label="Status">${states.map(s=>`<option value="${s}">${s}</option>`).join('')}</select></label><button>Update invoice status</button></form>`:''}<p>Drafts reserve their tasks. Cancel a draft or issued invoice to release them. Paid invoices are final in this sandbox. Tasks and pack allocations used by an active invoice are locked to preserve its balance.</p>`),200,'text/html');
+ const lines=(await db.prepare('SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY task_id').bind(id).all()).results,states=xero?[]:invoice.status==='draft'?['issued','cancelled']:invoice.status==='issued'?['paid','cancelled']:[];
+ return respond(page('Test invoice',`<p>${esc(invoice.client_name)} · ${esc(invoice.status)}</p><p>Reference: ${esc(id)}</p>${xero||invoice.status==='draft'?`<p><a href="${root}/${id}/xero">${xero?'Xero: '+esc(xero.xero_invoice_number||xero.state):'Create draft in Xero Demo Company'}</a></p>`:''}<h2>Total: ${money(lines.reduce((s,l)=>s+l.amount_cents,0))}</h2><p>Saved prices and pack coverage. This test invoice is not sent to the client.</p><ul>${lines.map(l=>`<li>${esc(l.title)}<span>${l.billable_minutes-l.covered_minutes} uncovered minutes at ${money(l.hourly_rate_cents)}/hour · ${money(l.amount_cents)}</span></li>`).join('')}</ul>${states.length?`<form method="post"><input type="hidden" name="id" value="${id}"><input type="hidden" name="version" value="${invoice.version}"><label>Status<select name="status" aria-label="Status">${states.map(s=>`<option value="${s}">${s}</option>`).join('')}</select></label><button>Update invoice status</button></form>`:''}<p>Drafts reserve their tasks. Cancel a draft or issued invoice to release them. Paid invoices are final in this sandbox. Tasks and pack allocations used by an active invoice are locked to preserve its balance.</p>`),200,'text/html');
  }catch{return respond('Could not load or save this test invoice. Please retry.',503)}
 }
