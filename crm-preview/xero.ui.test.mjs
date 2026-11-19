@@ -15,6 +15,11 @@ test('desktop and mobile Xero draft form and stored invoice number',async()=>{
  }catch{res.writeHead(500);res.end('Test fixture failed')}});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
  try{
+ await page.route('https://login.xero.com/identity/connect/authorize**',route=>route.fulfill({status:200,contentType:'text/html',body:'<h1>Xero sign-in test destination</h1>'}));
+ await page.goto(origin+'/sandbox/xero');
+ await page.getByRole('button',{name:'Connect Xero Demo Company'}).click();
+ await page.waitForURL(url=>url.origin==='https://login.xero.com',{timeout:5000,waitUntil:'commit'});
+ assert.equal(new URL(page.url()).origin,'https://login.xero.com');
  await page.goto(origin+t.path);await page.getByRole('heading',{name:'Create Xero draft',exact:true}).waitFor();
  await page.getByLabel('Xero contact',{exact:true}).selectOption({label:'Demo customer'});
  await page.getByLabel('Sales account',{exact:true}).selectOption('200');
