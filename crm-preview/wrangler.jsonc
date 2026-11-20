@@ -1,0 +1,46 @@
+{
+	"name": "bloomwood-crm-preview",
+	"main": "worker.mjs",
+	"compatibility_date": "2026-11-01",
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [
+		{
+			"pattern": "crm-preview.bloomwood.com.au",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "PREVIEW_DB",
+			"database_name": "bloomwood-crm-preview",
+			"database_id": "7b105461-f8bd-4f3b-9af8-848642eb9fe2"
+		},
+		{
+			"binding": "DIRECTORY_STAGE",
+			"database_name": "bloomwood-crm-directory-rehearsal",
+			"database_id": "3eb2cbbe-b1b9-4b8b-abb8-9a008f0bb396"
+		},
+		{
+			"binding": "EDITING_DB",
+			"database_name": "bloomwood-crm-editing-sandbox",
+			"database_id": "1147ffdc-6285-404f-8a0a-b17eaa925656",
+			"migrations_dir": "editing-migrations"
+		},
+		{
+			"binding": "XERO_DB",
+			"database_name": "bloomwood-crm-xero-connection",
+			"database_id": "d788c5b1-9dc3-4450-924a-fd463d62fa27",
+			"migrations_dir": "xero-migrations"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "EDITING_FILES",
+			"bucket_name": "bloomwood-crm-editing-files"
+		}
+	],
+	"vars": {
+		"XERO_CLIENT_ID": "0CFD2EC7529643558253CC53CA3EA0B3"
+	}
+}
