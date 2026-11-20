@@ -17,7 +17,7 @@ test('desktop and mobile Xero draft form and stored invoice number',async()=>{
  try{
  await page.route('https://login.xero.com/identity/connect/authorize**',route=>route.fulfill({status:200,contentType:'text/html',body:'<h1>Xero sign-in test destination</h1>'}));
  await page.goto(origin+'/sandbox/xero');
- await page.getByRole('button',{name:'Connect Xero Demo Company'}).click();
+ await page.getByRole('button',{name:'Connect or update Xero access'}).click();
  await page.waitForURL(url=>url.origin==='https://login.xero.com',{timeout:5000,waitUntil:'commit'});
  assert.equal(new URL(page.url()).origin,'https://login.xero.com');
  await page.goto(origin+t.path);await page.getByRole('heading',{name:'Create Xero draft',exact:true}).waitFor();

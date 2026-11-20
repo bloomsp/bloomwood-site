@@ -7,13 +7,13 @@ test('invoice snapshots, atomic duplicate prevention, cancellation release and s
  const {invoiceId,task}=await verifyInvoices(f);
  for(const path of ['/sandbox/tasks/'+task.id+'/edit','/sandbox/allocations/'+task.id]){
  const response=await f.request(path);assert.equal(response.status,409);
- const html=await response.text();assert.ok(html.includes('href="/sandbox/invoices/'+invoiceId+'"'));assert.match(html,/Status: paid/);
+ const html=await response.text();assert.ok(html.includes('href="/sandbox/invoices/'+invoiceId+'"'));assert.match(html,/Status: draft/);
  }
  const job=f.db.prepare('SELECT job_id FROM tasks WHERE id=?').get(task.id);
  assert.match(await (await f.request('/sandbox/jobs/'+job.job_id+'/edit')).text(),/Total to be billed: \$0\.00 AUD/);
  const row=f.db.prepare('SELECT * FROM invoices WHERE id=?').get(invoiceId);
- assert.ok(row.issued_at);assert.ok(row.paid_at);
- assert.equal(f.db.prepare("SELECT count(*) n FROM work_audit WHERE entity='invoice'").get().n,6);
+ assert.equal(row.issued_at,null);assert.equal(row.paid_at,null);
+ assert.equal(f.db.prepare("SELECT count(*) n FROM work_audit WHERE entity='invoice'").get().n,3);
  assert.equal(f.db.prepare('SELECT count(*) n FROM invoice_lines WHERE active=1').get().n,1);
  }finally{f.db.close()}
 });

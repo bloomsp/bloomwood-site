@@ -1,0 +1,1 @@
+CREATE TABLE catalogue_selection(id INTEGER PRIMARY KEY CHECK(id=1),tenant_id TEXT NOT NULL,name TEXT NOT NULL) STRICT;

@@ -79,3 +79,15 @@ A durable export claim freezes local invoice transitions before the remote call.
 Validation uses simulated Xero HTTP responses, OAuth/state/encryption/refresh tests and desktop/mobile forms. No real Xero invoice has been created before app-secret setup and staff authorisation. Test against the Australian Demo Company before proposing production access.
 
 References: https://developer.xero.com/documentation/api/accounting/invoices/ ; https://developer.xero.com/documentation/guides/oauth2/scopes/ ; https://developer.xero.com/documentation/guides/idempotent-requests/idempotency/ .
+
+### Xero-first invoicing, products and discounts
+
+Invoice selection now starts with **Create invoice in Xero**, saves a local reservation and goes directly to Xero details. Local issue/payment controls are removed (server requests for those statuses are rejected). Unexported drafts can be discarded; exported invoice number/status come from Xero. Older test invoice records remain intact.
+
+`/sandbox/items` lets staff select an authorised Xero organisation and import its sales catalogue using GET requests only. Connect/update Xero access and authorise live Bloomwood alongside Australian Demo Company to load live products. The export path still verifies Demo Company immediately before creating any invoice. Import is transactional per catalogue; unavailable items are deactivated and existing task/invoice prices remain snapshots. Items missing a price are listed but cannot be added. SPack anywhere in the code, case-insensitively, identifies a new service-pack product sale.
+
+On a task, **Products and discounts** supports multiple product lines, positive quantities (up to four decimal places) and per-line percentage discounts (0–100%, two decimal places). Four-decimal Xero prices are preserved. Integer arithmetic rounds net line amounts to cents. Adding products replaces hourly billing for that task; recorded time remains visible but is not charged again. Existing service-pack consumption and selling a product use separate tasks. A new SPack sale does not infer/create the hours allowance: that still requires an explicitly configured client service pack.
+
+Invoice creation snapshots all product lines atomically and claims their parent task against double billing. Discounts, quantities and item codes are passed to Xero using unitdp=4. Live-only codes are included in descriptions when exporting to Demo; ItemCode is included only if that code exists in the target catalogue or the source and target tenant match. Demo defaults/account/tax treatment are explicitly selected at export. No items are written to either Xero catalogue. Source prices and discounts shown in the CRM are before the export's explicit inclusive/exclusive tax treatment.
+
+Local validation covers read-only live import via simulated responses, SPack detection, discounts, saved invoice lines, stale edits, reserved-task locks and mobile/desktop product forms. Real product loading requires the staff member to authorise/select live Bloomwood in Products. No live invoice creation is enabled.
