@@ -74,7 +74,7 @@ Please complete the form below if you require service within 24 hours. If you re
 
 #### Email
 
-[info@geeksquadfnq.com](mailto:info@geeksquadfnq.com)
+[info@bloomwood.com.au](mailto:info@bloomwood.com.au)
 
 #### Address
 
