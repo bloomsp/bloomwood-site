@@ -26,3 +26,23 @@ test('live catalogue import is read-only; products and discounts snapshot into i
 test('product discounts round in integer arithmetic and recognise SPack anywhere',()=>{
  assert.equal(itemAmount(10000,1000000,10000),0);assert.equal(itemAmount(15000,1255000,1250),16472);assert.ok(isPack('IT-SPack-10'));assert.ok(isPack('spack'));assert.equal(isPack('repair'),false);
 });
+test('standalone product invoices need no job or task and preserve discounted totals',async()=>{
+ const {t,f,j}=await productScenario();try{
+ const count=f.db.prepare('SELECT count(*) n FROM tasks').get().n;
+ const values={id:crypto.randomUUID(),version:'',client_id:j.client_id,item_ids:item,quantities:'2',discounts:'10'};
+ assert.equal((await t.send('/sandbox/invoices/new',{...values,item_ids:''})).status,400);
+ assert.equal((await t.send('/sandbox/invoices/new',{...values,discounts:'101'})).status,400);
+ assert.equal((await t.send('/sandbox/invoices/new',values)).status,303);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM tasks').get().n,count);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM invoice_lines WHERE invoice_id=?').get(values.id).n,0);
+ const products=f.db.prepare('SELECT * FROM all_invoice_products WHERE invoice_id=?').all(values.id);
+ assert.equal(products.length,1);assert.equal(products[0].amount_cents,90000);assert.equal(products[0].task_id,null);
+ assert.match(await (await f.request('/sandbox/invoices/'+values.id)).text(),/Total: \$900.00 AUD/);
+ assert.match(await (await f.request('/sandbox/invoices')).text(),/\$900.00 AUD/);
+ const payload=draftPayload(values,[],{},products);
+ assert.equal(payload.Invoices[0].LineItems.length,1);assert.equal(payload.Invoices[0].LineItems[0].DiscountRate,10);
+ assert.equal((await t.send('/sandbox/invoices/new',values)).status,409);
+ f.db.prepare('UPDATE xero_items SET price_4=1').run();assert.equal(products[0].price_4,5000000);
+ assert.equal((await t.send('/sandbox/invoices/'+values.id,{id:values.id,version:'1',status:'cancelled'})).status,303);
+ }finally{f.db.close()}
+});

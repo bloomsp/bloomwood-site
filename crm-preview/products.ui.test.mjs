@@ -20,6 +20,14 @@ test('desktop/mobile products, SPack classification, discounts and removal',asyn
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.goto(origin+'/sandbox/jobs/'+j.id+'/edit');assert.match(await page.locator('main').innerText(),/Total to be billed: \$900\.00 AUD/);
  await page.goto(origin+path);await page.getByRole('button',{name:'Remove SPack-5',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[name=version]')?.value==='3');assert.equal(await page.getByRole('button',{name:'Remove SPack-5'}).count(),0);assert.deepEqual(errors,[]);
+ await page.goto(origin+'/sandbox/invoices/new?client_id='+j.client_id);
+ await page.getByLabel('Product 1',{exact:true}).selectOption('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+ await page.getByLabel('Quantity 1',{exact:true}).fill('2');await page.getByLabel('Discount 1',{exact:true}).fill('10');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.getByRole('button',{name:'Continue to Xero details'}).click();
+ await page.getByRole('heading',{name:'Create Xero draft',exact:true}).waitFor();
+ assert.match(await page.locator('main').innerText(),/Saved line amounts: \$900\.00 AUD/);
+
  }finally{await page.close();await new Promise(r=>server.close(r));f.db.close()}
  }}finally{await browser.close()}
 });

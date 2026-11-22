@@ -91,3 +91,9 @@ On a task, **Products and discounts** supports multiple product lines, positive 
 Invoice creation snapshots all product lines atomically and claims their parent task against double billing. Discounts, quantities and item codes are passed to Xero using unitdp=4. Live-only codes are included in descriptions when exporting to Demo; ItemCode is included only if that code exists in the target catalogue or the source and target tenant match. Demo defaults/account/tax treatment are explicitly selected at export. No items are written to either Xero catalogue. Source prices and discounts shown in the CRM are before the export's explicit inclusive/exclusive tax treatment.
 
 Local validation covers read-only live import via simulated responses, SPack detection, discounts, saved invoice lines, stale edits, reserved-task locks and mobile/desktop product forms. Real product loading requires the staff member to authorise/select live Bloomwood in Products. No live invoice creation is enabled.
+
+### Standalone product invoices
+
+The invoice form accepts a client and up to five catalogue product lines with quantities and percentage discounts. Completed tasks are optional and can be included on the same invoice. Migration `0009_direct_products.sql` snapshots direct products separately from task reservations; creation, line snapshots and audit are atomic. Totals and Xero exports include both types without double-counting task products. Saved prices remain fixed if the catalogue changes. Discard and recreate an unexported draft to correct its lines.
+
+Service-pack products remain sales only; automatic creation of an hours allowance on payment is not implemented. Xero writes remain restricted to the Australian Demo Company.
