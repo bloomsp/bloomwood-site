@@ -1,0 +1,30 @@
+{
+  "name": "bloomwood-files-preview",
+  "main": "public-download.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "files-preview.bloomwood.com.au",
+      "custom_domain": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "EDITING_DB",
+      "database_name": "bloomwood-crm-editing-sandbox",
+      "database_id": "1147ffdc-6285-404f-8a0a-b17eaa925656",
+      "migrations_dir": "editing-migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "EDITING_FILES",
+      "bucket_name": "bloomwood-crm-editing-files"
+    }
+  ],
+  "observability": {
+    "enabled": false
+  }
+}

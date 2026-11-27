@@ -1,0 +1,71 @@
+import {taskInvoiceLinks} from './invoice-links.mjs';
+import {allocation} from './service-editor.mjs';
+import {esc,uuid,page,readForm} from './client-editor.mjs';
+export function jobBilling(jobId,tasks,packs){
+ const coverage=new Map();
+ for(const pack of packs)for(const t of allocation(tasks.filter(t=>t.service_pack_id===pack.id),pack.purchased_minutes))coverage.set(t.id,t.covered);
+ let covered=0,uncovered=0,cents=0,unpriced=0;
+ for(const t of tasks.filter(t=>t.job_id===jobId&&t.status!=='cancelled'&&!t.invoice_reserved)){
+ if(t.product_cents!=null){cents+=t.product_cents;continue;}
+ const used=coverage.get(t.id)||0,minutes=t.billable_minutes-used;
+ covered+=used;uncovered+=minutes;
+ if(t.hourly_rate_cents==null)unpriced+=minutes;
+ else cents+=Math.round(minutes*t.hourly_rate_cents/60);
+ }
+ return {covered,uncovered,cents,unpriced};
+}
+const jobFields=['client_id','title','details','status'];
+const taskFields=['title','details','status','billable_minutes','non_billable_minutes'];
+const closed=s=>['completed','cancelled'].includes(s);
+const select=(name,label,options,value)=>`<label><span id="${name}-label">${label}</span><select name="${name}" aria-labelledby="${name}-label">${options.map(([id,text])=>`<option value="${esc(id)}" ${id===value?'selected':''}>${esc(text)}</option>`).join('')}</select></label>`;
+function form(v,path,task,clients,error='',extra=''){
+ const states=task?['open','done','cancelled']:['open','in_progress','completed','cancelled'];
+ return page(`${v.version?'Edit':'Create'} test ${task?'task':'job'}`,`${error?`<p role="alert" class="error">${esc(error)}</p>`:''}<form method="post" action="${esc(path)}"><input type="hidden" name="id" value="${esc(v.id)}"><input type="hidden" name="version" value="${esc(v.version||'')}">${task?'':v.version?`<input type="hidden" name="client_id" value="${esc(v.client_id)}"><p class="full">Client: <a href="/sandbox/clients/${esc(v.client_id)}/edit">${esc(clients.find(c=>c.id===v.client_id)?.display_name)}</a></p>`:select('client_id','Client',clients.map(c=>[c.id,c.display_name]),v.client_id)}<label>Title<input name="title" maxlength="200" required value="${esc(v.title)}"></label>${select('status','Status',states.map(s=>[s,s]),v.status)}<label class="full">Details<textarea name="details" maxlength="4000">${esc(v.details)}</textarea></label>${task?['billable_minutes','non_billable_minutes'].map(k=>`<label>${k==='billable_minutes'?'Billable minutes':'Non-billable minutes'}<input type="number" name="${k}" min="0" max="1000000" step="1" required value="${esc(v[k]??0)}"></label>`).join(''):''}<button class="full">Save test ${task?'task':'job'}</button></form>${extra}`);
+}
+export async function workEditor(request,env,actor,respond){
+ const {pathname:path,origin}=new URL(request.url),db=env.EDITING_DB;
+ const newJob=path==='/sandbox/jobs/new', jobMatch=path.match(/^\/sandbox\/jobs\/([0-9a-f-]+)\/edit$/),newTaskMatch=path.match(/^\/sandbox\/jobs\/([0-9a-f-]+)\/tasks\/new$/),taskMatch=path.match(/^\/sandbox\/tasks\/([0-9a-f-]+)\/edit$/);
+ const list=path==='/sandbox/jobs',task=!!(newTaskMatch||taskMatch),isNew=newJob||!!newTaskMatch,id=(jobMatch||newTaskMatch||taskMatch)?.[1];
+ if(!list&&!newJob&&!(id&&uuid.test(id)))return respond('Not found',404);
+ if(!['GET','POST'].includes(request.method)||(list&&request.method!=='GET'))return respond('Method not allowed',405,'text/plain',{Allow:'GET'});
+ if(request.method==='POST'&&(request.headers.get('origin')!==origin||['cross-site','same-site'].includes(request.headers.get('sec-fetch-site'))))return respond('Reload this page and submit from the CRM.',403);
+ if(!db)return respond('Editing sandbox unavailable',503);
+ try{
+ if(list){const {results}=await db.prepare('SELECT j.*,c.display_name FROM jobs j JOIN clients c ON c.id=j.client_id ORDER BY j.created_at DESC,j.id').all();return respond(page('Test jobs',`<a href="/sandbox/jobs/new">Create test job</a><ul>${results.map(j=>`<li><a href="/sandbox/jobs/${esc(j.id)}/edit">${esc(j.title)}</a><span>${esc(j.display_name)} · ${esc(j.status)}</span></li>`).join('')}</ul>`),200,'text/html')}
+ const clients=(await db.prepare('SELECT id,display_name FROM clients ORDER BY display_name,id').all()).results;
+ const existing=isNew?null:await db.prepare(`SELECT * FROM ${task?'tasks':'jobs'} WHERE id=?`).bind(id).first();
+ if(!isNew&&!existing)return respond('Record not found',404);
+ const parent=task?await db.prepare('SELECT * FROM jobs WHERE id=?').bind(newTaskMatch?id:existing.job_id).first():null;
+ if(task&&!parent)return respond('Job not found',404);
+ let extra='';
+ if(task)extra=`${existing?`<p><a href="/sandbox/tasks/${existing.id}/items">Products and discounts</a></p><p><a href="/sandbox/allocations/${existing.id}">Service and pack allocation</a></p>`:''}<p><a href="/sandbox/jobs/${esc(parent.id)}/edit">Back to ${esc(parent.title)}</a></p>`;
+ if(!task&&existing){const rows=(await db.prepare('SELECT * FROM tasks WHERE job_id=? ORDER BY created_at,id').bind(id).all()).results;
+ const allTasks=(await db.prepare('SELECT t.*,(SELECT sum(amount_cents) FROM task_items WHERE task_id=t.id) product_cents,s.hourly_rate_cents,EXISTS(SELECT 1 FROM invoice_lines l WHERE l.task_id=t.id AND l.active=1) invoice_reserved FROM tasks t LEFT JOIN service_types s ON s.id=t.service_type_id WHERE t.client_id=? ORDER BY t.created_at,t.id').bind(existing.client_id).all()).results;
+ const packs=(await db.prepare('SELECT id,purchased_minutes FROM service_packs WHERE client_id=?').bind(existing.client_id).all()).results;
+ const billing=jobBilling(id,allTasks,packs);
+ const billingHtml=`<h3>To be billed outside service packs</h3><p><strong>${billing.unpriced?'Priced subtotal':'Total to be billed'}: $${(billing.cents/100).toFixed(2)} AUD</strong></p><p>${billing.covered} pack-covered minutes · ${billing.uncovered} uncovered billable minutes.</p>${billing.unpriced?`<p role="status">${billing.unpriced} uncovered minutes need a service rate before the total is complete. Open each task’s Service and pack allocation to choose a service.</p>`:''}<p>Includes discounted product charges, or uncovered hourly work for tasks without products. Includes open and done tasks; cancelled and non-billable time are excluded. Shared packs account for tasks in other jobs. Work already reserved by draft, issued or paid invoices is excluded.</p>`;
+ const active=rows.filter(t=>t.status!=='cancelled'),bill=active.reduce((a,t)=>a+t.billable_minutes,0),non=active.reduce((a,t)=>a+t.non_billable_minutes,0);
+ extra=`<h2>Tasks and time</h2><p>Recorded time (open and done tasks; cancelled tasks excluded): <strong>${bill} billable minutes</strong>, ${non} non-billable minutes; ${bill+non} total minutes.</p>${billingHtml}${closed(existing.status)?'<p>Reopen this job to add or edit tasks.</p>':`<a href="/sandbox/jobs/${id}/tasks/new">Add test task</a>`}<ul>${rows.map(t=>`<li><a href="/sandbox/tasks/${esc(t.id)}/edit">${esc(t.title)}</a><span>${esc(t.status)} · ${t.time_taken_minutes} minutes</span></li>`).join('')}</ul>`;
+ }
+ if(task&&existing){const links=await taskInvoiceLinks(db,existing);if(links)return respond(page('Task reserved by an invoice',`<p>This task or its shared pack is reserved by an active invoice. Cancel the draft or issued invoice before editing. Paid invoices are final in this sandbox.</p>${links}${extra}`),409,'text/html')}
+ if(task&&closed(parent.status))return respond(page('Job is closed',`<p>Reopen the job before adding or editing tasks.</p>${extra}`),409,'text/html');
+ if(request.method==='GET')return respond(form(existing||{id:crypto.randomUUID(),status:'open'},path,task,clients,'',extra),200,'text/html');
+ let v;try{v=await readForm(request,task?taskFields:jobFields)}catch(e){return respond(e.message,400)}
+ if(!uuid.test(v.id)||(!isNew&&v.id!==id)||(isNew?v.version!=='':!/^[1-9]\d{0,8}$/.test(v.version)))return respond('Invalid form. Reload this record.',400);
+ let error=!v.title||v.title.length>200?'Enter a title of up to 200 characters.':v.details.length>4000?'Details are too long.':!(task?['open','done','cancelled']:['open','in_progress','completed','cancelled']).includes(v.status)?'Choose a valid status.':'';
+ if(task&&['billable_minutes','non_billable_minutes'].some(k=>!/^\d{1,7}$/.test(v[k])||Number(v[k])>1000000))error='Enter whole minutes between 0 and 1000000.';
+ if(!task&&(!clients.some(c=>c.id===v.client_id)||existing&&existing.client_id!==v.client_id))error='Choose a valid client. An existing job cannot change clients.';
+ if(error)return respond(form(v,path,task,clients,error,extra),400,'text/html');
+ const now=new Date().toISOString();let result;
+ if(task){const completed=v.status==='done'?(existing?.completed_at||now):null;
+ if(isNew)result=await db.prepare("INSERT INTO tasks(id,job_id,client_id,title,details,status,billable_minutes,non_billable_minutes,completed_at,created_at,updated_at,changed_by) SELECT ?,id,client_id,?,?,?,?,?,?,?,?,? FROM jobs WHERE id=? AND status IN ('open','in_progress') ON CONFLICT(id) DO NOTHING RETURNING id").bind(v.id,v.title,v.details,v.status,Number(v.billable_minutes),Number(v.non_billable_minutes),completed,now,now,actor,parent.id).all();
+ else result=await db.prepare("UPDATE tasks SET title=?,details=?,status=?,billable_minutes=?,non_billable_minutes=?,completed_at=?,updated_at=?,changed_by=?,version=version+1 WHERE id=? AND version=? AND EXISTS(SELECT 1 FROM jobs WHERE id=tasks.job_id AND status IN ('open','in_progress')) RETURNING id").bind(v.title,v.details,v.status,Number(v.billable_minutes),Number(v.non_billable_minutes),completed,now,actor,id,Number(v.version)).all();
+ }else{
+ const ended=closed(v.status)?existing?.closed_at||now:null;
+ if(isNew)result=await db.prepare('INSERT INTO jobs(id,client_id,title,details,status,created_at,updated_at,closed_at,changed_by) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING RETURNING id').bind(v.id,v.client_id,v.title,v.details,v.status,now,now,ended,actor).all();
+ else result=await db.prepare("UPDATE jobs SET title=?,details=?,status=?,updated_at=?,closed_at=?,changed_by=?,version=version+1 WHERE id=? AND version=? AND (? NOT IN ('completed','cancelled') OR NOT EXISTS(SELECT 1 FROM tasks WHERE job_id=jobs.id AND status='open')) RETURNING id").bind(v.title,v.details,v.status,now,ended,actor,id,Number(v.version),v.status).all();
+ }
+ if(result.results?.length!==1)return respond(form(v,path,task,clients,'Not saved: this form was already saved, the record changed, or the job still has open tasks. Copy your edits and reload.',extra),409,'text/html');
+ return respond('',303,'text/plain',{Location:`/sandbox/${task?'tasks':'jobs'}/${v.id}/edit`});
+ }catch{return respond('Could not load or save this test record. Please retry.',503)}
+}
