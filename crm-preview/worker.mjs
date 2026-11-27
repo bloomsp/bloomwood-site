@@ -1,3 +1,4 @@
+import {packProduct} from './pack-sales.mjs';
 import {catalogue,taskItems} from './xero-items.mjs';
 import {xeroConnection} from './xero-connection.mjs';
 import {xeroInvoice} from './xero-invoices.mjs';
@@ -49,6 +50,7 @@ export function createHandler(keysFor = accessKeys) {
         return respond('Access denied: your verified sign-in email is not on the CRM staff list.', 403);
       }
     } catch { return respond('Invalid staff session', 401); }
+    if (/^\/sandbox\/items\/[^/]+\/pack$/.test(url.pathname)) return packProduct(request,env,actor,respond);
     if (url.pathname === '/sandbox/items') return catalogue(request,env,actor,respond);
     if (/^\/sandbox\/tasks\/[^/]+\/items$/.test(url.pathname)) return taskItems(request,env,actor,respond);
     if (url.pathname === '/sandbox/xero' || url.pathname.startsWith('/sandbox/xero/')) return xeroConnection(request,env,actor,respond);

@@ -46,3 +46,38 @@ test('standalone product invoices need no job or task and preserve discounted to
  assert.equal((await t.send('/sandbox/invoices/'+values.id,{id:values.id,version:'1',status:'cancelled'})).status,303);
  }finally{f.db.close()}
 });
+test('standalone Xero pack sale activates saved allowance once, only after matching full payment',async()=>{
+ const {t,f,j}=await productScenario();try{
+ const id=crypto.randomUUID(),path='/sandbox/invoices/'+id+'/xero',service=f.db.prepare('SELECT id FROM service_types LIMIT 1').get().id;
+ const values={...t.values,id};
+ assert.equal((await t.send('/sandbox/invoices/new',{id,version:'',client_id:j.client_id,item_ids:item,quantities:'2',discounts:'10'})).status,303);
+ assert.equal((await t.send(path,values)).status,409);
+ const config='/sandbox/items/'+item+'/pack',settings={id:item,tenant_id:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',version:'0',service_type_id:service,hours:'5'};
+ assert.equal((await f.request(config,new URLSearchParams(settings).toString(),{Origin:'https://evil.test'})).status,403);
+ assert.equal((await t.send(config,settings)).status,303);
+ const base=f.env.XERO_FETCH;let request,remote,putCount=0;
+ f.env.XERO_FETCH=async(url,options={})=>{
+ if(url.includes('/Items')&&options.headers['Xero-tenant-id']==='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')return Response.json({Items:[]});
+ if(url.includes('/Invoices')){
+ if(options.method==='PUT'){putCount++;request=JSON.parse(options.body).Invoices[0];remote={...request,InvoiceID:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',InvoiceNumber:'INV-PACK',Total:990,AmountDue:990};}
+ return Response.json({Invoices:[remote]});
+ }return base(url,options);
+ };
+ assert.equal((await t.send(path,values)).status,303);assert.equal(putCount,1);
+ assert.equal(f.db.prepare('SELECT minutes FROM invoice_pack_grants WHERE invoice_id=?').get(id).minutes,600);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM service_packs WHERE invoice_source IS NOT NULL').get().n,0);
+ assert.equal((await t.send(config,{...settings,version:'1',hours:'10'})).status,303);
+ remote.Status='AUTHORISED';remote.AmountDue=100;
+ const refresh=()=>t.send(path,{id,version:'1',action:'refresh'});
+ assert.equal((await refresh()).status,303);assert.equal(f.db.prepare('SELECT count(*) n FROM service_packs WHERE invoice_source IS NOT NULL').get().n,0);
+ remote.Status='PAID';remote.AmountDue=0;remote.LineItems[0].Quantity=3;
+ await refresh();assert.match(f.db.prepare('SELECT pack_review FROM xero_exports WHERE invoice_id=?').get(id).pack_review,/needs review/);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM service_packs WHERE invoice_source IS NOT NULL').get().n,0);
+ remote.LineItems[0].Quantity=2;
+ assert.equal((await refresh()).status,303);assert.equal((await refresh()).status,303);
+ const packs=f.db.prepare('SELECT * FROM service_packs WHERE invoice_source IS NOT NULL').all();assert.equal(packs.length,1);assert.equal(packs[0].purchased_minutes,600);assert.equal(packs[0].client_id,j.client_id);assert.equal(packs[0].service_type_id,service);assert.equal(putCount,1);
+ assert.match(await (await f.request(path)).text(),/10 hours activated/);
+ remote.Status='AUTHORISED';remote.AmountDue=990;await refresh();assert.match(f.db.prepare('SELECT pack_review FROM xero_exports WHERE invoice_id=?').get(id).pack_review,/Payment status changed/);
+ assert.equal(f.db.prepare('SELECT purchased_minutes FROM service_packs WHERE invoice_source IS NOT NULL').get().purchased_minutes,600);
+ }finally{f.db.close()}
+});

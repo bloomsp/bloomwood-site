@@ -16,6 +16,7 @@ export async function editingFixture() {
  db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0008_xero_items.sql',import.meta.url),'utf8'));
  db.exec(readFileSync(new URL('../../crm-preview/xero-migrations/0002_catalogue.sql',import.meta.url),'utf8'));
  db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0009_direct_products.sql',import.meta.url),'utf8'));
+ db.exec(readFileSync(new URL('../../crm-preview/editing-migrations/0010_pack_sales.sql',import.meta.url),'utf8'));
  const objects=new Map();
  const key=await generateKeyPair('RS256'),issuer='https://test.cloudflareaccess.com';
  const token=await new SignJWT({email:'staff@example.test'}).setProtectedHeader({alg:'RS256'}).setSubject('staff-1').setIssuer(issuer).setAudience('test').setExpirationTime('5m').sign(key.privateKey);

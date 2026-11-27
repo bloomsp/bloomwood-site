@@ -96,4 +96,13 @@ Local validation covers read-only live import via simulated responses, SPack det
 
 The invoice form accepts a client and up to five catalogue product lines with quantities and percentage discounts. Completed tasks are optional and can be included on the same invoice. Migration `0009_direct_products.sql` snapshots direct products separately from task reservations; creation, line snapshots and audit are atomic. Totals and Xero exports include both types without double-counting task products. Saved prices remain fixed if the catalogue changes. Discard and recreate an unexported draft to correct its lines.
 
-Service-pack products remain sales only; automatic creation of an hours allowance on payment is not implemented. Xero writes remain restricted to the Australian Demo Company.
+Service-pack products can now activate an allowance on confirmed full payment (see below). Xero writes remain restricted to the Australian Demo Company.
+
+
+### Paid service-pack activation (27 November 2026)
+
+Migration `0010_pack_sales.sql` adds product-to-service allowance settings and immutable per-invoice grants. Products → Configure pack hours prefills hours from descriptive codes such as SPack5 and SPack10; staff select the service and save. Quantity multiplies allowance; percentage discounts never reduce hours. Export requires valid settings and whole-minute totals. The first export snapshots the settings atomically with its claim, so later settings changes do not affect that sale.
+
+Refresh from Xero activates those saved grants only when Xero reports PAID, AmountDue is zero, and invoice product lines match the original request. This is refresh-driven, not a webhook or background poll. A unique source prevents duplicate allowances on repeated/concurrent refreshes; status and allowance inserts share one transaction. Pack detail links back to its Xero invoice. Partial payment creates no allowance. Changed products or reversed payment produce a review message; existing hours are not silently removed. Exports predating this migration require manual allowance review rather than guessed retrospective activation.
+
+Automated tests use simulated Xero responses, including paid, partial, changed-line and reversed-payment cases. Live invoice writes remain disabled; staff should perform final acceptance in Xero Demo.

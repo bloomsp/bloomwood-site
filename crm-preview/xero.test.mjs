@@ -21,7 +21,7 @@ test('uncertain export reconciles using GET only and live organisations are reje
  t.setDemo(false);assert.equal((await t.send(t.path,t.values)).status,503);assert.equal(t.writes(),0);
  t.setDemo(true);t.setMode('uncertain');assert.equal((await t.send(t.path,t.values)).status,303);
  assert.equal(t.f.db.prepare('SELECT state FROM xero_exports').get().state,'uncertain');
- assert.equal((await t.send(t.path,{id:t.id,version:'1',action:'refresh'})).status,200);assert.equal(t.writes(),1);
+ assert.equal((await t.send(t.path,{id:t.id,version:'1',action:'refresh'})).status,303);assert.equal(t.writes(),1);
  assert.equal(t.f.db.prepare('SELECT state FROM xero_exports').get().state,'linked');
  }finally{t.f.db.close()}
 });

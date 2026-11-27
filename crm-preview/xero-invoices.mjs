@@ -1,3 +1,4 @@
+import {packSetupProblems,packActivation} from './pack-sales.mjs';
 import {page,esc,uuid,readForm} from './client-editor.mjs';
 import {xeroSession,xeroApi,requireDemo} from './xero-connection.mjs';
 export function draftPayload(invoice,lines,v,products=[],targetTenant='',demoCodes=new Set()){
@@ -12,21 +13,24 @@ export async function xeroInvoice(request,env,actor,respond){
  try{
  const invoice=await db.prepare('SELECT * FROM invoices WHERE id=?').bind(id).first();if(!invoice)return respond('Invoice not found',404);
  let exported=await db.prepare('SELECT * FROM xero_exports WHERE invoice_id=?').bind(id).first();
- const renderExport=e=>page('Xero invoice',`<p>${esc(invoice.client_name)}</p><p>Export: ${esc(e.state)}</p>${e.xero_invoice_id?`<p>Xero invoice number: <strong>${esc(e.xero_invoice_number)}</strong></p><p>Xero status: ${esc(e.xero_status)} · Total: $${Number(e.xero_total).toFixed(2)} AUD</p><a rel="noreferrer" href="https://go.xero.com/AccountsReceivable/View.aspx?InvoiceID=${esc(e.xero_invoice_id)}">Open invoice in Xero</a>`:'<p>The result is not confirmed. Check Xero for the CRM reference. Refresh performs a lookup only and will not create another invoice.</p>'}<form method="post"><input type="hidden" name="id" value="${id}"><input type="hidden" name="version" value="${invoice.version}"><input type="hidden" name="action" value="refresh"><button>Refresh from Xero</button></form><p>Manage invoice status and sending in Xero. CRM task reservations remain in place until a separate correction/reconciliation workflow is implemented.</p><a href="/sandbox/invoices/${id}">Back to CRM invoice</a>`);
+ const activatedPacks=(await db.prepare('SELECT p.id,p.name,p.purchased_minutes FROM service_packs p JOIN invoice_pack_grants g ON g.source_key=p.invoice_source WHERE g.invoice_id=?').bind(id).all()).results;
+ const renderExport=e=>page('Xero invoice',`<p>${esc(invoice.client_name)}</p><p>Export: ${esc(e.state)}</p>${e.pack_review?`<p role="alert">${esc(e.pack_review)}</p>`:''}<p>Refresh from Xero checks payment and activates configured service packs once fully paid. Partial payment does not activate packs.</p>${activatedPacks.map(p=>`<p><a href="/sandbox/packs/${p.id}/edit">${esc(p.name)}</a> · ${p.purchased_minutes/60} hours activated</p>`).join('')}${e.xero_invoice_id?`<p>Xero invoice number: <strong>${esc(e.xero_invoice_number)}</strong></p><p>Xero status: ${esc(e.xero_status)} · Total: $${Number(e.xero_total).toFixed(2)} AUD</p><a rel="noreferrer" href="https://go.xero.com/AccountsReceivable/View.aspx?InvoiceID=${esc(e.xero_invoice_id)}">Open invoice in Xero</a>`:'<p>The result is not confirmed. Check Xero for the CRM reference. Refresh performs a lookup only and will not create another invoice.</p>'}<form method="post"><input type="hidden" name="id" value="${id}"><input type="hidden" name="version" value="${invoice.version}"><input type="hidden" name="action" value="refresh"><button>Refresh from Xero</button></form><p>Manage invoice status and sending in Xero. CRM task reservations remain in place until a separate correction/reconciliation workflow is implemented.</p><a href="/sandbox/invoices/${id}">Back to CRM invoice</a>`);
  if(exported&&request.method==='GET')return respond(renderExport(exported),200,'text/html');
  const session=await xeroSession(env);await requireDemo(env,session);
  if(exported){
  const v=await readForm(request,['action']);if(v.id!==id||v.action!=='refresh')return respond('Invalid form',400);
  if(exported.tenant_id!==session.tenant)return respond('Reconnect the original Demo Company before refreshing this invoice.',409);
  const reference=JSON.parse(exported.request_json).Invoices[0].Reference;
- const data=await xeroApi(env,session,exported.xero_invoice_id?'Invoices/'+exported.xero_invoice_id:'Invoices?where='+encodeURIComponent('Reference=="'+reference+'"'));
+ const data=await xeroApi(env,session,exported.xero_invoice_id?'Invoices/'+exported.xero_invoice_id+'?unitdp=4':'Invoices?unitdp=4&where='+encodeURIComponent('Reference=="'+reference+'"'));
  const matches=data.Invoices||[];
  if(matches.length!==1)return respond(renderExport(exported),409,'text/html');
  const remote=matches[0],original=JSON.parse(exported.request_json).Invoices[0];
  if(!uuid.test(remote.InvoiceID||'')||remote.Type!=='ACCREC'||remote.CurrencyCode!=='AUD'||remote.Reference!==reference||remote.Contact?.ContactID!==original.Contact.ContactID)throw Error('Xero identity mismatch');
- await saveRemote(db,id,remote,actor);exported=await db.prepare('SELECT * FROM xero_exports WHERE invoice_id=?').bind(id).first();return respond(renderExport(exported),200,'text/html');
+ await saveRemote(db,id,remote,actor,original);return respond('',303,'text/plain',{Location:url.pathname});
  }
  if(invoice.status!=='draft')return respond('Only a CRM draft can be exported.',409);
+ const packProblems=await packSetupProblems(db,id);
+ if(packProblems.length)return respond(page('Configure service-pack hours',`<p>Set a service and hours per product in Products, and use quantities that yield whole minutes (at most 1,000,000 minutes per line): ${esc(packProblems.join(', '))}.</p><a href="/sandbox/items">Configure products</a>`),409,'text/html');
  const contacts=(await xeroApi(env,session,'Contacts?page=1&where='+encodeURIComponent('ContactStatus=="ACTIVE"'))).Contacts||[];
  const accounts=(await xeroApi(env,session,'Accounts')).Accounts?.filter(a=>a.Status==='ACTIVE'&&['REVENUE','SALES','OTHERINCOME'].includes(a.Type))||[];
  const taxes=(await xeroApi(env,session,'TaxRates')).TaxRates?.filter(t=>t.Status==='ACTIVE'&&t.CanApplyToRevenue===true)||[];
@@ -44,12 +48,13 @@ export async function xeroInvoice(request,env,actor,respond){
  try{
  const data=await xeroApi(env,session,'Invoices?unitdp=4',{method:'PUT',headers:{'Idempotency-Key':'bloomwood-'+id},body:JSON.stringify(payload)}),remote=data.Invoices?.[0];
  if(data.Invoices?.length!==1||remote.HasErrors||!uuid.test(remote.InvoiceID||'')||!remote.InvoiceNumber||remote.Status!=='DRAFT'||remote.Reference!==payload.Invoices[0].Reference||remote.Contact?.ContactID!==v.contact_id)throw Error('Xero did not confirm a draft');
- await saveRemote(db,id,remote,actor);
+ await saveRemote(db,id,remote,actor,payload.Invoices[0]);
  }catch{await db.prepare("UPDATE xero_exports SET state='uncertain',updated_at=?,changed_by=? WHERE invoice_id=? AND state!='linked'").bind(new Date().toISOString(),actor,id).run();}
  return respond('',303,'text/plain',{Location:url.pathname});
  }catch{return respond(page('Xero unavailable','<p>Check the Xero connection and Demo Company access. Any export already started remains reserved; use Refresh from Xero to reconcile it before further action.</p><a href="/sandbox/xero">Xero connection</a>'),503,'text/html')}
 }
-async function saveRemote(db,id,remote,actor){
+async function saveRemote(db,id,remote,actor,original){
  if(!Number.isFinite(remote.Total)||typeof remote.Status!=='string'||typeof remote.InvoiceNumber!=='string')throw Error('Invalid invoice response');
- await db.prepare("UPDATE xero_exports SET state='linked',xero_invoice_id=?,xero_invoice_number=?,xero_status=?,xero_total=?,updated_at=?,changed_by=? WHERE invoice_id=?").bind(remote.InvoiceID,remote.InvoiceNumber,remote.Status,remote.Total,new Date().toISOString(),actor,id).run();
+ const activation=await packActivation(db,id,remote,original,actor);
+ await db.batch([db.prepare("UPDATE xero_exports SET state='linked',xero_invoice_id=?,xero_invoice_number=?,xero_status=?,xero_total=?,updated_at=?,changed_by=?,pack_review=? WHERE invoice_id=?").bind(remote.InvoiceID,remote.InvoiceNumber,remote.Status,remote.Total,new Date().toISOString(),actor,activation.review,id),...activation.statements]);
 }
